@@ -1,0 +1,4 @@
+import { describe, expect, it } from 'vitest';
+import { discoverClue, initialState, type Clue } from '../src/domain/investigation';
+const clues: readonly Clue[] = [{id:'note',title:'Torn note',description:'A paper scrap.'},{id:'print',title:'Muddy footprint',description:'A partial print.'}];
+describe('discoverClue',()=>{it('records known clues once',()=>{const first=discoverClue(initialState,'note',clues);expect(first.discoveredClueIds).toEqual(['note']);expect(discoverClue(first,'note',clues)).toBe(first);});it('ignores unknown clues',()=>{expect(discoverClue(initialState,'missing',clues)).toBe(initialState);});it('preserves previous state immutably',()=>{const first=discoverClue(initialState,'note',clues);const second=discoverClue(first,'print',clues);expect(second.discoveredClueIds).toEqual(['note','print']);expect(first.discoveredClueIds).toEqual(['note']);});});
