@@ -205,3 +205,7 @@ The project prioritizes:
 All rights reserved.
 
 Midnight Detectives, Hollow Creek, its characters, designs, stories, and associated creative assets are part of the project's intellectual property. No permission to reproduce or distribute these materials is granted by this repository.
+
+## Preview deployment
+
+The `Deploy playable preview` GitHub Actions workflow builds, tests, and publishes the browser preview to GitHub Pages after changes are pushed to `main`.
