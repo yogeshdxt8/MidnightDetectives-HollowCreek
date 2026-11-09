@@ -97,7 +97,7 @@ async function movePlayerTo(page: import('@playwright/test').Page, from: { x: nu
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
   await page.mouse.move(centerX + (dx / length) * radius, centerY + (dz / length) * radius);
-  await page.waitForTimeout((distance / 3.1) * 1000 + 140);
+  await page.waitForTimeout((distance / 3.1) * 1000 + 40);
   await page.mouse.up();
   await page.waitForTimeout(250);
 }
