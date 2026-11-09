@@ -327,8 +327,8 @@ async function initializeGamePersistence(){
   restoreRuntimeSave(result.save);
   if(result.warning)notify(result.warning);
   currentSave=result.save;
-  lastSubmittedScore=calculateInvestigationScore(result.save);
-  if(lastSubmittedScore>0)void playablesPlatform.sendScore(lastSubmittedScore).catch(error=>console.warn('Initial Playables score submission failed',error));
+  const restoredScore=calculateInvestigationScore(result.save);
+  if(restoredScore>0){saveQueue=saveQueue.then(async()=>{await playablesPlatform.sendScore(restoredScore);lastSubmittedScore=Math.max(lastSubmittedScore,restoredScore);}).catch(error=>{console.warn('Initial Playables score submission failed',error);});}
   playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=true;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
   document.addEventListener('click',()=>{gameAudio.playUiCue();scheduleGameSave();});
   persistenceReady=true;
