@@ -98,7 +98,7 @@ function renderPuzzleState(){puzzleFeedback.textContent=fountainPuzzleState.feed
 document.querySelector('#puzzle-open')?.addEventListener('click',()=>{if(fountainPuzzleState.status==='locked'){notify('The torn note may explain this mechanism.');return;}renderPuzzleState();puzzlePanel.hidden=false;puzzlePanel.style.removeProperty('display');});
 document.querySelector('#puzzle-close')?.addEventListener('click',closePuzzle);
 puzzlePanel.addEventListener('click',event=>{if(event.target===puzzlePanel)closePuzzle();});
-document.querySelector('#puzzle-actions')?.addEventListener('click',event=>{const target=event.target;if(!(target instanceof HTMLElement))return;const button=target.closest<HTMLButtonElement>('[data-symbol]');if(!button)return;const symbol=button.dataset['symbol'];if(!symbol)return;const result=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds);fountainPuzzleState=result.state;renderPuzzleState();if(result.completed){compartmentOpen=true;hiddenRelic.visible=true;relicState=updateRelicAvailability(relicState,fountainRelic,[fountainPuzzle.id]);document.querySelector('#status')!.textContent='FOUNTAIN SEAL OPEN';notify('A hidden compartment opens beneath the fountain.');}else if(!result.accepted){notify(fountainPuzzleState.feedback);}});
+document.querySelector('#puzzle-actions')?.addEventListener('click',event=>{const target=event.target;if(!(target instanceof HTMLElement))return;const button=target.closest<HTMLButtonElement>('[data-symbol]');if(!button)return;const symbol=button.dataset['symbol'];if(!symbol)return;const result=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds);fountainPuzzleState=result.state;renderPuzzleState();if(result.completed){compartmentOpen=true;hiddenRelic.visible=true;relicState=updateRelicAvailability(relicState,fountainRelic,[fountainPuzzle.id]);document.querySelector<HTMLButtonElement>('#puzzle-open')!.hidden=true;document.querySelector('#status')!.textContent='FOUNTAIN SEAL OPEN';notify('A hidden compartment opens beneath the fountain.');}else if(!result.accepted){notify(fountainPuzzleState.feedback);}});
 puzzleResetButton.addEventListener('click',()=>{fountainPuzzleState=resetPuzzle(fountainPuzzleState);renderPuzzleState();});
 function closeLeadPanel(){leadPanel.hidden=true;leadPanel.style.setProperty('display','none','important');}
 const leadReviewButton=document.querySelector<HTMLButtonElement>('#lead-review')!;
@@ -260,7 +260,7 @@ function restoreRuntimeSave(save:import('./domain/game-save').GameSaveData){
   for(const symbol of fountainPuzzle.sequence)fountainPuzzleState=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds).state;
   compartmentOpen=true;compartmentReveal=1;lidHinge.rotation.x=-1.28;
   relicState=createRelicState(fountainRelic,[fountainPuzzle.id]);
-  hiddenRelic.visible=true;relicButton.hidden=false;document.querySelector<HTMLButtonElement>('#puzzle-open')!.hidden=false;
+  hiddenRelic.visible=true;relicButton.hidden=false;document.querySelector<HTMLButtonElement>('#puzzle-open')!.hidden=true;
  }
  if(save.investigation.recoveredObjectIds.includes(fountainRelic.id)){
   relicState=collectRelic(relicState,fountainRelic,0,relicRange).state;
