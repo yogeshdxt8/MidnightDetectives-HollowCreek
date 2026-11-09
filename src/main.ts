@@ -222,7 +222,8 @@ const gameAudio=new GameAudio(playablesPlatform.audioEnabled);
 let lastSubmittedScore=0;
 let firstFrameNotified=false;
 let persistenceReady=false;
-function notifyReadyWhenPossible(){if(firstFrameNotified&&persistenceReady&&!gameInteractable){const loadingScreen=document.querySelector<HTMLElement>('#playables-loading');if(loadingScreen)loadingScreen.hidden=true;gameInteractable=true;playablesPlatform.notifyGameReady();}}
+let gameReadyNotified=false;
+function notifyReadyWhenPossible(){if(firstFrameNotified&&persistenceReady&&!gameInteractable){const loadingScreen=document.querySelector<HTMLElement>('#playables-loading');if(loadingScreen)loadingScreen.hidden=true;gameInteractable=true;gameReadyNotified=true;playablesPlatform.notifyGameReady();}}
 const gamePersistence=new GamePersistence(playablesPlatform,typeof window!=='undefined'?window.localStorage:undefined);
 let currentSave:import('./domain/game-save').GameSaveData|undefined;
 let saveQueue:Promise<void>=Promise.resolve();
@@ -329,7 +330,7 @@ async function initializeGamePersistence(){
   currentSave=result.save;
   const restoredScore=calculateInvestigationScore(result.save);
   if(restoredScore>0){saveQueue=saveQueue.then(async()=>{await playablesPlatform.sendScore(restoredScore);lastSubmittedScore=Math.max(lastSubmittedScore,restoredScore);}).catch(error=>{console.warn('Initial Playables score submission failed',error);});}
-  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=true;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
+  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=gameReadyNotified;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
   document.addEventListener('click',()=>{gameAudio.playUiCue();scheduleGameSave();});
   persistenceReady=true;
   notifyReadyWhenPossible();
