@@ -1,6 +1,7 @@
 export class GameAudio {
   private enabled: boolean;
   private context: AudioContext | undefined;
+  private paused = false;
 
   constructor(initiallyEnabled: boolean) {
     this.enabled = initiallyEnabled;
@@ -14,15 +15,17 @@ export class GameAudio {
   }
 
   pause(): void {
+    this.paused = true;
     if (this.context && this.context.state === 'running') void this.context.suspend();
   }
 
   resume(): void {
+    this.paused = false;
     if (this.enabled && this.context?.state === 'suspended') void this.context.resume();
   }
 
   async playUiCue(): Promise<void> {
-    if (!this.enabled || typeof window === 'undefined') return;
+    if (!this.enabled || this.paused || typeof window === 'undefined') return;
     const AudioContextConstructor = window.AudioContext;
     if (!AudioContextConstructor) return;
 
@@ -31,7 +34,7 @@ export class GameAudio {
       // Start/resume synchronously from the player's gesture, then wait for the
       // browser's asynchronous state transition before creating the sound.
       if (this.context.state === 'suspended') await this.context.resume();
-      if (!this.enabled || this.context.state !== 'running') return;
+      if (!this.enabled || this.paused || this.context.state !== 'running') return;
 
       const oscillator = this.context.createOscillator();
       const gain = this.context.createGain();
