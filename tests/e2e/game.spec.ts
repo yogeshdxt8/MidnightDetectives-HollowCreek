@@ -86,26 +86,49 @@ async function movePlayerTo(page: import('@playwright/test').Page, from: { x: nu
   const joystick = page.locator('#joystick');
   const bounds = await joystick.boundingBox();
   if (!bounds) throw new Error('Movement joystick is not visible.');
+
   const dx = to.x - from.x;
   const dz = to.z - from.z;
   const distance = Math.hypot(dx, dz);
   if (distance === 0) return;
+
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
-  // Match the joystick's actual clamp radius (34% of its width) and the
-  // game's 3.1 world-units/second movement speed.
   const radius = bounds.width * 0.34;
   const length = Math.hypot(dx, dz);
+  const targetX = centerX + (dx / length) * radius;
+  const targetY = centerY + (dz / length) * radius;
+  const hint = page.locator('#hint');
+
+  // Keep the real pointer held until the game's own proximity calculation
+  // confirms arrival. A fixed duration based on ideal speed is unreliable
+  // under CI frame scheduling and can stop short of the interaction radius.
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
-  await page.mouse.move(centerX + (dx / length) * radius, centerY + (dz / length) * radius);
-  await page.waitForTimeout((distance / 3.1) * 1000 + 80);
+  await page.mouse.move(targetX, targetY);
+
+  const stickTransform = await page.locator('#stick').evaluate(element => getComputedStyle(element).transform);
+  if (stickTransform === 'none' || stickTransform === 'matrix(1, 0, 0, 1, 0, 0)') {
+    await page.mouse.up();
+    throw new Error('Joystick did not register the requested pointer direction.');
+  }
+
+  const timeoutMs = Math.ceil((distance / 3.1) * 1000 * 2.5 + 2500);
+  const deadline = Date.now() + timeoutMs;
+  let arrived = false;
+  while (Date.now() < deadline) {
+    if ((await hint.textContent())?.includes('NEARBY')) {
+      arrived = true;
+      break;
+    }
+    await page.waitForTimeout(100);
+  }
   await page.mouse.up();
 
-  // Wait for the scene camera to settle and confirm the player is within
-  // interaction range before attempting to inspect the nearest clue.
-  await expect(page.locator('#hint')).toContainText('NEARBY');
-  await page.waitForTimeout(500);
+  if (!arrived) {
+    throw new Error(`Player did not enter clue range after ${timeoutMs}ms of joystick input (route ${from.x},${from.z} -> ${to.x},${to.z}).`);
+  }
+  await page.waitForTimeout(250);
 }
 
 async function inspectNearestClue(page: import('@playwright/test').Page) {
