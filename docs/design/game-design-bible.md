@@ -1,7 +1,7 @@
 # Midnight Detectives: Hollow Creek — Game Design Bible
 
 **Document status:** Living design source of truth  
-**Version:** 0.2.1  
+**Version:** 0.2.2  
 **Last updated:** 2026-11-10  
 **Repository:** `yogeshdxt8/MidnightDetectives-HollowCreek`  
 **Audience:** Game design, narrative, engineering, art, audio, QA, and production  
@@ -101,7 +101,7 @@ The four equal playable leads are:
 - Lily Carter
 - Maya Williams
 
-All four are 12 years old. This is the current approved character canon. Their age does not need to match the game's intended audience age: the game is designed for a general audience aged 13+. Preserve their names, identities, established personalities, relationships, and canonical visual designs.
+All four are canonically 12 years old. This is internal character-bible information and must never be disclosed to the player through in-game dialogue, UI, narration, collectibles, marketing copy, or other player-facing content. Do not state or imply an exact age in the game. Their age does not need to match the game's intended audience age: the game is designed for a general audience aged 13+. Preserve their names, identities, established personalities, relationships, and canonical visual designs.
 
 ### 4.1 Character selection
 
@@ -595,6 +595,7 @@ Before a design decision or feature is marked approved, confirm:
 | 0.1.0 | 2026-11-10 | Initial living Game Design Bible. Consolidates approved core vision, third-person rule, Four Gates opening, dependency-based gameplay, evidence distinctions, contextual interactions, encounter checkpoints and hints, difficulty principles, 13+ direction, and physical room/level transition rule. Clearly marks campaign details and unresolved lore as proposals/open. |
 | 0.2.0 | 2026-11-10 | Temporary age-14 update, superseded by creator decision in v0.2.1. |
 | 0.2.1 | 2026-11-10 | Creator reverted the protagonists' ages to 12. Age 12 is current canon; the game's general-audience 13+ positioning remains unchanged. |
+| 0.2.2 | 2026-11-10 | Creator approved a player-facing confidentiality rule: never disclose the protagonists' exact ages anywhere in the game. Age 12 remains internal canon only. |
 
 ---
 
