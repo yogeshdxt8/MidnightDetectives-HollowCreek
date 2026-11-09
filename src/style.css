@@ -189,3 +189,50 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
     font-size: 9px;
   }
 }
+
+
+/* Final mobile scene composition: remove redundant hint and clear the joystick's text area. */
+@media (max-width: 600px) {
+  .overlay strong {
+    display: none;
+  }
+
+  .overlay small {
+    position: relative;
+    top: -24px;
+  }
+
+  .overlay h1 {
+    position: relative;
+    top: -24px;
+    max-width: 310px;
+    font-size: clamp(29px, 8vw, 36px);
+    line-height: 1.02;
+  }
+
+  .overlay p {
+    position: relative;
+    top: -24px;
+    max-width: 290px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .touch-controls #joystick {
+    left: 12px;
+    bottom: 12px;
+    width: 76px;
+    height: 76px;
+  }
+
+  .touch-controls #stick {
+    width: 34px;
+    height: 34px;
+  }
+
+  .touch-controls #look-pad {
+    right: 12px;
+    bottom: 16px;
+    font-size: 8px;
+  }
+}
