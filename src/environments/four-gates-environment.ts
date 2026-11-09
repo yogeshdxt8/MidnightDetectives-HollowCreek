@@ -96,23 +96,23 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     }
     // Oversized, high-contrast Roman numeral on a dedicated illuminated plaque.
     const numeral = ['I', 'II', 'III', 'IV'][index]!;
-    const plaque = addBox(.94, .72, .14, materials.sign, x, 3.35, gateZ - 1.12);
+    // Raised gold frame and solid 3D Roman numerals avoid texture/back-face
+    // ambiguity on mobile GPUs and remain legible at the gameplay camera distance.
+    addBox(1.02, .8, .18, materials.gateTrim, x, 3.35, gateZ - 1.12);
+    const plaque = addBox(.9, .68, .2, materials.sign, x, 3.35, gateZ - 1.16);
     plaque.userData['gateIndex'] = index + 1;
     plaque.userData['gateNumeral'] = numeral;
-    const numeralCanvas = document.createElement('canvas'); numeralCanvas.width = 256; numeralCanvas.height = 256;
-    const numeralContext = numeralCanvas.getContext('2d');
-    if (numeralContext) {
-      numeralContext.clearRect(0, 0, 256, 256);
-      numeralContext.fillStyle = '#f0d9a5';
-      numeralContext.font = 'bold 174px Georgia, serif';
-      numeralContext.textAlign = 'center'; numeralContext.textBaseline = 'middle';
-      numeralContext.fillText(numeral, 128, 136);
-    }
-    const numeralTexture = new THREE.CanvasTexture(numeralCanvas); numeralTexture.colorSpace = THREE.SRGBColorSpace;
-    textures.push(numeralTexture);
-    const numeralFace = new THREE.Mesh(new THREE.PlaneGeometry(.78, .62), new THREE.MeshBasicMaterial({ map: numeralTexture, transparent: true, depthWrite: false }));
-    geometries.push(numeralFace.geometry);
-    numeralFace.position.set(x, 3.35, gateZ - 1.04); root.add(numeralFace);
+    const numeralZ = gateZ - .91;
+    const numeralBar = (offsetX: number, height: number, angle = 0) => {
+      const mark = addBox(.105, height, .075, materials.gateTrim, x + offsetX, 3.35, numeralZ);
+      mark.rotation.z = angle;
+      mark.userData['gateNumeral'] = numeral;
+      mark.userData['gateIndex'] = index + 1;
+    };
+    if (numeral === 'I') numeralBar(0, .48);
+    if (numeral === 'II') { numeralBar(-.13, .48); numeralBar(.13, .48); }
+    if (numeral === 'III') { numeralBar(-.25, .48); numeralBar(0, .48); numeralBar(.25, .48); }
+    if (numeral === 'IV') { numeralBar(-.23, .48); numeralBar(.04, .48, -.42); numeralBar(.29, .48, .42); }
     // A warm crown lamp marks each entrance without washing out the ironwork.
     const crown = addBox(.16, .16, .16, materials.lamp, x, 4.02, gateZ - 1.14);
     crown.userData['gatePortal'] = index + 1;
@@ -123,18 +123,18 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
 
   // The town-name sign is a separate header above the complete row of four gates.
   addBox(10.8, .3, .72, materials.stoneLight, 0, 6.48, gateZ);
-  addBox(7.65, .72, .2, materials.sign, 0, 6.12, gateZ - .48);
+  addBox(8.55, .84, .24, materials.sign, 0, 6.12, gateZ - .48);
   const signCanvas = document.createElement('canvas'); signCanvas.width = 1024; signCanvas.height = 192;
   const ctx = signCanvas.getContext('2d');
   if (ctx) {
     ctx.fillStyle = '#151d29'; ctx.fillRect(0, 0, 1024, 192);
     ctx.strokeStyle = '#d0b27b'; ctx.lineWidth = 7; ctx.strokeRect(10, 10, 1004, 172);
-    ctx.fillStyle = '#f0d9a5'; ctx.font = 'bold 70px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#f0d9a5'; ctx.font = 'bold 88px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('HOLLOW CREEK  ·  FOUR GATES', 512, 98);
   }
   const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace; textures.push(signTexture);
-  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(7.42, .58), new THREE.MeshBasicMaterial({ map: signTexture }));
-  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .36); root.add(signFace);
+  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(8.28, .7), new THREE.MeshBasicMaterial({ map: signTexture }));
+  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .28); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
