@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { PlayablesPlatform } from './platform/playables-sdk';
+import { GamePersistence } from './platform/game-persistence';
+import { captureInvestigationSave } from './domain/investigation-save-projection';
 import './style.css';
 import { discoverClue, initialState, isClueWithinRange, evaluatePrototypeDeduction, prototypeDeductionOptions, type Clue } from './domain/investigation';
 import { createPuzzleState, interactWithPuzzle, resetPuzzle, type EnvironmentalPuzzleDefinition, type EnvironmentalPuzzleState } from './domain/environmental-puzzle';
@@ -204,5 +207,117 @@ function resize(){const w=Math.max(1,sceneRoot.clientWidth),h=Math.max(1,sceneRo
 const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
 const clock=new THREE.Clock();let frame=0;let walkTime=0;
 function animate(){frame=requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw)),right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));const direction=forward.clone().multiplyScalar(-move.y).add(right.multiplyScalar(move.x));if(direction.lengthSq()>.001){direction.normalize();const speed=3.1,nx=THREE.MathUtils.clamp(player.position.x+direction.x*speed*dt,-5.5,5.5),nz=THREE.MathUtils.clamp(player.position.z+direction.z*speed*dt,-8.3,6.5);if(Math.hypot(nx,nz+2.8)>1.95){player.position.x=nx;player.position.z=nz;}player.rotation.y=Math.atan2(direction.x,direction.z);walkTime+=dt*10;player.position.y=Math.abs(Math.sin(walkTime*2))*.045;const swing=Math.sin(walkTime)*.48;leftLeg.rotation.x=swing;rightLeg.rotation.x=-swing;leftArm.rotation.x=-swing*.72;rightArm.rotation.x=swing*.72;}else{player.position.y=0;leftLeg.rotation.x=THREE.MathUtils.damp(leftLeg.rotation.x,0,12,dt);rightLeg.rotation.x=THREE.MathUtils.damp(rightLeg.rotation.x,0,12,dt);leftArm.rotation.x=THREE.MathUtils.damp(leftArm.rotation.x,0,12,dt);rightArm.rotation.x=THREE.MathUtils.damp(rightArm.rotation.x,0,12,dt);}compartmentReveal=THREE.MathUtils.damp(compartmentReveal,compartmentOpen?1:0,3.2,dt);lidHinge.rotation.x=-compartmentReveal*1.28;hiddenRelic.position.y=.1+Math.sin(t*2.4)*.035;relicLight.intensity=compartmentReveal*1.7;const target=new THREE.Vector3(player.position.x,1.05,player.position.z),distance=6.8,height=3.4,desired=new THREE.Vector3(player.position.x+Math.sin(cameraYaw)*distance,player.position.y+height,player.position.z+Math.cos(cameraYaw)*distance);camera.position.lerp(desired,1-Math.exp(-dt*5));camera.lookAt(target);const relicWorld=hiddenRelic.getWorldPosition(new THREE.Vector3());const relicDistance=Math.hypot(player.position.x-relicWorld.x,player.position.z-relicWorld.z);relicButton.hidden=relicState.status!=='available'||relicDistance>relicRange;locationMarker.visible=investigationChain.locationStatus==='unlocked';locationMarker.rotation.y=t*.8;const locationDistance=Math.hypot(player.position.x-locationMarker.position.x,player.position.z-locationMarker.position.z);locationButton.hidden=investigationChain.locationStatus!=='unlocked'||locationDistance>2.5;const keeperDistance=Math.hypot(player.position.x-keeperNpc.position.x,player.position.z-keeperNpc.position.z);keeperButton.hidden=keeperState.status==='unavailable'||keeperDistance>2.8;const valeDistance=Math.hypot(player.position.x-yardNpc.position.x,player.position.z-yardNpc.position.z);valeButton.hidden=valeState.status!=='available'||valeDistance>2.8;const pumpDistance=Math.hypot(player.position.x-pumpMarker.position.x,player.position.z-pumpMarker.position.z);pumpButton.hidden=pumpHouseState.status==='locked'||pumpDistance>2.8;const recordsDistance=Math.hypot(player.position.x-recordsMarker.position.x,player.position.z-recordsMarker.position.z);recordsButton.hidden=recordsState.status==='locked'||recordsDistance>2.8;const waterworksDistance=Math.hypot(player.position.x-waterworksMarker.position.x,player.position.z-waterworksMarker.position.z);waterworksButton.hidden=waterworksState.status==='locked'||waterworksDistance>2.8;waterworksMarker.rotation.y=t*.65;timingGear.rotation.z=Math.sin(t*.8)*.12;recordsMarker.rotation.y=t*.7;pumpMarker.rotation.y=t*.8;pumpWheel.rotation.x=t*.5;const yardDistance=Math.hypot(player.position.x-yardSearchMarker.position.x,player.position.z-yardSearchMarker.position.z);yardButton.hidden=maintenanceYardState.status!=='available'||yardDistance>2.8;const regulatorDistance=Math.hypot(player.position.x-yardRegulator.position.x,player.position.z-yardRegulator.position.z);regulatorButton.hidden=maintenanceYardState.status!=='searched'||regulatorDistance>2.3;yardSearchMarker.rotation.y=t*.7;yardRegulator.rotation.y=t*.4;const hint=document.querySelector<HTMLElement>('#hint');if(hint&&state.discoveredClueIds.length<3){let nearest:THREE.Mesh|undefined;let nearestDistance=Infinity;for(const mesh of clueMeshes){const id=mesh.userData['clueId'];if(typeof id!=='string'||state.discoveredClueIds.includes(id))continue;const distance=Math.hypot(player.position.x-mesh.position.x,player.position.z-mesh.position.z);if(distance<nearestDistance){nearest=mesh;nearestDistance=distance;}}hint.textContent=nearest&&nearestDistance<=3.1?'NEARBY: TAP THE GLOWING CLUE':'EXPLORE THE SQUARE TO FIND CLUES';}clueMeshes.forEach((mesh,i)=>{mesh.rotation.y=t*.7+i;mesh.position.y=positions[i]![1]+Math.sin(t*1.8+i*1.7)*.12;});renderer.render(scene,camera);}
+
+const playablesPlatform=new PlayablesPlatform();
+const gamePersistence=new GamePersistence(playablesPlatform,typeof window!=='undefined'?window.localStorage:undefined);
+let currentSave:import('./domain/game-save').GameSaveData|undefined;
+let saveQueue:Promise<void>=Promise.resolve();
+let saveTimer=0;
+function captureRuntimeSave(){
+ if(!currentSave)return currentSave;
+ const trackedLeadIds:string[]=[];
+ if(leadState.status==='tracked')trackedLeadIds.push(relicLead.id);
+ if(wallMessageLeadState.status==='tracked')trackedLeadIds.push(wallMessageLead.id);
+ if(keeperLeadState.status==='tracked')trackedLeadIds.push(keeperLead.id);
+ const unlockedLocationIds:string[]=[];
+ const searchedLocationIds:string[]=[];
+ if(investigationChain.locationStatus!=='locked')unlockedLocationIds.push(clockTowerLocation.id);
+ if(investigationChain.locationStatus==='searched')searchedLocationIds.push(clockTowerLocation.id);
+ const discoveredEvidenceIds=[...discoveredInvestigationEvidenceIds,...pumpHouseState.discoveredEvidenceIds,...waterworksState.discoveredEvidenceIds];
+ if(maintenanceYardState.regulatorCollected)discoveredEvidenceIds.push('brass-regulator');
+ if(pumpHouseState.ledgerRecovered)discoveredEvidenceIds.push('crescent-order-mark');
+ return captureInvestigationSave(currentSave,{
+  discoveredClueIds:state.discoveredClueIds,
+  solvedPuzzleIds:[...(fountainPuzzleState.status==='solved'?[fountainPuzzle.id]:[]),...(servicePuzzleState.status==='solved'?[servicePanelPuzzle.id]:[]),...pumpHouseState.status==='mechanism-open'||pumpHouseState.status==='ledger-recovered'||pumpHouseState.status==='deduction-complete'?['pump-house-mechanism']:[],...waterworksState.status==='incident-reconstructed'?['waterworks-timeline']:[]],
+  discoveredEvidenceIds,
+  trackedLeadIds,
+  unlockedLocationIds,
+  searchedLocationIds,
+  askedKeeperTopicIds:keeperState.askedTopicIds,
+  presentedKeeperEvidenceIds:keeperState.presentedEvidenceIds,
+  recoveredObjectIds:[...(relicState.status==='collected'?[fountainRelic.id]:[]),...(maintenanceYardState.regulatorCollected?['brass-regulator']:[]),...(pumpHouseState.ledgerRecovered?['sealed-ledger']:[])],
+  completedDeductionIds:[...(deductionSolved?['town-square-deduction']:[]),...(maintenanceYardState.deductionId? [maintenanceYardState.deductionId]:[]),...(pumpHouseState.deductionId?[pumpHouseState.deductionId]:[])]
+ });
+}
+function requestGameSave(){
+ if(!currentSave)return;
+ const snapshot=captureRuntimeSave();
+ saveQueue=saveQueue.then(async()=>{await gamePersistence.save(snapshot);}).catch(error=>{console.error('Investigation save failed',error);});
+}
+function scheduleGameSave(){
+ window.clearTimeout(saveTimer);
+ saveTimer=window.setTimeout(requestGameSave,180);
+}
+function restoreRuntimeSave(save:import('./domain/game-save').GameSaveData){
+ currentSave=save;
+ for(const id of save.discoveredClueIds){state=discoverClue(state,id,clues);}
+ clueMeshes.forEach(mesh=>{mesh.visible=!state.discoveredClueIds.includes(String(mesh.userData['clueId']));});
+ document.querySelector('#count')!.textContent=String(state.discoveredClueIds.length);
+ document.querySelector('#evidence')!.replaceChildren(...state.discoveredClueIds.map(id=>{const item=clues.find(clue=>clue.id===id);const button=document.createElement('button');button.type='button';button.className='clue';button.dataset['clueId']=id;button.textContent='✦ '+(item?.title??id);return button;}));
+ if(state.discoveredClueIds.length===3){document.querySelector<HTMLButtonElement>('#deduction-open')!.hidden=false;document.querySelector('#status')!.textContent='EVIDENCE COLLECTION COMPLETE';}
+ if(save.solvedPuzzleIds.includes(fountainPuzzle.id)){
+  fountainPuzzleState=createPuzzleState(fountainPuzzle,state.discoveredClueIds);
+  for(const symbol of fountainPuzzle.sequence)fountainPuzzleState=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds).state;
+  compartmentOpen=true;compartmentReveal=1;lidHinge.rotation.x=-1.28;
+  relicState=createRelicState(fountainRelic,[fountainPuzzle.id]);
+  hiddenRelic.visible=true;relicButton.hidden=false;document.querySelector<HTMLButtonElement>('#puzzle-open')!.hidden=false;
+ }
+ if(save.investigation.recoveredObjectIds.includes(fountainRelic.id)){
+  relicState=collectRelic(relicState,fountainRelic,0,relicRange).state;
+  hiddenRelic.visible=false;relicButton.hidden=true;relicInventory.hidden=false;relicInventory.textContent='✦ '+fountainRelic.name;
+ }
+ if(save.investigation.trackedLeadIds.includes(relicLead.id)){
+  leadState=revealInvestigationLead(leadState,relicLead,[fountainRelic.id]);leadState=trackInvestigationLead(leadState);
+  investigationChain=unlockInvestigationLocation(investigationChain,[relicLead.id],clockTowerLocation);
+  locationButton.hidden=false;locationMarker.visible=true;
+  activeLead.textContent='NEXT LEAD · '+relicLead.title+' — '+relicLead.nextObjective;activeLead.hidden=false;
+ }
+ if(save.investigation.searchedLocationIds.includes(clockTowerLocation.id)){
+  investigationChain=searchInvestigationLocation(investigationChain,clockTowerLocation.id,clockTowerLocation).state;
+  discoveredInvestigationEvidenceIds.push(clockTowerLocation.evidence.id);
+  servicePuzzleState=createServicePanelPuzzleState(servicePanelPuzzle,[clockTowerLocation.evidence.id]);
+  servicePuzzleButton.hidden=false;locationButton.hidden=true;
+  document.querySelector<HTMLElement>('#location-evidence')!.hidden=false;
+  document.querySelector<HTMLElement>('#location-evidence-title')!.textContent=clockTowerLocation.evidence.title;
+  document.querySelector<HTMLElement>('#location-evidence-description')!.textContent=clockTowerLocation.evidence.description;
+  locationSearchButton.hidden=true;
+ }
+ if(save.investigation.solvedPuzzleIds.includes(servicePanelPuzzle.id)){
+  for(const symbol of servicePanelPuzzle.sequence)servicePuzzleState=interactWithServicePanel(servicePuzzleState,servicePanelPuzzle,symbol,[clockTowerLocation.evidence.id]).state;
+  discoveredInvestigationEvidenceIds.push('keeper-message');
+  wallMessageLeadState=revealInvestigationLead(wallMessageLeadState,wallMessageLead,[clockTowerLocation.evidence.id]);
+  currentLead=wallMessageLead;
+  document.querySelector<HTMLElement>('#keeper-lead')!.hidden=false;
+  keeperState=unlockKeeperEncounter(keeperState);keeperNpc.visible=true;keeperButton.hidden=false;
+ }
+ if(save.investigation.trackedLeadIds.includes(wallMessageLead.id)){
+  wallMessageLeadState=trackInvestigationLead(wallMessageLeadState);
+  keeperState=unlockKeeperEncounter(keeperState);keeperNpc.visible=true;keeperButton.hidden=false;
+ }
+ for(const topic of save.investigation.askedKeeperTopicIds){if(['clock','maintenance','missing-object'].includes(topic))keeperState=askKeeperAbout(keeperState,keeperDefinition,topic as 'clock'|'maintenance'|'missing-object').state;}
+ if(save.investigation.presentedKeeperEvidenceIds.includes(keeperDefinition.presentedEvidenceId)){
+  keeperState=presentEvidenceToKeeper(keeperState,keeperDefinition,keeperDefinition.presentedEvidenceId,['three-line-imprint','keeper-message']).state;
+  keeperLeadState=revealInvestigationLead(keeperLeadState,keeperLead,['keeper-message']);
+  document.querySelector<HTMLElement>('#keeper-lead')!.hidden=false;
+  document.querySelector<HTMLButtonElement>('#keeper-track-yard-lead')!.hidden=false;
+ }
+ syncBoardEvidence();renderServicePuzzle();renderKeeperPanel();
+}
+async function initializeGamePersistence(){
+ try{
+  const result=await gamePersistence.initialize();
+  restoreRuntimeSave(result.save);
+  if(result.warning)notify(result.warning);
+  currentSave=result.save;
+  playablesPlatform.registerLifecycle({onPause:()=>{requestGameSave();},onResume:()=>{},onAudioEnabledChange:enabled=>{if(!enabled){/* Audio is currently silent prototype output. */}}});
+  document.addEventListener('click',scheduleGameSave);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')requestGameSave();});
+  window.addEventListener('pagehide',()=>{requestGameSave();},{once:true});
+  playablesPlatform.notifyFirstFrameReady();
+  playablesPlatform.notifyGameReady();
+ }catch(error){console.error('Game persistence initialization failed',error);notify('Progress saving is unavailable for this session.');}
+}
+void initializeGamePersistence();
+
 animate();
 window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);observer.disconnect();renderer.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});window.clearTimeout(toastTimer);},{once:true});
