@@ -6,6 +6,9 @@ export interface PlayablesSdk {
     loadData(): Promise<string>;
     saveData(data: string): Promise<void>;
   };
+  readonly engagement: {
+    sendScore(score: { readonly value: number }): Promise<void>;
+  };
   readonly system: {
     isAudioEnabled(): boolean;
     onAudioEnabledChange(callback: (enabled: boolean) => void): () => void;
@@ -46,6 +49,12 @@ export class PlayablesPlatform {
 
   get isInPlayablesEnvironment(): boolean {
     return this.sdk?.IN_PLAYABLES_ENV ?? false;
+  }
+
+  async sendScore(value: number): Promise<void> {
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error('Playables score must be a non-negative safe integer.');
+    if (!this.isAvailable || !this.sdk?.engagement) return;
+    await this.sdk.engagement.sendScore({ value });
   }
 
   get audioEnabled(): boolean {
