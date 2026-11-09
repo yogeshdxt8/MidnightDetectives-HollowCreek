@@ -228,7 +228,7 @@ function captureRuntimeSave(){
  if(pumpHouseState.ledgerRecovered)discoveredEvidenceIds.push('crescent-order-mark');
  return captureInvestigationSave(currentSave,{
   discoveredClueIds:state.discoveredClueIds,
-  solvedPuzzleIds:[...(fountainPuzzleState.status==='solved'?[fountainPuzzle.id]:[]),...(servicePuzzleState.status==='solved'?[servicePanelPuzzle.id]:[]),...pumpHouseState.status==='mechanism-open'||pumpHouseState.status==='ledger-recovered'||pumpHouseState.status==='deduction-complete'?['pump-house-mechanism']:[],...waterworksState.status==='incident-reconstructed'?['waterworks-timeline']:[]],
+  solvedPuzzleIds:[...(fountainPuzzleState.status==='solved'?[fountainPuzzle.id]:[]),...(servicePuzzleState.status==='solved'?[servicePanelPuzzle.id]:[]),...(pumpHouseState.status==='mechanism-open'||pumpHouseState.status==='ledger-recovered'||pumpHouseState.status==='deduction-complete'?['pump-house-mechanism']:[]),...waterworksState.status==='incident-reconstructed'?['waterworks-timeline']:[]],
   discoveredEvidenceIds,
   trackedLeadIds,
   unlockedLocationIds,
