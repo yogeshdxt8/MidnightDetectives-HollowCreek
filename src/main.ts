@@ -256,6 +256,10 @@ function restoreRuntimeSave(save:import('./domain/game-save').GameSaveData){
  document.querySelector('#count')!.textContent=String(state.discoveredClueIds.length);
  document.querySelector('#evidence')!.replaceChildren(...state.discoveredClueIds.map(id=>{const item=clues.find(clue=>clue.id===id);const button=document.createElement('button');button.type='button';button.className='clue';button.dataset['clueId']=id;button.textContent='✦ '+(item?.title??id);return button;}));
  if(state.discoveredClueIds.length===3){document.querySelector<HTMLButtonElement>('#deduction-open')!.hidden=false;document.querySelector('#status')!.textContent='EVIDENCE COLLECTION COMPLETE';}
+ if(state.discoveredClueIds.includes('note')&&!save.solvedPuzzleIds.includes(fountainPuzzle.id)){
+  fountainPuzzleState=createPuzzleState(fountainPuzzle,state.discoveredClueIds);
+  document.querySelector<HTMLButtonElement>('#puzzle-open')!.hidden=false;
+ }
  if(save.solvedPuzzleIds.includes(fountainPuzzle.id)){
   fountainPuzzleState=createPuzzleState(fountainPuzzle,state.discoveredClueIds);
   for(const symbol of fountainPuzzle.sequence)fountainPuzzleState=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds).state;
