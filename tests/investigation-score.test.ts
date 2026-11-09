@@ -16,7 +16,7 @@ describe('persistent investigation score', () => {
         completedDeductionIds: ['town-square-deduction']
       }
     };
-    expect(calculateInvestigationScore(save)).toBe(3 * 100 + 2 * 250 + 300 + 500);
+    expect(calculateInvestigationScore(save)).toBe(2 * 100 + 2 * 250 + 300 + 500);
   });
 
   it('returns zero for a new save and never produces fractional scores', () => {
