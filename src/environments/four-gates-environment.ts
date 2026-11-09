@@ -12,7 +12,8 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     asphalt: new THREE.MeshStandardMaterial({ color: '#252d38', roughness: .96 }),
     wetAsphalt: new THREE.MeshStandardMaterial({ color: '#303b48', roughness: .48, metalness: .08 }),
     stone: new THREE.MeshStandardMaterial({ color: '#555766', roughness: .94 }),
-    stoneLight: new THREE.MeshStandardMaterial({ color: '#777783', roughness: .88 }),
+    stoneLight: new THREE.MeshStandardMaterial({ color: '#9295a3', roughness: .82 }),
+    gateTrim: new THREE.MeshStandardMaterial({ color: '#b99b65', emissive: '#6d4d22', emissiveIntensity: .42, metalness: .48, roughness: .48 }),
     mortar: new THREE.MeshStandardMaterial({ color: '#343744', roughness: 1 }),
     iron: new THREE.MeshStandardMaterial({ color: '#202832', metalness: .72, roughness: .42 }),
     timber: new THREE.MeshStandardMaterial({ color: '#3d3434', roughness: .88 }),
@@ -81,20 +82,28 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
       addBox(.12, .16, .08, materials.stoneLight, bx, 2.43, gateZ - .58);
     }
     // Roman numerals distinguish the four entrances at gameplay distance.
-    const plaque = addBox(.46, .34, .09, materials.sign, x, 3.05, gateZ - .66);
+    const plaque = addBox(.62, .46, .11, materials.sign, x, 3.05, gateZ - .7);
     plaque.userData['gateIndex'] = index + 1;
     const numeral = ['I', 'II', 'III', 'IV'][index]!;
     const numeralY = 3.05;
     const numeralZ = gateZ - .72;
     const stroke = (sx: number, sy: number, angle = 0) => {
-      const mark = addBox(.035, .2, .035, materials.signText, x + sx, numeralY + sy, numeralZ);
+      const mark = addBox(.052, .27, .045, materials.signText, x + sx, numeralY + sy, numeralZ);
       mark.rotation.z = angle;
       mark.userData['gateNumeral'] = numeral;
     };
     if (numeral === 'I') stroke(0, 0);
     if (numeral === 'II') { stroke(-.055, 0); stroke(.055, 0); }
     if (numeral === 'III') { stroke(-.075, 0); stroke(0, 0); stroke(.075, 0); }
-    if (numeral === 'IV') { stroke(-.07, 0); stroke(.045, 0, -.34); stroke(.13, 0, .34); }
+    if (numeral === 'IV') { stroke(-.12, 0); stroke(.035, 0, -.34); stroke(.16, 0, .34); }
+    // Warm inner-edge trim gives every portal a separate silhouette on narrow phone screens.
+    for (const side of [-1, 1]) {
+      const trim = addBox(.075, 3.35, .085, materials.gateTrim, x + side * 1.19, 2.83, gateZ - .76);
+      trim.userData['gatePortal'] = index + 1;
+    }
+    const gateGlow = new THREE.PointLight('#d6b77e', .58, 4.8, 2);
+    gateGlow.position.set(x, 3.25, gateZ - 1.05);
+    root.add(gateGlow);
   });
 
   // A single town-name lintel unifies the four portals while leaving each opening distinct.
