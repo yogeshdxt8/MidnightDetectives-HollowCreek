@@ -35,10 +35,10 @@ describe('YouTube Playables platform adapter', () => {
     expect(sdk.game.gameReady).not.toHaveBeenCalled();
   });
 
-  it('requires a successful load before gameReady or saveData', async () => {
+  it('waits for cloud loading to settle before gameReady and requires success before saveData', async () => {
     const sdk = createSdk();
     const platform = new PlayablesPlatform(sdk);
-    expect(() => platform.notifyGameReady()).toThrow('before cloud data has loaded');
+    expect(() => platform.notifyGameReady()).toThrow('before cloud data loading has settled');
     await expect(platform.saveData('progress')).rejects.toThrow('until loadData succeeds');
     await platform.loadData();
     platform.notifyGameReady();
