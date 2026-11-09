@@ -22,6 +22,11 @@ function createSdk(): PlayablesSdk {
 describe('YouTube Playables platform adapter', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('can be constructed in a non-browser test/runtime without a global window', () => {
+    expect(() => new PlayablesPlatform()).not.toThrow();
+    expect(new PlayablesPlatform().isAvailable).toBe(false);
+  });
+
   it('requires a successful load before gameReady or saveData', async () => {
     const sdk = createSdk();
     const platform = new PlayablesPlatform(sdk);

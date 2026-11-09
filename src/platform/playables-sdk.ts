@@ -26,12 +26,16 @@ export interface PlayablesLifecycleHandlers {
   readonly onAudioEnabledChange: (enabled: boolean) => void;
 }
 
+function getDefaultSdk(): PlayablesSdk | undefined {
+  return typeof window === 'undefined' ? undefined : window.ytgame;
+}
+
 export class PlayablesPlatform {
   private readonly sdk: PlayablesSdk | undefined;
   private loaded = false;
   private readonly unsubscribe: Array<() => void> = [];
 
-  constructor(sdk: PlayablesSdk | undefined = window.ytgame) {
+  constructor(sdk: PlayablesSdk | undefined = getDefaultSdk()) {
     this.sdk = sdk;
   }
 
