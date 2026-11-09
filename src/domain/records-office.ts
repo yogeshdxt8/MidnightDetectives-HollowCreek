@@ -16,7 +16,7 @@ export function classifyArchiveDocument(state:RecordsOfficeState,definition:Reco
  const document=definition.documents.find(d=>d.id===documentId);
  if(!document||state.classifiedDocumentIds.includes(documentId))return {state,accepted:false,completed:false};
  const expected=definition.classificationSequence[state.classificationProgress];
- if(document.category!==expected)return {state:{...state,status:'classification-open',classificationProgress:0,feedback:'That document does not fit the archive index order. Re-examine its contents and try again.'},accepted:true,completed:false};
+ if(document.category!==expected)return {state:{...state,status:'classification-open',classificationProgress:0,classifiedDocumentIds:[],feedback:'That document does not fit the archive index order. The index resets; re-examine the sequence and try again.'},accepted:true,completed:false};
  const classified=[...state.classifiedDocumentIds,documentId];
  const progress=state.classificationProgress+1;
  const complete=progress===definition.classificationSequence.length;
