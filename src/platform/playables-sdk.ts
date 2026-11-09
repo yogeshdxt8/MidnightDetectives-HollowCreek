@@ -40,7 +40,7 @@ export class PlayablesPlatform {
   }
 
   get isAvailable(): boolean {
-    return this.sdk !== undefined;
+    return this.sdk?.IN_PLAYABLES_ENV === true;
   }
 
   get isInPlayablesEnvironment(): boolean {
@@ -56,6 +56,7 @@ export class PlayablesPlatform {
   }
 
   notifyGameReady(): void {
+    if (!this.isAvailable) return;
     if (!this.loaded) {
       throw new Error('Game cannot be marked ready before cloud data has loaded.');
     }
