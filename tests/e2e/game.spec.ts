@@ -37,6 +37,8 @@ test('keeps the touch investigation controls usable on a phone viewport', async 
 });
 
 test('restores solved fountain and Clock Tower evidence from browser save', async ({ page }) => {
+  page.on('pageerror', error => console.log('[browser pageerror]', error.stack ?? error.message));
+  page.on('console', message => { if (message.type() === 'error') console.log('[browser console error]', message.text()); });
   await page.addInitScript(() => {
     if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
     const seededSave = {
