@@ -126,3 +126,66 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
 @media(min-width:600px){
  .detail-panel{left:50%!important;right:auto!important;width:min(92vw,560px)!important;transform:translateX(-50%)!important}
 }
+
+
+/* Mobile scene HUD: keep contextual actions in a reserved top row above the story title. */
+@media (max-width: 600px) {
+  main > .board-open {
+    top: 12px;
+    right: 12px;
+    left: auto;
+    max-width: 42%;
+    min-height: 48px;
+    padding: 10px 11px;
+    font-size: 9px;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  main > .location-interact {
+    top: 12px;
+    right: auto;
+    left: 12px;
+    bottom: auto;
+    width: calc(58% - 24px);
+    max-width: 220px;
+    min-height: 48px;
+    padding: 9px 10px;
+    transform: none;
+    font-size: 9px;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .overlay {
+    padding: 94px 20px 112px;
+    background: linear-gradient(90deg, #080d19d9, transparent 88%),
+      linear-gradient(0deg, #080d1966, transparent 58%);
+  }
+
+  .overlay small {
+    display: block;
+    font-size: 9px;
+    line-height: 1.4;
+  }
+
+  .overlay h1 {
+    max-width: 340px;
+    margin: 12px 0 8px;
+    font-size: clamp(32px, 9vw, 42px);
+    line-height: 1;
+  }
+
+  .overlay p {
+    max-width: 270px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .overlay strong {
+    bottom: 118px;
+    max-width: 76%;
+    font-size: 9px;
+  }
+}
