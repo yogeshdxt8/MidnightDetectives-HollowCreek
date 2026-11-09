@@ -241,8 +241,8 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
 /* Mobile: transient notifications must not cover the reserved HUD action row or touch controls. */
 @media (max-width: 600px) {
   #toast {
-    bottom: 8px;
-    max-width: 52%;
+    bottom: 100px;
+    max-width: 76%;
     padding: 8px 10px;
     font-size: 10px;
     line-height: 1.3;
