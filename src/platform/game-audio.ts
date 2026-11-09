@@ -21,7 +21,7 @@ export class GameAudio {
 
   resume(): void {
     this.paused = false;
-    if (this.enabled && this.context?.state === 'suspended') void this.context.resume().catch(() => undefined);
+    if (this.enabled && this.context && this.context.state !== 'closed' && this.context.state !== 'running') void this.context.resume().catch(() => undefined);
   }
 
   async playUiCue(): Promise<void> {
