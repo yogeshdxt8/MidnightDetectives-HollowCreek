@@ -68,9 +68,9 @@ describe('versioned game save', () => {
 
   it('rejects malformed UTF-16 save strings', () => {
     expect(isWellFormedUtf16('Hollow Creek 😀')).toBe(true);
-    expect(isWellFormedUtf16('broken-\\ud800')).toBe(false);
-    expect(isWellFormedUtf16('broken-\\udc00')).toBe(false);
-    expect(() => parseGameSave('\\ud800')).toThrow('well-formed UTF-16');
+    expect(isWellFormedUtf16('broken-' + String.fromCharCode(0xd800))).toBe(false);
+    expect(isWellFormedUtf16('broken-' + String.fromCharCode(0xdc00))).toBe(false);
+    expect(() => parseGameSave(String.fromCharCode(0xd800))).toThrow('well-formed UTF-16');
   });
 });
 
