@@ -1,0 +1,12 @@
+import {describe,expect,it} from 'vitest';
+import {askValeAbout,createValeEncounterState,presentEvidenceToVale,unlockValeEncounter,type ValeEncounterDefinition} from '../src/domain/vale-encounter';
+const definition:ValeEncounterDefinition={id:'elias-vale',requiredEvidenceIds:['brass-regulator','signed-work-order','matching-tool-mark'],decisiveEvidenceId:'signed-work-order',response:'Elias admits he moved the regulator, but says the order came from someone whose name was written in the sealed ledger.',followUpLeadId:'sealed-ledger',followUpLeadTitle:'The sealed ledger',topics:[{id:'transfer-order',label:'The transfer order',response:'I only carried out what was written on the order. The signature was not mine.'},{id:'regulator',label:'The brass regulator',response:'I moved it because I was told the clock would be safer without it.'},{id:'keeper',label:'The keeper',response:'The keeper did not give me the order. He was afraid of whoever did.'}]};
+describe('Elias Vale encounter',()=>{
+ it('stays locked until the deduction unlocks it',()=>expect(createValeEncounterState().status).toBe('locked'));
+ it('unlocks once',()=>expect(unlockValeEncounter(createValeEncounterState()).status).toBe('available'));
+ it('answers a topic once and rejects repeats',()=>{const s=unlockValeEncounter(createValeEncounterState());const r=askValeAbout(s,definition,'regulator');expect(r.accepted).toBe(true);expect(r.state.feedback).toContain('safer');expect(askValeAbout(r.state,definition,'regulator').accepted).toBe(false);});
+ it('rejects unknown topics',()=>expect(askValeAbout(unlockValeEncounter(createValeEncounterState()),definition,'unknown' as never).accepted).toBe(false));
+ it('requires all recovered evidence before presenting the order',()=>{const s=unlockValeEncounter(createValeEncounterState());expect(presentEvidenceToVale(s,definition,'signed-work-order',['signed-work-order']).accepted).toBe(false);});
+ it('reveals the next lead when the complete evidence is presented',()=>{const s=unlockValeEncounter(createValeEncounterState());const r=presentEvidenceToVale(s,definition,'signed-work-order',definition.requiredEvidenceIds);expect(r.unlockedLead).toBe(true);expect(r.state.status).toBe('confronted');});
+ it('prevents duplicate evidence presentation',()=>{const s=unlockValeEncounter(createValeEncounterState());const r=presentEvidenceToVale(s,definition,'signed-work-order',definition.requiredEvidenceIds);expect(presentEvidenceToVale(r.state,definition,'signed-work-order',definition.requiredEvidenceIds).accepted).toBe(false);});
+});
