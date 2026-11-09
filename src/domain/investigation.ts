@@ -5,3 +5,9 @@ export function discoverClue(state: InvestigationState, id: string, clues: reado
   if (!clues.some((clue) => clue.id === id) || state.discoveredClueIds.includes(id)) return state;
   return { discoveredClueIds: [...state.discoveredClueIds, id] };
 }
+
+export function isClueWithinRange(playerX:number,playerZ:number,clueX:number,clueZ:number,range:number):boolean {
+  const dx=playerX-clueX;
+  const dz=playerZ-clueZ;
+  return dx*dx+dz*dz<=range*range;
+}
