@@ -1,7 +1,7 @@
 # Midnight Detectives: Hollow Creek — Game Design Bible
 
 **Document status:** Living design source of truth  
-**Version:** 0.1.0  
+**Version:** 0.2.0  
 **Last updated:** 2026-11-10  
 **Repository:** `yogeshdxt8/MidnightDetectives-HollowCreek`  
 **Audience:** Game design, narrative, engineering, art, audio, QA, and production  
@@ -101,7 +101,7 @@ The four equal playable leads are:
 - Lily Carter
 - Maya Williams
 
-All four are 12 years old. Their identities, ages, personalities, relationships, and canonical visual designs must remain consistent with the approved source material.
+All four are 14 years old. This is an explicitly creator-approved canon update and supersedes the previous age-12 entries in earlier source/archive material. Preserve their names, identities, established personalities, relationships, and canonical visual designs; update age-dependent descriptions and materials consistently to reflect age 14. Do not otherwise redesign or rewrite their character canon without approval.
 
 ### 4.1 Character selection
 
@@ -593,6 +593,7 @@ Before a design decision or feature is marked approved, confirm:
 | Version | Date | Change |
 |---|---|---|
 | 0.1.0 | 2026-11-10 | Initial living Game Design Bible. Consolidates approved core vision, third-person rule, Four Gates opening, dependency-based gameplay, evidence distinctions, contextual interactions, encounter checkpoints and hints, difficulty principles, 13+ direction, and physical room/level transition rule. Clearly marks campaign details and unresolved lore as proposals/open. |
+| 0.2.0 | 2026-11-10 | Creator-approved canon update: Ethan, Noah, Lily, and Maya are now 14 years old. This supersedes earlier age-12 source/archive entries; established identities, personalities, relationships, and visual designs remain unchanged. |
 
 ---
 
