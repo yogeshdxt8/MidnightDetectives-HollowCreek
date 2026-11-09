@@ -91,6 +91,9 @@ async function readPlayerPosition(page: import('@playwright/test').Page) {
 }
 
 async function movePlayerTo(page: import('@playwright/test').Page, target: { x: number; z: number }) {
+  const runtimeErrors: string[] = [];
+  page.on('pageerror', error => runtimeErrors.push(error.stack ?? error.message));
+  page.on('console', message => { if (message.type() === 'error') runtimeErrors.push(message.text()); });
   const joystick = page.locator('#joystick');
   const bounds = await joystick.boundingBox();
   if (!bounds) throw new Error('Movement joystick is not visible.');
@@ -144,7 +147,9 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
         throw new Error(
           `Investigator movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}) ` +
           `with ${remaining.toFixed(2)} units remaining to (${target.x}, ${target.z}); ` +
-          `hint="${(await hint.textContent())?.trim()}" and joystick="${await page.locator('#stick').evaluate(element => getComputedStyle(element).transform)}".`
+          `hint="${(await hint.textContent())?.trim()}" and joystick="${await page.locator('#stick').evaluate(element => getComputedStyle(element).transform)}"; ` +
+          `runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; ` +
+          `errors=${JSON.stringify(runtimeErrors)}.`
         );
       }
 
