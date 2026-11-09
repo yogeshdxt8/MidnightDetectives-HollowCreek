@@ -289,11 +289,20 @@ function restoreRuntimeSave(save:import('./domain/game-save').GameSaveData){
  if(save.investigation.recoveredObjectIds.includes(fountainRelic.id)){
   relicState=collectRelic(relicState,fountainRelic,0,relicRange).state;
   hiddenRelic.visible=false;relicButton.hidden=true;relicInventory.hidden=false;relicInventory.textContent='✦ '+fountainRelic.name;
+  // Recovering the relic also creates a pending lead. Preserve that prompt even
+  // when the player closes the lead dialog without pinning it yet.
+  leadState=revealInvestigationLead(leadState,relicLead,[fountainRelic.id]);
+  currentLead=relicLead;
+  document.querySelector<HTMLElement>('#lead-title')!.textContent=relicLead.title;
+  document.querySelector<HTMLElement>('#lead-observation')!.textContent=relicLead.observation;
+  document.querySelector<HTMLElement>('#lead-objective')!.textContent=relicLead.nextObjective;
+  document.querySelector<HTMLElement>('#lead-location')!.textContent=relicLead.locationHint;
+  leadReviewButton.hidden=false;
  }
  if(save.investigation.trackedLeadIds.includes(relicLead.id)){
   leadState=revealInvestigationLead(leadState,relicLead,[fountainRelic.id]);leadState=trackInvestigationLead(leadState);
   investigationChain=unlockInvestigationLocation(investigationChain,[relicLead.id],clockTowerLocation);
-  locationButton.hidden=false;locationMarker.visible=true;
+  locationButton.hidden=false;locationMarker.visible=true;leadReviewButton.hidden=true;
   activeLead.textContent='NEXT LEAD · '+relicLead.title+' — '+relicLead.nextObjective;activeLead.hidden=false;
  }
  if(save.investigation.searchedLocationIds.includes(clockTowerLocation.id)){
@@ -310,7 +319,13 @@ function restoreRuntimeSave(save:import('./domain/game-save').GameSaveData){
   for(const symbol of servicePanelPuzzle.sequence)servicePuzzleState=interactWithServicePanel(servicePuzzleState,servicePanelPuzzle,symbol,[clockTowerLocation.evidence.id]).state;
   discoveredInvestigationEvidenceIds.push('keeper-message');
   wallMessageLeadState=revealInvestigationLead(wallMessageLeadState,wallMessageLead,[clockTowerLocation.evidence.id]);
-  currentLead=wallMessageLead;
+  if(!save.investigation.trackedLeadIds.includes(wallMessageLead.id)){
+   currentLead=wallMessageLead;leadReviewButton.hidden=false;
+   document.querySelector<HTMLElement>('#lead-title')!.textContent=wallMessageLead.title;
+   document.querySelector<HTMLElement>('#lead-observation')!.textContent=wallMessageLead.observation;
+   document.querySelector<HTMLElement>('#lead-objective')!.textContent=wallMessageLead.nextObjective;
+   document.querySelector<HTMLElement>('#lead-location')!.textContent=wallMessageLead.locationHint;
+  }
   document.querySelector<HTMLElement>('#keeper-lead')!.hidden=false;
   keeperState=unlockKeeperEncounter(keeperState);keeperNpc.visible=true;keeperButton.hidden=false;
  }
