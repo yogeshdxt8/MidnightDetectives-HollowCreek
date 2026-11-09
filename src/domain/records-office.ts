@@ -1,11 +1,11 @@
 export type RecordsOfficeStatus='locked'|'available'|'searched'|'classification-open'|'classified'|'historical-discovery';
 export interface ArchiveDocument { readonly id:string; readonly title:string; readonly category:string; readonly description:string; }
 export interface RecordsOfficeDefinition { readonly id:string; readonly requiredLeadId:string; readonly documents:readonly ArchiveDocument[]; readonly classificationSequence:readonly string[]; readonly historicalEvidenceId:string; }
-export interface RecordsOfficeState { readonly status:RecordsOfficeStatus; readonly discoveredDocumentIds:readonly string[]; readonly classificationProgress:number; readonly classifiedDocumentIds:readonly string[]; readonly historicalEvidenceDiscovered:boolean; readonly feedback:string; }
+export interface RecordsOfficeState { readonly status:RecordsOfficeStatus; readonly discoveredDocumentIds:readonly string[]; readonly classificationProgress:number; readonly classifiedDocumentIds:readonly string[]; readonly historicalEvidenceDiscovered:boolean; readonly historicalEvidenceId:string|null; readonly feedback:string; }
 export interface RecordsOfficeResult { readonly state:RecordsOfficeState; readonly accepted:boolean; readonly completed:boolean; }
 export function createRecordsOfficeState(definition:RecordsOfficeDefinition,trackedLeadIds:readonly string[]=[]):RecordsOfficeState {
  const unlocked=trackedLeadIds.includes(definition.requiredLeadId);
- return {status:unlocked?'available':'locked',discoveredDocumentIds:[],classificationProgress:0,classifiedDocumentIds:[],historicalEvidenceDiscovered:false,feedback:unlocked?'The records office is open. Search the archive shelves and filing cabinets.':'Track the crescent-seal lead to unlock the records office.'};
+ return {status:unlocked?'available':'locked',discoveredDocumentIds:[],classificationProgress:0,classifiedDocumentIds:[],historicalEvidenceDiscovered:false,historicalEvidenceId:null,feedback:unlocked?'The records office is open. Search the archive shelves and filing cabinets.':'Track the crescent-seal lead to unlock the records office.'};
 }
 export function searchRecordsOffice(state:RecordsOfficeState,definition:RecordsOfficeDefinition):RecordsOfficeResult {
  if(state.status!=='available')return {state,accepted:false,completed:false};
@@ -24,5 +24,5 @@ export function classifyArchiveDocument(state:RecordsOfficeState,definition:Reco
 }
 export function revealHistoricalIncident(state:RecordsOfficeState,definition:RecordsOfficeDefinition):RecordsOfficeResult {
  if(state.status!=='classified'||state.historicalEvidenceDiscovered)return {state,accepted:false,completed:false};
- return {state:{...state,status:'historical-discovery',historicalEvidenceDiscovered:true,feedback:'The incident file describes an earlier event at Hollow Creek. The crescent seal appears on an authorization sheet dated years before the missing regulator was moved.'},accepted:true,completed:true};
+ return {state:{...state,status:'historical-discovery',historicalEvidenceDiscovered:true,historicalEvidenceId:definition.historicalEvidenceId,feedback:'The incident file describes an earlier event at Hollow Creek. The crescent seal appears on an authorization sheet dated years before the missing regulator was moved.'},accepted:true,completed:true};
 }
