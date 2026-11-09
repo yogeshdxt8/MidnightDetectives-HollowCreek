@@ -41,3 +41,11 @@
 
 /* Action controls are siblings of the touch overlay so the canvas cannot intercept their taps. */
 main>.relic-interact,main>.location-interact,main>.keeper-interact,main>.yard-interact,main>.regulator-interact,main>.vale-interact,main>.pump-interact,main>.board-open,main>.records-interact,main>.waterworks-interact{pointer-events:auto;z-index:20;touch-action:manipulation;}
+
+/* Consistent mobile dialog chrome: every modal close action uses the game HUD style. */
+.detail-panel>button[id$="-close"]{float:right;min-height:40px;padding:9px 14px;border:1px solid #8b7955;border-radius:7px;background:#26364d;color:#f1dfb7;font:11px monospace;letter-spacing:.1em;touch-action:manipulation;cursor:pointer}
+.detail-panel>button[id$="-close"]:active{background:#3a4b63;border-color:#e6c98f}
+.detail-panel{max-height:min(86dvh,760px);overflow-y:auto;overscroll-behavior:contain; scrollbar-color:#8b7955 #101a2b}
+.detail-panel::before{content:"";position:fixed;inset:-100vh -100vw;z-index:-1;background:#030814b8;backdrop-filter:blur(3px);pointer-events:none}
+body:has(.detail-panel:not([hidden])) main>.relic-interact,body:has(.detail-panel:not([hidden])) main>.location-interact,body:has(.detail-panel:not([hidden])) main>.keeper-interact,body:has(.detail-panel:not([hidden])) main>.yard-interact,body:has(.detail-panel:not([hidden])) main>.regulator-interact,body:has(.detail-panel:not([hidden])) main>.vale-interact,body:has(.detail-panel:not([hidden])) main>.pump-interact,body:has(.detail-panel:not([hidden])) main>.board-open,body:has(.detail-panel:not([hidden])) main>.records-interact,body:has(.detail-panel:not([hidden])) main>.waterworks-interact{visibility:hidden;pointer-events:none}
+@media(max-width:480px){.detail-panel{width:calc(100vw - 28px);padding:18px;border-radius:12px}.detail-panel h2{font-size:clamp(22px,6vw,28px)}.detail-panel>button[id$="-close"]{min-height:42px}.board-evidence{grid-template-columns:1fr}}
