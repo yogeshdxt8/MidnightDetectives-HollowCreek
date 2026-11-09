@@ -93,3 +93,36 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
 @media(max-height:700px){
  .detail-panel{max-height:68dvh!important;padding-top:64px!important}
 }
+
+/* Stable modal viewport: the dialog itself is the only scroll container. */
+.detail-panel{
+ position:fixed!important;
+ inset:12px 12px 12px 12px!important;
+ top:12px!important;left:12px!important;
+ width:auto!important;height:auto!important;
+ max-width:560px!important;max-height:none!important;
+ margin:0 auto!important;
+ transform:none!important;
+ padding:72px 16px 24px!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ overscroll-behavior:contain!important;
+ scroll-behavior:auto!important;
+ background:#101a2b!important;
+ z-index:100!important;
+}
+.detail-panel .dialog-close{
+ position:sticky!important;
+ top:-58px!important;
+ float:right!important;
+ display:inline-flex!important;
+ margin-top:-58px!important;
+ margin-bottom:16px!important;
+ margin-right:0!important;
+ z-index:110!important;
+}
+.detail-panel small:first-of-type{clear:both;display:block;margin-top:0!important}
+.board-panel #board-connect{position:relative!important;inset:auto!important;display:block;width:100%;margin:18px 0!important}
+.detail-panel h3{clear:both}
+@media(min-width:600px){
+ .detail-panel{left:50%!important;right:auto!important;width:min(92vw,560px)!important;transform:translateX(-50%)!important}
+}
