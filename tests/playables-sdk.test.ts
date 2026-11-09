@@ -10,6 +10,7 @@ function createSdk(): PlayablesSdk {
       loadData: vi.fn().mockResolvedValue('saved-progress'),
       saveData: vi.fn().mockResolvedValue(undefined)
     },
+    engagement: { sendScore: vi.fn().mockResolvedValue(undefined) },
     system: {
       isAudioEnabled: vi.fn().mockReturnValue(true),
       onAudioEnabledChange: vi.fn().mockReturnValue(vi.fn()),
@@ -56,6 +57,16 @@ describe('YouTube Playables platform adapter', () => {
     platform.notifyGameReady();
     expect(sdk.game.gameReady).toHaveBeenCalledOnce();
     expect(sdk.game.saveData).not.toHaveBeenCalled();
+  });
+
+  it('submits only non-negative safe integer scores to YouTube', async () => {
+    const sdk = createSdk();
+    const platform = new PlayablesPlatform(sdk);
+    await platform.sendScore(1250);
+    expect(sdk.engagement.sendScore).toHaveBeenCalledWith({ value: 1250 });
+    await expect(platform.sendScore(-1)).rejects.toThrow('non-negative safe integer');
+    await expect(platform.sendScore(1.5)).rejects.toThrow('non-negative safe integer');
+    await expect(platform.sendScore(Number.MAX_SAFE_INTEGER + 1)).rejects.toThrow('non-negative safe integer');
   });
 
   it('exposes YouTube audio state and registers lifecycle callbacks', () => {
