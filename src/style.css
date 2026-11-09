@@ -13,3 +13,5 @@
 #evidence-detail::before{content:"";position:fixed;inset:0;z-index:-1;background:#050914df;backdrop-filter:blur(3px);pointer-events:auto}
 
 .detail-panel[hidden]{display:none!important}
+
+.puzzle-panel{max-height:min(86vh,720px);overflow-y:auto}.puzzle-panel>p{color:#c2ccdc;line-height:1.55}.puzzle-sequence{margin:14px 0;padding:12px;border:1px solid #8b7955;border-radius:7px;background:#1a2639;color:#e6c98f;text-align:center;font:11px monospace;letter-spacing:.12em}.puzzle-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.puzzle-actions button{min-height:54px;border:1px solid #59647a;border-radius:8px;background:#1b2a40;color:#eef3ff;font:11px monospace;letter-spacing:.08em;touch-action:manipulation}.puzzle-actions button:active:not(:disabled){background:#354761;border-color:#e6c98f}.puzzle-actions button:disabled{opacity:.45}.puzzle-panel #puzzle-feedback{min-height:42px;color:#e6c98f;font-size:13px}.puzzle-panel #puzzle-reset{margin-top:8px}.puzzle-panel #puzzle-reset[hidden]{display:none}
