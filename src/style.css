@@ -9,3 +9,5 @@
 .deduction-open{margin-top:12px;padding:11px 14px;border:1px solid #a88b57;border-radius:7px;background:#27354a;color:#f0d9a8;font:11px monospace;letter-spacing:.12em}.deduction-open[hidden]{display:none}.deduction-panel>p{line-height:1.5;color:#c2ccdc}.deduction-option{display:block;width:100%;margin:9px 0;padding:13px;text-align:left;border:1px solid #59647a;border-radius:8px;background:#1b2a40;color:#eef3ff;font:13px system-ui}.deduction-option:focus-visible{outline:2px solid #e6c98f;outline-offset:3px}.deduction-option.selected{border-color:#e6c98f;background:#29374b}.deduction-option small{display:block;margin:6px 0 0;color:#b5c1d4;font:11px system-ui;letter-spacing:0}
 
 .case-result>small{margin-top:0}.case-result>button{margin-top:16px;width:100%;padding:13px;border:1px solid #a88b57;border-radius:7px;background:#27354a;color:#f0d9a8;font:11px monospace;letter-spacing:.12em}.case-result h2{font-size:28px;line-height:1.1}.case-result .detail-observation{line-height:1.8}
+
+#evidence-detail::before{content:"";position:fixed;inset:0;z-index:-1;background:#050914df;backdrop-filter:blur(3px);pointer-events:auto}
