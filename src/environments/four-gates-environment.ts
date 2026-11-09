@@ -73,6 +73,18 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   // Sign lettering is represented by restrained raised strokes to avoid font textures and external assets.
   for (let i = 0; i < 10; i++) addBox(.09, .24, .035, materials.signText, -1.85 + i * .41, 3.42, -12.91);
   addBox(10.4, .18, 1.25, materials.stoneLight, 0, 4.52, -13.6);
+  // Locally generated entrance lettering: no remote font/image dependency.
+  const signCanvas = document.createElement('canvas'); signCanvas.width = 1024; signCanvas.height = 192;
+  const ctx = signCanvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#202631'; ctx.fillRect(0, 0, 1024, 192);
+    ctx.strokeStyle = '#bca477'; ctx.lineWidth = 5; ctx.strokeRect(12, 12, 1000, 168);
+    ctx.fillStyle = '#e0cda4'; ctx.font = '600 76px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('HOLLOW CREEK  ·  FOUR GATES', 512, 98);
+  }
+  const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace;
+  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(4.18, .68), new THREE.MeshBasicMaterial({ map: signTexture }));
+  geometries.push((signFace.geometry as THREE.BufferGeometry)); signFace.position.set(0, 3.42, -12.91); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
