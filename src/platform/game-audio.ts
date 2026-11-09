@@ -10,7 +10,7 @@ export class GameAudio {
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (!enabled && this.context && this.context.state !== 'closed') {
-      void this.context.suspend();
+      void this.context.suspend().catch(() => undefined);
     }
   }
 
@@ -21,7 +21,7 @@ export class GameAudio {
 
   resume(): void {
     this.paused = false;
-    if (this.enabled && this.context?.state === 'suspended') void this.context.resume();
+    if (this.enabled && this.context?.state === 'suspended') void this.context.resume().catch(() => undefined);
   }
 
   async playUiCue(): Promise<void> {
@@ -54,7 +54,7 @@ export class GameAudio {
   }
 
   dispose(): void {
-    if (this.context && this.context.state !== 'closed') void this.context.close();
+    if (this.context && this.context.state !== 'closed') void this.context.close().catch(() => undefined);
     this.context = undefined;
   }
 }
