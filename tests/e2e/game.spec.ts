@@ -70,7 +70,8 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
   await expect(page.locator('#evidence')).toContainText('Torn note');
   await expect(page.locator('#evidence')).toContainText('Muddy footprint');
   await expect(page.locator('#evidence')).toContainText('Brass key');
-  await expect(page.locator('#location-evidence')).toBeVisible();
-  await expect(page.locator('#location-evidence-title')).toHaveText('Three-line metal imprint');
+  await page.locator('#board-open').click();
+  await expect(page.locator('#board-panel')).toBeVisible();
+  await expect(page.locator('#board-evidence')).toContainText('Three-line metal imprint');
   await expect(page.locator('#puzzle-open')).toBeHidden();
 });
