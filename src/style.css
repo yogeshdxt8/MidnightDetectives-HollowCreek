@@ -49,3 +49,17 @@ main>.relic-interact,main>.location-interact,main>.keeper-interact,main>.yard-in
 .detail-panel::before{content:"";position:fixed;inset:-100vh -100vw;z-index:-1;background:#030814b8;backdrop-filter:blur(3px);pointer-events:none}
 body:has(.detail-panel:not([hidden])) main>.relic-interact,body:has(.detail-panel:not([hidden])) main>.location-interact,body:has(.detail-panel:not([hidden])) main>.keeper-interact,body:has(.detail-panel:not([hidden])) main>.yard-interact,body:has(.detail-panel:not([hidden])) main>.regulator-interact,body:has(.detail-panel:not([hidden])) main>.vale-interact,body:has(.detail-panel:not([hidden])) main>.pump-interact,body:has(.detail-panel:not([hidden])) main>.board-open,body:has(.detail-panel:not([hidden])) main>.records-interact,body:has(.detail-panel:not([hidden])) main>.waterworks-interact{visibility:hidden;pointer-events:none}
 @media(max-width:480px){.detail-panel{width:calc(100vw - 28px);padding:18px;border-radius:12px}.detail-panel h2{font-size:clamp(22px,6vw,28px)}.detail-panel>button[id$="-close"]{min-height:42px}.board-evidence{grid-template-columns:1fr}}
+
+/* Mobile dialog layout: reserve a dedicated header zone and keep the main action reachable. */
+.detail-panel{position:fixed;top:50%;left:50%;width:min(92vw,520px);max-height:calc(100dvh - 32px);padding:66px 18px 20px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scroll-padding-block:16px 88px;scrollbar-gutter:stable;isolation:isolate}
+.detail-panel>button[id$="-close"]{position:absolute;top:14px;right:14px;z-index:3;float:none;min-width:92px;min-height:42px;margin:0}
+.detail-panel>small:first-of-type{margin-top:0;max-width:calc(100% - 4px);line-height:1.45}
+.detail-panel h2{clear:both;overflow-wrap:anywhere}
+.detail-panel p{overflow-wrap:anywhere}
+.board-panel #board-connect{position:sticky;bottom:-20px;z-index:2;margin:14px 0 10px;padding-block:15px;background:#27384e;box-shadow:0 -12px 18px #101a2b}
+.lead-panel #lead-track,.location-panel #location-search,.location-panel #service-puzzle-open,.keeper-panel .lead-track,.records-panel .lead-track,.waterworks-panel .lead-track{position:sticky;bottom:0;z-index:2;box-shadow:0 -8px 14px #101a2b}
+@media(max-width:480px){
+ .detail-panel{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);padding:68px 16px 18px}
+ .detail-panel h2{font-size:clamp(22px,6vw,29px);line-height:1.15}
+ .board-panel #board-connect{bottom:-18px}
+}
