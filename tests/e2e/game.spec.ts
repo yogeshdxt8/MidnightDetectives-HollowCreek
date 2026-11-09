@@ -92,14 +92,20 @@ async function movePlayerTo(page: import('@playwright/test').Page, from: { x: nu
   if (distance === 0) return;
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
-  const radius = bounds.width * 0.30;
+  // Match the joystick's actual clamp radius (34% of its width) and the
+  // game's 3.1 world-units/second movement speed.
+  const radius = bounds.width * 0.34;
   const length = Math.hypot(dx, dz);
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
   await page.mouse.move(centerX + (dx / length) * radius, centerY + (dz / length) * radius);
-  await page.waitForTimeout((distance / 2.7) * 1000 + 180);
+  await page.waitForTimeout((distance / 3.1) * 1000 + 80);
   await page.mouse.up();
-  await page.waitForTimeout(250);
+
+  // Wait for the scene camera to settle and confirm the player is within
+  // interaction range before attempting to inspect the nearest clue.
+  await expect(page.locator('#hint')).toContainText('NEARBY');
+  await page.waitForTimeout(500);
 }
 
 async function inspectNearestClue(page: import('@playwright/test').Page) {
