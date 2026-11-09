@@ -36,7 +36,7 @@ The established four young detectives remain the central team:
 - Lily Carter
 - Maya Williams
 
-Each is 12 years old. Preserve their established identities, relationships, personalities, and approved references. Do not age them up or change their defining traits without explicit creator approval.
+Each is 14 years old. This is the creator-approved current canon and supersedes earlier age-12 entries in prior source/archive material. Preserve their established identities, relationships, personalities, and approved visual references. Update age-dependent descriptions consistently, but do not otherwise change their defining traits without explicit creator approval.
 
 The existing supporting cast, family relationships, pets, and approved character references remain governed by the project's canonical registries and source materials. Do not silently promote prototype-only characters into canon.
 
@@ -186,4 +186,4 @@ A “no” or “unknown” answer requires review before the feature is treated
 
 ---
 
-**Approval note:** The general-audience 13+ direction and the inclusion of both ANT-001 The Hollow Man and ANT-002 The Shadow Walker in this standard are approved. This approval does not authorize changes to their established canon or claim that the game has received an official age rating or platform certification.
+**Approval note:** The general-audience 13+ direction, the inclusion of both ANT-001 The Hollow Man and ANT-002 The Shadow Walker, and the creator-approved age of 14 for Ethan Parker, Noah Brooks, Lily Carter, and Maya Williams are approved. The age update supersedes earlier age-12 source/archive entries; other character canon remains unchanged. This approval does not claim that the game has received an official age rating or platform certification.
