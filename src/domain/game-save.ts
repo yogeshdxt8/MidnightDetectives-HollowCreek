@@ -23,9 +23,6 @@ export function serializeGameSave(save: GameSaveData): string {
   if (serialized.length > 3 * 1024 * 1024) {
     throw new Error('Game save exceeds the YouTube Playables 3 MiB limit.');
   }
-  if (typeof serialized.isWellFormed === 'function' && !serialized.isWellFormed()) {
-    throw new Error('Game save contains malformed UTF-16 text.');
-  }
   return serialized;
 }
 
