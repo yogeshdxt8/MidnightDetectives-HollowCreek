@@ -5,6 +5,7 @@ test('renders the investigation interface and WebGL scene', async ({ page }) => 
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto('/');
+  await expect(page.locator('#playables-loading')).toBeHidden();
   await expect(page.locator('header')).toContainText('MIDNIGHT DETECTIVES');
   await expect(page.getByRole('heading', { name: /the town keeps/i })).toBeVisible();
   await expect(page.locator('#scene-root canvas')).toBeVisible();
