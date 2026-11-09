@@ -133,10 +133,11 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
       }
 
       // Re-aim from the observed position, not a guessed previous waypoint.
+      // Joystick Y is inverted by the game controller: dragging upward moves toward -Z.
       // This compensates for frame timing, collision deflection and small overshoots.
       await page.mouse.move(
         centerX + (remainingX / remaining) * radius,
-        centerY + (remainingZ / remaining) * radius
+        centerY - (remainingZ / remaining) * radius
       );
 
       const moved = Math.hypot(current.x - previous.x, current.z - previous.z);
