@@ -112,7 +112,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     textures.push(numeralTexture);
     const numeralFace = new THREE.Mesh(new THREE.PlaneGeometry(.78, .62), new THREE.MeshBasicMaterial({ map: numeralTexture, transparent: true, depthWrite: false }));
     geometries.push(numeralFace.geometry);
-    numeralFace.position.set(x, 3.35, gateZ - 1.205); root.add(numeralFace);
+    numeralFace.position.set(x, 3.35, gateZ - 1.04); root.add(numeralFace);
     // A warm crown lamp marks each entrance without washing out the ironwork.
     const crown = addBox(.16, .16, .16, materials.lamp, x, 4.02, gateZ - 1.14);
     crown.userData['gatePortal'] = index + 1;
@@ -134,7 +134,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   }
   const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace; textures.push(signTexture);
   const signFace = new THREE.Mesh(new THREE.PlaneGeometry(7.42, .58), new THREE.MeshBasicMaterial({ map: signTexture }));
-  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .595); root.add(signFace);
+  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .36); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
