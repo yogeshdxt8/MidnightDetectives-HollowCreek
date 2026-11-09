@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  base: '/MidnightDetectives-HollowCreek/',
+  base: './',
   build: {
     target: 'es2022',
     sourcemap: false,
