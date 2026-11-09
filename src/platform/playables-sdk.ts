@@ -32,7 +32,8 @@ function getDefaultSdk(): PlayablesSdk | undefined {
 
 export class PlayablesPlatform {
   private readonly sdk: PlayablesSdk | undefined;
-  private loaded = false;
+  private loadSettled = false;
+  private loadSucceeded = false;
   private readonly unsubscribe: Array<() => void> = [];
 
   constructor(sdk: PlayablesSdk | undefined = getDefaultSdk()) {
@@ -57,25 +58,30 @@ export class PlayablesPlatform {
 
   notifyGameReady(): void {
     if (!this.isAvailable) return;
-    if (!this.loaded) {
-      throw new Error('Game cannot be marked ready before cloud data has loaded.');
+    if (!this.loadSettled) {
+      throw new Error('Game cannot be marked ready before cloud data loading has settled.');
     }
     this.sdk?.game.gameReady();
   }
 
   async loadData(): Promise<string> {
     if (!this.sdk) {
-      this.loaded = true;
+      this.loadSettled = true;
+      this.loadSucceeded = true;
       return '';
     }
 
-    const data = await this.sdk.game.loadData();
-    this.loaded = true;
-    return data;
+    try {
+      const data = await this.sdk.game.loadData();
+      this.loadSucceeded = true;
+      return data;
+    } finally {
+      this.loadSettled = true;
+    }
   }
 
   async saveData(data: string): Promise<void> {
-    if (!this.loaded) {
+    if (!this.loadSucceeded) {
       throw new Error('Cloud save is blocked until loadData succeeds.');
     }
     if (!this.sdk) return;
