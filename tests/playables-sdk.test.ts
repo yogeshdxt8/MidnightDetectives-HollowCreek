@@ -27,6 +27,14 @@ describe('YouTube Playables platform adapter', () => {
     expect(new PlayablesPlatform().isAvailable).toBe(false);
   });
 
+  it('uses browser preview mode when the SDK script exists outside Playables', () => {
+    const sdk = { ...createSdk(), IN_PLAYABLES_ENV: false };
+    const platform = new PlayablesPlatform(sdk);
+    expect(platform.isAvailable).toBe(false);
+    expect(() => platform.notifyGameReady()).not.toThrow();
+    expect(sdk.game.gameReady).not.toHaveBeenCalled();
+  });
+
   it('requires a successful load before gameReady or saveData', async () => {
     const sdk = createSdk();
     const platform = new PlayablesPlatform(sdk);
