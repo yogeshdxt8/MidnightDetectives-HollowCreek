@@ -42,7 +42,7 @@ describe('clock tower keeper encounter', () => {
   it('rejects unknown topics and unavailable conversations', () => {
     const initial = createKeeperEncounterState();
     expect(askKeeperAbout(initial, keeper, 'clock').accepted).toBe(false);
-    expect(askKeeperAbout(unlockKeeperEncounter(initial), keeper, 'missing-object' as never).accepted).toBe(false);
+    expect(askKeeperAbout(unlockKeeperEncounter(initial), keeper, 'unknown-topic' as never).accepted).toBe(false);
   });
 
   it('requires all prerequisite evidence before evidence can be presented', () => {
