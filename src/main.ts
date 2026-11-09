@@ -32,7 +32,7 @@ joystick?.addEventListener('pointerdown',e=>{e.preventDefault();joystickPointer=
 joystick?.addEventListener('pointermove',e=>{if(e.pointerId===joystickPointer)updateJoystick(e);});
 function releaseJoystick(e:PointerEvent){if(e.pointerId!==joystickPointer)return;joystickPointer=null;move.x=0;move.y=0;if(stick)stick.style.transform='translate(0,0)';}
 joystick?.addEventListener('pointerup',releaseJoystick);joystick?.addEventListener('pointercancel',releaseJoystick);
-let lookPointer:number|null=null;let lookStartX=0;let lookStartY=0;let lastLookX=0;let lookMoved=false;
+let cameraYaw=0;let lookPointer:number|null=null;let lookStartX=0;let lookStartY=0;let lastLookX=0;let lookMoved=false;
 renderer.domElement.addEventListener('pointerdown',e=>{lookPointer=e.pointerId;lookStartX=e.clientX;lookStartY=e.clientY;lastLookX=e.clientX;lookMoved=false;renderer.domElement.setPointerCapture(e.pointerId);});
 renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;const total=Math.hypot(e.clientX-lookStartX,e.clientY-lookStartY);if(total>7)lookMoved=true;if(lookMoved){cameraYaw-=(e.clientX-lastLookX)*.008;}lastLookX=e.clientX;});
 function endLook(e:PointerEvent){if(e.pointerId!==lookPointer)return;if(!lookMoved)inspect(e.clientX,e.clientY);lookPointer=null;}
