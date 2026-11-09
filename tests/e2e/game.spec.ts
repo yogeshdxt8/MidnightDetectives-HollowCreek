@@ -72,7 +72,7 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
   await expect(page.locator('#evidence')).toContainText('Brass key');
   await page.locator('#board-open').click();
   await expect(page.locator('#board-panel')).toBeVisible();
-  await expect(page.locator('#board-evidence')).toContainText('Three-line metal imprint');
+  await expect(page.locator('#board-evidence')).toContainText('Three-line imprint');
   await expect(page.locator('#location-interact')).toBeVisible();
   await page.locator('#location-interact').click();
   await expect(page.locator('#location-panel')).toBeVisible();
