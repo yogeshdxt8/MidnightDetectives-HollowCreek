@@ -11,11 +11,11 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   const materials = {
     asphalt: new THREE.MeshStandardMaterial({ color: '#252d38', roughness: .96 }),
     wetAsphalt: new THREE.MeshStandardMaterial({ color: '#303b48', roughness: .48, metalness: .08 }),
-    stone: new THREE.MeshStandardMaterial({ color: '#555766', roughness: .94 }),
-    stoneLight: new THREE.MeshStandardMaterial({ color: '#9295a3', roughness: .82 }),
+    stone: new THREE.MeshStandardMaterial({ color: '#737b8a', roughness: .9 }),
+    stoneLight: new THREE.MeshStandardMaterial({ color: '#c0b69f', roughness: .78 }),
     gateTrim: new THREE.MeshStandardMaterial({ color: '#b99b65', emissive: '#6d4d22', emissiveIntensity: .42, metalness: .48, roughness: .48 }),
     mortar: new THREE.MeshStandardMaterial({ color: '#343744', roughness: 1 }),
-    iron: new THREE.MeshStandardMaterial({ color: '#202832', metalness: .72, roughness: .42 }),
+    iron: new THREE.MeshStandardMaterial({ color: '#8793a2', metalness: .82, roughness: .34 }),
     timber: new THREE.MeshStandardMaterial({ color: '#3d3434', roughness: .88 }),
     roof: new THREE.MeshStandardMaterial({ color: '#292d3a', roughness: .9 }),
     plasterA: new THREE.MeshStandardMaterial({ color: '#55545a', roughness: .96 }),
@@ -27,6 +27,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     puddle: new THREE.MeshStandardMaterial({ color: '#566474', roughness: .2, metalness: .18, transparent: true, opacity: .48 })
   };
   const geometries: THREE.BufferGeometry[] = [];
+  const textures: THREE.Texture[] = [];
   const addBox = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number) => {
     const geometry = new THREE.BoxGeometry(w, h, d); geometries.push(geometry);
     const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.castShadow = false; mesh.receiveShadow = true; root.add(mesh); return mesh;
@@ -69,57 +70,71 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     cap.rotation.y = Math.PI / 6;
   }
 
-  // Each portal has its own lintel, keystone, open iron leaves and numbered plaque.
+  // Four separate portal bays. Deep shadowed reveals sit behind the iron, while
+  // bright stone jambs, capitals and thresholds give each opening its own frame.
   const gateCenters = [-3.9, -1.3, 1.3, 3.9];
   gateCenters.forEach((x, index) => {
-    addBox(2.75, .48, 1.18, materials.stone, x, 5.0, gateZ);
-    addBox(.42, .58, .22, materials.stoneLight, x, 5.04, gateZ - .62);
-    addBox(2.28, .08, .12, materials.iron, x, 1.15, gateZ - .58);
-    addBox(2.28, .08, .12, materials.iron, x, 2.35, gateZ - .58);
-    for (let bar = 0; bar < 9; bar++) {
-      const bx = x - 1.02 + bar * .255;
-      addBox(.045, 1.18, .055, materials.iron, bx, 1.75, gateZ - .58);
-      addBox(.12, .16, .08, materials.stoneLight, bx, 2.43, gateZ - .58);
-    }
-    // Roman numerals distinguish the four entrances at gameplay distance.
-    const plaque = addBox(.62, .46, .11, materials.sign, x, 3.05, gateZ - .7);
-    plaque.userData['gateIndex'] = index + 1;
-    const numeral = ['I', 'II', 'III', 'IV'][index]!;
-    const numeralY = 3.05;
-    const numeralZ = gateZ - .72;
-    const stroke = (sx: number, sy: number, angle = 0) => {
-      const mark = addBox(.052, .27, .045, materials.signText, x + sx, numeralY + sy, numeralZ);
-      mark.rotation.z = angle;
-      mark.userData['gateNumeral'] = numeral;
-    };
-    if (numeral === 'I') stroke(0, 0);
-    if (numeral === 'II') { stroke(-.055, 0); stroke(.055, 0); }
-    if (numeral === 'III') { stroke(-.075, 0); stroke(0, 0); stroke(.075, 0); }
-    if (numeral === 'IV') { stroke(-.12, 0); stroke(.035, 0, -.34); stroke(.16, 0, .34); }
-    // Warm inner-edge trim gives every portal a separate silhouette on narrow phone screens.
+    // Recessed portal interior: near-black stone makes the iron silhouette legible.
+    addBox(2.12, 3.82, .2, materials.sign, x, 2.88, gateZ + .36);
+    // Individually framed jambs with projecting bases and capitals.
     for (const side of [-1, 1]) {
-      const trim = addBox(.075, 3.35, .085, materials.gateTrim, x + side * 1.19, 2.83, gateZ - .76);
-      trim.userData['gatePortal'] = index + 1;
+      const jambX = x + side * 1.13;
+      addBox(.22, 3.95, .42, materials.stoneLight, jambX, 2.78, gateZ - .72);
+      addBox(.34, .24, .52, materials.gateTrim, jambX, .82, gateZ - .78);
+      addBox(.34, .22, .52, materials.stoneLight, jambX, 4.72, gateZ - .78);
+      addBox(.075, 3.48, .1, materials.gateTrim, x + side * 1.0, 2.82, gateZ - .98);
     }
-    const gateGlow = new THREE.PointLight('#d6b77e', .58, 4.8, 2);
-    gateGlow.position.set(x, 3.25, gateZ - 1.05);
+    addBox(2.58, .48, .58, materials.stoneLight, x, 5.0, gateZ - .7);
+    addBox(.42, .58, .24, materials.gateTrim, x, 5.04, gateZ - 1.02);
+    // Iron cross rails and vertical bars, clearly separated from the dark recess.
+    addBox(2.12, .095, .14, materials.iron, x, 1.12, gateZ - 1.02);
+    addBox(2.12, .095, .14, materials.iron, x, 2.34, gateZ - 1.02);
+    for (let bar = 0; bar < 9; bar++) {
+      const bx = x - .96 + bar * .24;
+      addBox(.065, 1.18, .085, materials.iron, bx, 1.73, gateZ - 1.04);
+      addBox(.13, .13, .11, materials.gateTrim, bx, 2.4, gateZ - 1.06);
+    }
+    // Oversized, high-contrast Roman numeral on a dedicated illuminated plaque.
+    const numeral = ['I', 'II', 'III', 'IV'][index]!;
+    const plaque = addBox(.94, .72, .14, materials.sign, x, 3.35, gateZ - 1.12);
+    plaque.userData['gateIndex'] = index + 1;
+    plaque.userData['gateNumeral'] = numeral;
+    const numeralCanvas = document.createElement('canvas'); numeralCanvas.width = 256; numeralCanvas.height = 256;
+    const numeralContext = numeralCanvas.getContext('2d');
+    if (numeralContext) {
+      numeralContext.clearRect(0, 0, 256, 256);
+      numeralContext.fillStyle = '#f0d9a5';
+      numeralContext.font = 'bold 174px Georgia, serif';
+      numeralContext.textAlign = 'center'; numeralContext.textBaseline = 'middle';
+      numeralContext.fillText(numeral, 128, 136);
+    }
+    const numeralTexture = new THREE.CanvasTexture(numeralCanvas); numeralTexture.colorSpace = THREE.SRGBColorSpace;
+    textures.push(numeralTexture);
+    const numeralFace = new THREE.Mesh(new THREE.PlaneGeometry(.78, .62), new THREE.MeshBasicMaterial({ map: numeralTexture, transparent: true, depthWrite: false }));
+    geometries.push(numeralFace.geometry);
+    numeralFace.position.set(x, 3.35, gateZ - 1.205); root.add(numeralFace);
+    // A warm crown lamp marks each entrance without washing out the ironwork.
+    const crown = addBox(.16, .16, .16, materials.lamp, x, 4.02, gateZ - 1.14);
+    crown.userData['gatePortal'] = index + 1;
+    const gateGlow = new THREE.PointLight('#d6b77e', .82, 5.2, 2);
+    gateGlow.position.set(x, 3.55, gateZ - 1.15);
     root.add(gateGlow);
   });
 
-  // A single town-name lintel unifies the four portals while leaving each opening distinct.
-  addBox(10.8, .42, .72, materials.stoneLight, 0, 5.95, gateZ);
-  addBox(5.6, .62, .14, materials.sign, 0, 5.92, gateZ - .43);
+  // The town-name sign is a separate header above the complete row of four gates.
+  addBox(10.8, .3, .72, materials.stoneLight, 0, 6.48, gateZ);
+  addBox(7.65, .72, .2, materials.sign, 0, 6.12, gateZ - .48);
   const signCanvas = document.createElement('canvas'); signCanvas.width = 1024; signCanvas.height = 192;
   const ctx = signCanvas.getContext('2d');
   if (ctx) {
-    ctx.fillStyle = '#202631'; ctx.fillRect(0, 0, 1024, 192);
-    ctx.strokeStyle = '#bca477'; ctx.lineWidth = 5; ctx.strokeRect(12, 12, 1000, 168);
-    ctx.fillStyle = '#e0cda4'; ctx.font = '600 76px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#151d29'; ctx.fillRect(0, 0, 1024, 192);
+    ctx.strokeStyle = '#d0b27b'; ctx.lineWidth = 7; ctx.strokeRect(10, 10, 1004, 172);
+    ctx.fillStyle = '#f0d9a5'; ctx.font = 'bold 70px Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('HOLLOW CREEK  ·  FOUR GATES', 512, 98);
   }
-  const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace;
-  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(5.42, .56), new THREE.MeshBasicMaterial({ map: signTexture }));
-  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 5.92, gateZ - .51); root.add(signFace);
+  const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace; textures.push(signTexture);
+  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(7.42, .58), new THREE.MeshBasicMaterial({ map: signTexture }));
+  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .595); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
@@ -175,6 +190,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     dispose() {
       root.traverse(o => { if (o instanceof THREE.PointLight) return; });
       geometries.forEach(g => g.dispose());
+      textures.forEach(t => t.dispose());
       Object.values(materials).forEach(m => m.dispose());
     }
   };
