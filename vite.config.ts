@@ -4,6 +4,7 @@ export default defineConfig({
   base: './',
   build: {
     target: 'es2022',
+    modulePreload: { polyfill: false },
     sourcemap: false,
     assetsInlineLimit: 4096,
     rollupOptions: {
