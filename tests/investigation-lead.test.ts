@@ -46,3 +46,17 @@ describe('relic-triggered investigation lead', () => {
     expect(trackInvestigationLead(tracked)).toBe(tracked);
   });
 });
+
+describe('evidence-originated investigation leads', () => {
+  it('reveals a follow-up lead when its source evidence is discovered', () => {
+    const followUp = { ...relicLead, id: 'message-in-the-wall', sourceRelicId: '', sourceEvidenceId: 'three-line-imprint' };
+    const state = createInvestigationLeadState();
+    expect(revealInvestigationLead(state, followUp, ['three-line-imprint']).status).toBe('revealed');
+  });
+
+  it('does not reveal an evidence-originated lead without its source evidence', () => {
+    const followUp = { ...relicLead, id: 'message-in-the-wall', sourceRelicId: '', sourceEvidenceId: 'three-line-imprint' };
+    const state = createInvestigationLeadState();
+    expect(revealInvestigationLead(state, followUp, []).status).toBe('hidden');
+  });
+});
