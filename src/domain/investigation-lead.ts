@@ -4,6 +4,7 @@ export interface InvestigationLeadDefinition {
   readonly id: string;
   readonly title: string;
   readonly sourceRelicId: string;
+  readonly sourceEvidenceId?: string;
   readonly observation: string;
   readonly nextObjective: string;
   readonly locationHint: string;
@@ -24,7 +25,7 @@ export function revealInvestigationLead(
   collectedRelicIds: readonly string[]
 ): InvestigationLeadState {
   if (state.status !== 'hidden') return state;
-  if (!collectedRelicIds.includes(definition.sourceRelicId)) return state;
+  if (!collectedRelicIds.includes(definition.sourceRelicId) && (!definition.sourceEvidenceId || !collectedRelicIds.includes(definition.sourceEvidenceId))) return state;
   return {
     status: 'revealed',
     feedback: `New lead uncovered: ${definition.title}`
