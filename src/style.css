@@ -63,3 +63,8 @@ body:has(.detail-panel:not([hidden])) main>.relic-interact,body:has(.detail-pane
  .detail-panel h2{font-size:clamp(22px,6vw,29px);line-height:1.15}
  .board-panel #board-connect{bottom:-18px}
 }
+
+/* Explicit shared close-button class avoids selector drift across every modal. */
+.detail-panel .dialog-close{position:absolute!important;top:14px!important;right:14px!important;float:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:92px!important;min-height:44px!important;padding:10px 14px!important;border:1px solid #8b7955!important;border-radius:7px!important;background:#26364d!important;color:#f1dfb7!important;font:11px monospace!important;letter-spacing:.1em!important;line-height:1!important;box-shadow:0 3px 10px #0005!important;touch-action:manipulation!important;cursor:pointer!important;appearance:none!important;-webkit-appearance:none!important}
+.detail-panel .dialog-close:active{background:#3a4b63!important;border-color:#e6c98f!important}
+body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events:none}
