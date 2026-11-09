@@ -56,12 +56,28 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
     }
   };
 
+  await page.addInitScript(() => {
+    const seededSave = {
+      version: 2,
+      activeCaseId: 'case-001',
+      discoveredClueIds: ['note', 'print', 'key'],
+      solvedPuzzleIds: ['fountain-seal'],
+      completedCaseIds: [],
+      investigation: {
+        discoveredEvidenceIds: ['three-line-imprint'],
+        trackedLeadIds: ['clocktower-service-door'],
+        unlockedLocationIds: ['clocktower-service-entrance'],
+        searchedLocationIds: ['clocktower-service-entrance'],
+        solvedPuzzleIds: [],
+        askedKeeperTopicIds: [],
+        presentedKeeperEvidenceIds: [],
+        recoveredObjectIds: ['fountain-relic'],
+        completedDeductionIds: []
+      }
+    };
+    localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(seededSave));
+  });
   await page.goto('/');
-  await page.evaluate(value => {
-    localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(value));
-  }, save);
-  await page.reload();
-
   await expect(page.locator('#count')).toHaveText('3');
   await expect(page.locator('#relic-inventory')).toContainText('Fountain relic');
   await expect(page.locator('#evidence')).toContainText('Torn note');
