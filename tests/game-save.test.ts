@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createNewGameSave, parseGameSave, serializeGameSave } from '../src/domain/game-save';
+import { createNewGameSave, getUtf16ByteLength, isWellFormedUtf16, parseGameSave, serializeGameSave } from '../src/domain/game-save';
 
 describe('versioned game save', () => {
   it('creates a clean first-run save', () => {
@@ -57,6 +57,20 @@ describe('versioned game save', () => {
   it('rejects malformed save shapes', () => {
     expect(() => parseGameSave('{"version":2}')).toThrow('invalid shape');
     expect(() => parseGameSave('not-json')).toThrow();
+  });
+
+  it('counts serialized saves as UTF-16 bytes, including supplementary characters', () => {
+    expect(getUtf16ByteLength('A😀')).toBe(6);
+    expect(() => serializeGameSave({ ...createNewGameSave(), activeCaseId: 'x'.repeat(1_600_000) }))
+      .toThrow('3 MiB limit');
+    expect(() => parseGameSave(' '.repeat(1_600_000))).toThrow('3 MiB limit');
+  });
+
+  it('rejects malformed UTF-16 save strings', () => {
+    expect(isWellFormedUtf16('Hollow Creek 😀')).toBe(true);
+    expect(isWellFormedUtf16('broken-\\ud800')).toBe(false);
+    expect(isWellFormedUtf16('broken-\\udc00')).toBe(false);
+    expect(() => parseGameSave('\\ud800')).toThrow('well-formed UTF-16');
   });
 });
 
