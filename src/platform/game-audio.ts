@@ -10,19 +10,21 @@ export class GameAudio {
     this.enabled = enabled;
     if (!enabled && this.context && this.context.state !== 'closed') {
       void this.context.suspend();
-    } else if (enabled && this.context?.state === 'suspended') {
-      // Resume is attempted on the next player gesture to satisfy autoplay policy.
     }
   }
 
-  playUiCue(): void {
+  async playUiCue(): Promise<void> {
     if (!this.enabled || typeof window === 'undefined') return;
     const AudioContextConstructor = window.AudioContext;
     if (!AudioContextConstructor) return;
+
     try {
       this.context ??= new AudioContextConstructor();
-      if (this.context.state === 'suspended') void this.context.resume();
-      if (this.context.state !== 'running') return;
+      // Start/resume synchronously from the player's gesture, then wait for the
+      // browser's asynchronous state transition before creating the sound.
+      if (this.context.state === 'suspended') await this.context.resume();
+      if (!this.enabled || this.context.state !== 'running') return;
+
       const oscillator = this.context.createOscillator();
       const gain = this.context.createGain();
       oscillator.type = 'sine';
