@@ -46,10 +46,24 @@ export function parseGameSave(serialized: string): GameSaveData {
   if (serialized.length > 3 * 1024 * 1024) throw new Error('Game save exceeds the supported size limit.');
   const parsed: unknown = JSON.parse(serialized);
   if (!isRecord(parsed)) throw new Error('Game save must be an object.');
-  if (parsed['version'] !== GAME_SAVE_VERSION) throw new Error(`Unsupported game save version: ${String(parsed['version'])}`);
+  if (parsed['version'] !== 1 && parsed['version'] !== GAME_SAVE_VERSION) throw new Error(`Unsupported game save version: ${String(parsed['version'])}`);
   if (typeof parsed['activeCaseId'] !== 'string' || !isStringArray(parsed['discoveredClueIds']) ||
-      !isStringArray(parsed['solvedPuzzleIds']) || !isStringArray(parsed['completedCaseIds']) ||
-      !isRecord(parsed['investigation'])) throw new Error('Game save has an invalid shape.');
+      !isStringArray(parsed['solvedPuzzleIds']) || !isStringArray(parsed['completedCaseIds'])) {
+    throw new Error('Game save has an invalid shape.');
+  }
+  // Version 1 stored only the original clue/puzzle/case collections.
+  // Preserve those collections and initialize newer investigation progress empty.
+  if (parsed['version'] === 1) {
+    const migrated = createNewGameSave();
+    return {
+      ...migrated,
+      activeCaseId: parsed['activeCaseId'],
+      discoveredClueIds: unique(parsed['discoveredClueIds']),
+      solvedPuzzleIds: unique(parsed['solvedPuzzleIds']),
+      completedCaseIds: unique(parsed['completedCaseIds'])
+    };
+  }
+  if (!isRecord(parsed['investigation'])) throw new Error('Game save has an invalid shape.');
   const investigation = parsed['investigation'];
   const keys: readonly (keyof InvestigationProgressSave)[] = [
     'discoveredEvidenceIds','trackedLeadIds','unlockedLocationIds','searchedLocationIds',
