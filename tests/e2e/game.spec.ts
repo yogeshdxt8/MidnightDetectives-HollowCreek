@@ -56,10 +56,11 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
     }
   };
 
-  await page.addInitScript(value => {
+  await page.goto('/');
+  await page.evaluate(value => {
     localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(value));
   }, save);
-  await page.goto('/');
+  await page.reload();
 
   await expect(page.locator('#count')).toHaveText('3');
   await expect(page.locator('#relic-inventory')).toContainText('Fountain relic');
