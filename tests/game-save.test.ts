@@ -35,6 +35,15 @@ describe('versioned game save', () => {
     expect(parseGameSave(imported).discoveredClueIds).toEqual(['note']);
   });
 
+  it('migrates version one saves while preserving existing progress', () => {
+    const legacy = JSON.stringify({ version: 1, activeCaseId: 'case-001', discoveredClueIds: ['note'], solvedPuzzleIds: ['fountain-seal'], completedCaseIds: [] });
+    const migrated = parseGameSave(legacy);
+    expect(migrated.version).toBe(2);
+    expect(migrated.discoveredClueIds).toEqual(['note']);
+    expect(migrated.solvedPuzzleIds).toEqual(['fountain-seal']);
+    expect(migrated.investigation.trackedLeadIds).toEqual([]);
+  });
+
   it('rejects unknown versions rather than overwriting old progress', () => {
     expect(() => parseGameSave(JSON.stringify({
       version: 99,
