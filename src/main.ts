@@ -347,6 +347,11 @@ async function initializeGamePersistence(){
   const result=await gamePersistence.initialize();
   restoreRuntimeSave(result.save);
   if(result.warning)notify(result.warning);
+  if(playablesPlatform.isInPlayablesEnvironment){
+   const cloudStatus=result.source==='cloud'?'PLAYABLES CLOUD RESTORED · '+result.save.discoveredClueIds.length+'/3 CLUES · '+result.save.investigation.recoveredObjectIds.length+' OBJECTS':result.writable?'PLAYABLES CLOUD EMPTY · NEW SAVE':'PLAYABLES CLOUD LOAD FAILED · SAVE PROTECTED';
+   console.info('[Persistence diagnostic]',{status:cloudStatus,source:result.source,writable:result.writable,warning:result.warning??null});
+   if(toast){toast.textContent=cloudStatus;toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),10000);}
+  }
   currentSave=result.save;
   const restoredScore=calculateInvestigationScore(result.save);
   if(restoredScore>0){saveQueue=saveQueue.then(async()=>{if(gamePaused)return;await playablesPlatform.sendScore(restoredScore);lastSubmittedScore=Math.max(lastSubmittedScore,restoredScore);}).catch(error=>{console.warn('Initial Playables score submission failed',error);});}
@@ -354,7 +359,7 @@ async function initializeGamePersistence(){
   document.addEventListener('click',()=>{gameAudio.playUiCue();scheduleGameSave();});
   persistenceReady=true;
   notifyReadyWhenPossible();
- }catch(error){console.error('Game persistence initialization failed',error);notify('Progress saving is unavailable for this session.');}
+ }catch(error){console.error('Game persistence initialization failed',error);if(toast){toast.textContent='PLAYABLES CLOUD LOAD ERROR · '+(error instanceof Error?error.message:'UNKNOWN ERROR');toast.classList.add('show');window.clearTimeout(toastTimer);toastTimer=window.setTimeout(()=>toast.classList.remove('show'),10000);}notify('Progress saving is unavailable for this session.');}
 }
 void initializeGamePersistence();
 
