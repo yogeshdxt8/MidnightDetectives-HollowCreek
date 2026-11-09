@@ -71,11 +71,11 @@ export class PlayablesPlatform {
 
   notifyGameReady(): void {
     if (!this.isAvailable || this.gameReadyNotified) return;
-    if (!this.firstFrameNotified) {
-      throw new Error('Game cannot be marked ready before firstFrameReady.');
-    }
     if (!this.loadSettled) {
       throw new Error('Game cannot be marked ready before cloud data loading has settled.');
+    }
+    if (!this.firstFrameNotified) {
+      throw new Error('Game cannot be marked ready before firstFrameReady.');
     }
     this.sdk?.game.gameReady();
     this.gameReadyNotified = true;
