@@ -53,6 +53,9 @@ describe('YouTube Playables platform adapter', () => {
     const platform = new PlayablesPlatform(sdk);
     await expect(platform.loadData()).rejects.toThrow('offline');
     await expect(platform.saveData('new-game')).rejects.toThrow('until loadData succeeds');
+    platform.notifyGameReady();
+    expect(sdk.game.gameReady).toHaveBeenCalledOnce();
+    expect(sdk.game.saveData).not.toHaveBeenCalled();
   });
 
   it('exposes YouTube audio state and registers lifecycle callbacks', () => {
