@@ -38,6 +38,7 @@ test('keeps the touch investigation controls usable on a phone viewport', async 
 
 test('restores solved fountain and Clock Tower evidence from browser save', async ({ page }) => {
   await page.addInitScript(() => {
+    if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
     const seededSave = {
       version: 2,
       activeCaseId: 'case-001',
@@ -59,6 +60,7 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
     localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(seededSave));
   });
   await page.goto('/');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('midnight-detectives-hollow-creek.save.v2'))).not.toBeNull();
   await expect(page.locator('#count')).toHaveText('3');
   await expect(page.locator('#relic-inventory')).toContainText('Fountain relic');
   await expect(page.locator('#evidence')).toContainText('Torn note');
