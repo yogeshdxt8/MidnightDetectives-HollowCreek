@@ -30,6 +30,14 @@ describe('environmental puzzle state engine', () => {
     expect(createPuzzleState(puzzle, ['inscription']).status).toBe('active');
   });
 
+  it('unlocks an existing locked state when the missing evidence is later discovered', () => {
+    const locked = createPuzzleState(puzzle);
+    const unlocked = interactWithPuzzle(locked, puzzle, 'moon', ['inscription']);
+    expect(unlocked.accepted).toBe(true);
+    expect(unlocked.state.status).toBe('active');
+    expect(unlocked.state.progress).toBe(1);
+  });
+
   it('advances only when the expected interaction is performed', () => {
     const start = createPuzzleState(puzzle, ['inscription']);
     const first = interactWithPuzzle(start, puzzle, 'moon', ['inscription']);
@@ -80,8 +88,27 @@ describe('environmental puzzle state engine', () => {
     expect(reset.mistakes).toBe(0);
   });
 
-  it('does not reset a locked puzzle into an active state', () => {
+  it('resets after the full failure limit and permits a fresh successful attempt', () => {
+    let state = createPuzzleState(puzzle, ['inscription']);
+    for (let attempt = 0; attempt < puzzle.maxMistakes; attempt++) {
+      state = interactWithPuzzle(state, puzzle, 'wrong', ['inscription']).state;
+    }
+    expect(state.status).toBe('failed');
+    state = resetPuzzle(state);
+    expect(state).toMatchObject({ status: 'active', progress: 0, mistakes: 0 });
+    for (const symbol of puzzle.sequence) {
+      state = interactWithPuzzle(state, puzzle, symbol, ['inscription']).state;
+    }
+    expect(state.status).toBe('solved');
+  });
+
+  it('does not reset a locked or solved puzzle', () => {
     const locked = createPuzzleState(puzzle);
     expect(resetPuzzle(locked)).toBe(locked);
+    let solved = createPuzzleState(puzzle, ['inscription']);
+    for (const symbol of puzzle.sequence) {
+      solved = interactWithPuzzle(solved, puzzle, symbol, ['inscription']).state;
+    }
+    expect(resetPuzzle(solved)).toBe(solved);
   });
 });

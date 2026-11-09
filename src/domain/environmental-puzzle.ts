@@ -51,7 +51,7 @@ export function interactWithPuzzle(
   }
 
   const unlocked = (definition.requiredClueIds ?? []).every(id => discoveredClueIds.includes(id));
-  if (!unlocked || state.status === 'locked') {
+  if (!unlocked) {
     return {
       state: { ...state, status: 'locked', feedback: 'The mechanism is locked. Search for the missing evidence.' },
       accepted: false,
@@ -94,7 +94,7 @@ export function interactWithPuzzle(
 }
 
 export function resetPuzzle(state: EnvironmentalPuzzleState): EnvironmentalPuzzleState {
-  if (state.status === 'locked') return state;
+  if (state.status === 'locked' || state.status === 'solved') return state;
   return {
     status: 'active',
     progress: 0,
