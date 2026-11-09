@@ -13,6 +13,14 @@ export class GameAudio {
     }
   }
 
+  pause(): void {
+    if (this.context && this.context.state === 'running') void this.context.suspend();
+  }
+
+  resume(): void {
+    if (this.enabled && this.context?.state === 'suspended') void this.context.resume();
+  }
+
   async playUiCue(): Promise<void> {
     if (!this.enabled || typeof window === 'undefined') return;
     const AudioContextConstructor = window.AudioContext;
