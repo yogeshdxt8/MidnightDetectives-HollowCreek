@@ -213,8 +213,8 @@ const gamePersistence=new GamePersistence(playablesPlatform,typeof window!=='und
 let currentSave:import('./domain/game-save').GameSaveData|undefined;
 let saveQueue:Promise<void>=Promise.resolve();
 let saveTimer=0;
-function captureRuntimeSave(){
- if(!currentSave)return currentSave;
+function captureRuntimeSave():import('./domain/game-save').GameSaveData{
+ if(!currentSave)throw new Error('Cannot capture progress before save initialization.');
  const trackedLeadIds:string[]=[];
  if(leadState.status==='tracked')trackedLeadIds.push(relicLead.id);
  if(wallMessageLeadState.status==='tracked')trackedLeadIds.push(wallMessageLead.id);
