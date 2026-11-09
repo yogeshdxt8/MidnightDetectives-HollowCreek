@@ -83,8 +83,18 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     // Roman numerals distinguish the four entrances at gameplay distance.
     const plaque = addBox(.46, .34, .09, materials.sign, x, 3.05, gateZ - .66);
     plaque.userData['gateIndex'] = index + 1;
-    const numeral = addBox(.12, .22, .035, materials.signText, x, 3.05, gateZ - .72);
-    numeral.userData['gateNumeral'] = ['I', 'II', 'III', 'IV'][index];
+    const numeral = ['I', 'II', 'III', 'IV'][index]!;
+    const numeralY = 3.05;
+    const numeralZ = gateZ - .72;
+    const stroke = (sx: number, sy: number, angle = 0) => {
+      const mark = addBox(.035, .2, .035, materials.signText, x + sx, numeralY + sy, numeralZ);
+      mark.rotation.z = angle;
+      mark.userData['gateNumeral'] = numeral;
+    };
+    if (numeral === 'I') stroke(0, 0);
+    if (numeral === 'II') { stroke(-.055, 0); stroke(.055, 0); }
+    if (numeral === 'III') { stroke(-.075, 0); stroke(0, 0); stroke(.075, 0); }
+    if (numeral === 'IV') { stroke(-.07, 0); stroke(.045, 0, -.34); stroke(.13, 0, .34); }
   });
 
   // A single town-name lintel unifies the four portals while leaving each opening distinct.
