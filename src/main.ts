@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createDetectiveCharacter } from './characters/detective-character';
+import { createFourGatesEnvironment } from './environments/four-gates-environment';
 import { PlayablesPlatform } from './platform/playables-sdk';
 import { GamePersistence } from './platform/game-persistence';
 import { GameAudio } from './platform/game-audio';
@@ -35,14 +36,11 @@ const pumpHouseDefinition:PumpHouseDefinition={id:'old-pump-house',requiredLeadI
 const maintenanceYardDefinition:MaintenanceYardDefinition={id:'old-maintenance-yard',requiredLeadId:keeperLead.id,regulatorId:'brass-regulator',evidenceIds:['signed-work-order','matching-tool-mark'],correctDeductionId:'keeper-assistant'};
 const clues:readonly Clue[]=[{id:'note',title:'Torn note',description:'A torn note is caught beneath the noticeboard.'},{id:'print',title:'Muddy footprint',description:'A muddy footprint leads away from the clock tower.'},{id:'key',title:'Brass key',description:'A small brass key lies beside the fountain.'}];
 const root=document.querySelector<HTMLDivElement>('#scene-root');if(!root)throw new Error('Missing scene root');
-const sceneRoot=root;const scene=new THREE.Scene();scene.background=new THREE.Color('#17243a');scene.fog=new THREE.Fog('#17243a',14,38);
+const sceneRoot=root;const scene=new THREE.Scene();scene.background=new THREE.Color('#17243a');scene.fog=new THREE.FogExp2('#17243a',.027);
 const camera=new THREE.PerspectiveCamera(48,1,.1,100);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;sceneRoot.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight('#a9c4e8','#1b2434',2));const moon=new THREE.DirectionalLight('#c8d8f0',1.3);moon.position.set(-5,10,6);scene.add(moon);
-function block(w:number,h:number,d:number,color:string,x:number,y:number,z:number){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.92}));mesh.position.set(x,y,z);scene.add(mesh);}
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshStandardMaterial({color:'#29374b',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.05;scene.add(ground);
-block(7,5.5,3,'#26334a',-7,2.7,-8);block(6,7,3,'#30394d',1,3.4,-10);block(5,4.5,3,'#202d43',8,2.2,-7);block(7.2,.35,3.2,'#554743',-7,5.6,-8);block(6.2,.35,3.2,'#514343',1,7.05,-10);block(5.2,.35,3.2,'#45404a',8,4.6,-7);
-for(const x of [-5.2,5.1]){const pole=new THREE.Mesh(new THREE.CylinderGeometry(.055,.08,3.2,7),new THREE.MeshStandardMaterial({color:'#414756'}));pole.position.set(x,1.6,-1.8);scene.add(pole);const lamp=new THREE.Mesh(new THREE.BoxGeometry(.34,.42,.34),new THREE.MeshStandardMaterial({color:'#f1c77f',emissive:'#d18a36',emissiveIntensity:1.5}));lamp.position.set(x,3.25,-1.8);scene.add(lamp);}
+scene.add(new THREE.HemisphereLight('#a9c4e8','#1b2434',1.25));const moon=new THREE.DirectionalLight('#c8d8f0',1.05);moon.position.set(-5,10,6);scene.add(moon);
+const fourGatesEnvironment=createFourGatesEnvironment();scene.add(fourGatesEnvironment.root);
 const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.65,.5,12),new THREE.MeshStandardMaterial({color:'#667184'}));fountain.position.set(0,.25,-2.8);scene.add(fountain);
 const water=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.08,12),new THREE.MeshStandardMaterial({color:'#536f89',metalness:.3,roughness:.25}));water.position.set(0,.55,-2.8);scene.add(water);
 const compartment=new THREE.Group();compartment.position.set(0,.61,-2.8);scene.add(compartment);
