@@ -38,3 +38,6 @@
 
 /* Interactive HUD controls must receive taps even though the overlay container is transparent to input. */
 .touch-controls button{pointer-events:auto;position:relative;z-index:14;}
+
+/* Action controls are siblings of the touch overlay so the canvas cannot intercept their taps. */
+main>.relic-interact,main>.location-interact,main>.keeper-interact,main>.yard-interact,main>.regulator-interact,main>.vale-interact,main>.pump-interact,main>.board-open,main>.records-interact,main>.waterworks-interact{pointer-events:auto;z-index:20;touch-action:manipulation;}
