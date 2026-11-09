@@ -89,6 +89,7 @@ export function resetServicePanelPuzzle(
   state: ServicePanelPuzzleState,
   definition: ServicePanelPuzzleDefinition,
   discoveredEvidenceIds: readonly string[]
-): ServicePanelPuzzleState {
+ ): ServicePanelPuzzleState {
+  if (state.status === 'solved') return state;
   return createServicePanelPuzzleState(definition, discoveredEvidenceIds);
 }
