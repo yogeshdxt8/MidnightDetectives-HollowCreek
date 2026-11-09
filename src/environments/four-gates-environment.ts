@@ -51,29 +51,55 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   addPlane(1.6, .02, materials.puddle, 2.25, .003, -10.8);
   addPlane(.8, .02, materials.wetAsphalt, -.35, .004, -15.2);
 
-  // Four Gates: paired weathered stone piers, lintel, iron sidework and readable entrance sign.
-  for (const x of [-5.25, 5.25]) {
-    addBox(1.25, 4.15, 1.15, materials.stone, x, 2.075, -13.6);
-    addBox(1.42, .22, 1.32, materials.stoneLight, x, 4.2, -13.6);
-    addBox(1.08, .18, 1.08, materials.mortar, x, .48, -13.6);
-    for (let y = 1.05; y < 3.85; y += .7) addBox(1.29, .045, 1.19, materials.mortar, x, y, -13.6);
-    addBox(.28, .34, .28, materials.stoneLight, x, 4.48, -13.6);
-    const cap = addCylinder(.18, .23, .35, materials.stoneLight, x, 4.73, -13.6, 6);
+  // Four Gates: four separate, camera-readable portals across the road.
+  // Shared piers create four unmistakable openings without adding remote assets.
+  const gateZ = -13.6;
+  const pierXs = [-5.2, -2.6, 0, 2.6, 5.2];
+  for (let i = 0; i < pierXs.length; i++) {
+    const x = pierXs[i]!;
+    addBox(.52, 4.85, 1.05, materials.stone, x, 2.425, gateZ);
+    addBox(.7, .24, 1.22, materials.stoneLight, x, 4.92, gateZ);
+    addBox(.58, .12, 1.08, materials.mortar, x, .48, gateZ);
+    for (let y = 1.05; y < 4.55; y += .7) {
+      addBox(.55, .045, 1.1, materials.mortar, x, y, gateZ);
+    }
+    addBox(.28, .38, .3, materials.stoneLight, x, 5.2, gateZ);
+    const cap = addCylinder(.2, .27, .34, materials.stoneLight, x, 5.48, gateZ, 6);
     cap.rotation.y = Math.PI / 6;
-    // Iron fence wings terminate at the gate piers, leaving a wide central road opening.
-    const wingX = x < 0 ? -3.35 : 3.35;
-    addBox(2.8, .12, .12, materials.iron, wingX, 1.45, -13.6);
-    addBox(2.8, .12, .12, materials.iron, wingX, 3.05, -13.6);
-    for (let n = 0; n < 8; n++) addBox(.055, 1.65, .07, materials.iron, wingX + (n - 3.5) * .36, 2.23, -13.6);
   }
-  addBox(9.8, .52, .9, materials.stone, 0, 4.18, -13.6);
-  addBox(4.5, .74, .16, materials.sign, 0, 3.42, -13.02);
-  addBox(4.32, .045, .035, materials.signText, 0, 3.78, -12.92);
-  addBox(4.32, .045, .035, materials.signText, 0, 3.06, -12.92);
-  // Sign lettering is represented by restrained raised strokes to avoid font textures and external assets.
-  for (let i = 0; i < 10; i++) addBox(.09, .24, .035, materials.signText, -1.85 + i * .41, 3.42, -12.91);
-  addBox(10.4, .18, 1.25, materials.stoneLight, 0, 4.52, -13.6);
-  // Locally generated entrance lettering: no remote font/image dependency.
+
+  // Each portal has its own lintel, keystone, open iron leaves and numbered plaque.
+  const gateCenters = [-3.9, -1.3, 1.3, 3.9];
+  gateCenters.forEach((x, index) => {
+    addBox(2.75, .48, 1.18, materials.stone, x, 5.0, gateZ);
+    addBox(.42, .58, .22, materials.stoneLight, x, 5.04, gateZ - .62);
+    addBox(2.28, .08, .12, materials.iron, x, 1.15, gateZ - .58);
+    addBox(2.28, .08, .12, materials.iron, x, 2.35, gateZ - .58);
+    for (let bar = 0; bar < 9; bar++) {
+      const bx = x - 1.02 + bar * .255;
+      addBox(.045, 1.18, .055, materials.iron, bx, 1.75, gateZ - .58);
+      addBox(.12, .16, .08, materials.stoneLight, bx, 2.43, gateZ - .58);
+    }
+    // Roman numerals distinguish the four entrances at gameplay distance.
+    const plaque = addBox(.46, .34, .09, materials.sign, x, 3.05, gateZ - .66);
+    plaque.userData['gateIndex'] = index + 1;
+    const numeral = ['I', 'II', 'III', 'IV'][index]!;
+    const numeralY = 3.05;
+    const numeralZ = gateZ - .72;
+    const stroke = (sx: number, sy: number, angle = 0) => {
+      const mark = addBox(.035, .2, .035, materials.signText, x + sx, numeralY + sy, numeralZ);
+      mark.rotation.z = angle;
+      mark.userData['gateNumeral'] = numeral;
+    };
+    if (numeral === 'I') stroke(0, 0);
+    if (numeral === 'II') { stroke(-.055, 0); stroke(.055, 0); }
+    if (numeral === 'III') { stroke(-.075, 0); stroke(0, 0); stroke(.075, 0); }
+    if (numeral === 'IV') { stroke(-.07, 0); stroke(.045, 0, -.34); stroke(.13, 0, .34); }
+  });
+
+  // A single town-name lintel unifies the four portals while leaving each opening distinct.
+  addBox(10.8, .42, .72, materials.stoneLight, 0, 5.95, gateZ);
+  addBox(5.6, .62, .14, materials.sign, 0, 5.92, gateZ - .43);
   const signCanvas = document.createElement('canvas'); signCanvas.width = 1024; signCanvas.height = 192;
   const ctx = signCanvas.getContext('2d');
   if (ctx) {
@@ -83,8 +109,8 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     ctx.fillText('HOLLOW CREEK  ·  FOUR GATES', 512, 98);
   }
   const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace;
-  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(4.18, .68), new THREE.MeshBasicMaterial({ map: signTexture }));
-  geometries.push((signFace.geometry as THREE.BufferGeometry)); signFace.position.set(0, 3.42, -12.91); root.add(signFace);
+  const signFace = new THREE.Mesh(new THREE.PlaneGeometry(5.42, .56), new THREE.MeshBasicMaterial({ map: signTexture }));
+  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 5.92, gateZ - .51); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
