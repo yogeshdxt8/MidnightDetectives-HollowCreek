@@ -32,10 +32,10 @@ joystick?.addEventListener('pointerdown',e=>{e.preventDefault();joystickPointer=
 joystick?.addEventListener('pointermove',e=>{if(e.pointerId===joystickPointer)updateJoystick(e);});
 function releaseJoystick(e:PointerEvent){if(e.pointerId!==joystickPointer)return;joystickPointer=null;move.x=0;move.y=0;if(stick)stick.style.transform='translate(0,0)';}
 joystick?.addEventListener('pointerup',releaseJoystick);joystick?.addEventListener('pointercancel',releaseJoystick);
-let lookPointer:number|null=null;let lastLookX=0;let cameraYaw=0;
-renderer.domElement.addEventListener('pointerdown',e=>{const r=renderer.domElement.getBoundingClientRect();if(e.clientX>r.left+r.width*.48&&e.clientY>r.top+r.height*.38){lookPointer=e.pointerId;lastLookX=e.clientX;renderer.domElement.setPointerCapture(e.pointerId);}else{inspect(e.clientX,e.clientY);}});
-renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;const dx=e.clientX-lastLookX;lastLookX=e.clientX;cameraYaw-=dx*.008;});
-function endLook(e:PointerEvent){if(e.pointerId===lookPointer)lookPointer=null;}
+let lookPointer:number|null=null;let lookStartX=0;let lookStartY=0;let lastLookX=0;let lookMoved=false;
+renderer.domElement.addEventListener('pointerdown',e=>{lookPointer=e.pointerId;lookStartX=e.clientX;lookStartY=e.clientY;lastLookX=e.clientX;lookMoved=false;renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;const total=Math.hypot(e.clientX-lookStartX,e.clientY-lookStartY);if(total>7)lookMoved=true;if(lookMoved){cameraYaw-=(e.clientX-lastLookX)*.008;}lastLookX=e.clientX;});
+function endLook(e:PointerEvent){if(e.pointerId!==lookPointer)return;if(!lookMoved)inspect(e.clientX,e.clientY);lookPointer=null;}
 renderer.domElement.addEventListener('pointerup',endLook);renderer.domElement.addEventListener('pointercancel',endLook);
 function resize(){const w=Math.max(1,sceneRoot.clientWidth),h=Math.max(1,sceneRoot.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);}
 const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
