@@ -112,6 +112,7 @@ async function inspectNearestClue(page: import('@playwright/test').Page) {
 test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
+  await page.waitForTimeout(350);
   await expect(page.locator('#count')).toHaveText('0');
   await expect(page.locator('#deduction-open')).toBeHidden();
 
