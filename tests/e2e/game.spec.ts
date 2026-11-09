@@ -82,55 +82,89 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
 });
 
 
-async function movePlayerTo(page: import('@playwright/test').Page, from: { x: number; z: number }, to: { x: number; z: number }) {
+async function readPlayerPosition(page: import('@playwright/test').Page) {
+  return page.locator('#scene-root').evaluate(element => ({
+    x: Number(element.getAttribute('data-player-x')),
+    z: Number(element.getAttribute('data-player-z')),
+  }));
+}
+
+async function movePlayerTo(page: import('@playwright/test').Page, target: { x: number; z: number }) {
   const joystick = page.locator('#joystick');
   const bounds = await joystick.boundingBox();
   if (!bounds) throw new Error('Movement joystick is not visible.');
 
-  const dx = to.x - from.x;
-  const dz = to.z - from.z;
-  const distance = Math.hypot(dx, dz);
-  if (distance === 0) return;
-
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
   const radius = bounds.width * 0.34;
-  const length = Math.hypot(dx, dz);
-  const targetX = centerX + (dx / length) * radius;
-  const targetY = centerY + (dz / length) * radius;
   const hint = page.locator('#hint');
+  const initial = await readPlayerPosition(page);
+  if (!Number.isFinite(initial.x) || !Number.isFinite(initial.z)) {
+    throw new Error('Live investigator coordinates were not published by the scene.');
+  }
 
-  // Keep the real pointer held until the game's own proximity calculation
-  // confirms arrival. A fixed duration based on ideal speed is unreliable
-  // under CI frame scheduling and can stop short of the interaction radius.
+  const initialDistance = Math.hypot(target.x - initial.x, target.z - initial.z);
+  if (initialDistance <= 0.35) return;
+
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
-  await page.mouse.move(targetX, targetY);
 
-  const stickTransform = await page.locator('#stick').evaluate(element => getComputedStyle(element).transform);
-  if (stickTransform === 'none' || stickTransform === 'matrix(1, 0, 0, 1, 0, 0)') {
-    await page.mouse.up();
-    throw new Error('Joystick did not register the requested pointer direction.');
-  }
-
-  const timeoutMs = Math.ceil((distance / 3.1) * 1000 * 2.5 + 2500);
+  const timeoutMs = Math.ceil((initialDistance / 3.1) * 1000 * 2.5 + 3000);
   const deadline = Date.now() + timeoutMs;
+  let previous = initial;
+  let lastProgressAt = Date.now();
+  let current = initial;
   let arrived = false;
-  while (Date.now() < deadline) {
-    if ((await hint.textContent())?.includes('NEARBY')) {
-      arrived = true;
-      break;
+
+  try {
+    while (Date.now() < deadline) {
+      current = await readPlayerPosition(page);
+      const remainingX = target.x - current.x;
+      const remainingZ = target.z - current.z;
+      const remaining = Math.hypot(remainingX, remainingZ);
+
+      if (remaining <= 0.35) {
+        arrived = true;
+        break;
+      }
+
+      // Re-aim from the observed position, not a guessed previous waypoint.
+      // This compensates for frame timing, collision deflection and small overshoots.
+      await page.mouse.move(
+        centerX + (remainingX / remaining) * radius,
+        centerY + (remainingZ / remaining) * radius
+      );
+
+      const moved = Math.hypot(current.x - previous.x, current.z - previous.z);
+      if (moved >= 0.025) {
+        previous = current;
+        lastProgressAt = Date.now();
+      } else if (Date.now() - lastProgressAt > 1200) {
+        throw new Error(
+          `Investigator movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}) ` +
+          `with ${remaining.toFixed(2)} units remaining to (${target.x}, ${target.z}); ` +
+          `hint="${(await hint.textContent())?.trim()}" and joystick="${await page.locator('#stick').evaluate(element => getComputedStyle(element).transform)}".`
+        );
+      }
+
+      await page.waitForTimeout(80);
     }
-    await page.waitForTimeout(100);
+  } finally {
+    await page.mouse.up();
   }
-  await page.mouse.up();
 
   if (!arrived) {
-    throw new Error(`Player did not enter clue range after ${timeoutMs}ms of joystick input (route ${from.x},${from.z} -> ${to.x},${to.z}).`);
+    const finalPosition = await readPlayerPosition(page);
+    throw new Error(
+      `Investigator did not reach waypoint (${target.x}, ${target.z}) within ${timeoutMs}ms. ` +
+      `Started at (${initial.x.toFixed(2)}, ${initial.z.toFixed(2)}), ` +
+      `ended at (${finalPosition.x.toFixed(2)}, ${finalPosition.z.toFixed(2)}), ` +
+      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}.`
+    );
   }
-  await page.waitForTimeout(250);
-}
 
+  await page.waitForTimeout(150);
+}
 async function inspectNearestClue(page: import('@playwright/test').Page) {
   const canvas = page.locator('#scene-root canvas');
   const bounds = await canvas.boundingBox();
@@ -165,20 +199,20 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   await expect(page.locator('#deduction-open')).toBeHidden();
 
   // Navigate around the fountain exclusion zone and inspect each glowing clue in the 3D scene.
-  await movePlayerTo(page, { x: 0, z: 5.2 }, { x: 1.8, z: 0.6 });
+  await movePlayerTo(page, { x: 1.8, z: 0.6 });
   await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('1');
 
   // The fountain has a circular collision/exclusion zone centered near
   // z=-2.8. Route around its north side instead of trying to walk through it.
-  await movePlayerTo(page, { x: 1.8, z: 0.6 }, { x: -3.3, z: 0.6 });
-  await movePlayerTo(page, { x: -3.3, z: 0.6 }, { x: -3.3, z: -1.2 });
+  await movePlayerTo(page, { x: -3.3, z: 0.6 });
+  await movePlayerTo(page, { x: -3.3, z: -1.2 });
   await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('2');
 
-  await movePlayerTo(page, { x: -3.3, z: -1.2 }, { x: -3.3, z: 1.5 });
-  await movePlayerTo(page, { x: -3.3, z: 1.5 }, { x: 3.2, z: 1.5 });
-  await movePlayerTo(page, { x: 3.2, z: 1.5 }, { x: 3.2, z: -3.7 });
+  await movePlayerTo(page, { x: -3.3, z: 1.5 });
+  await movePlayerTo(page, { x: 3.2, z: 1.5 });
+  await movePlayerTo(page, { x: 3.2, z: -3.7 });
   await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('3');
   await expect(page.locator('#deduction-open')).toBeVisible();
