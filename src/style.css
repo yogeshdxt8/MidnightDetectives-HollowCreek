@@ -11,3 +11,5 @@
 .case-result>small{margin-top:0}.case-result>button{margin-top:16px;width:100%;padding:13px;border:1px solid #a88b57;border-radius:7px;background:#27354a;color:#f0d9a8;font:11px monospace;letter-spacing:.12em}.case-result h2{font-size:28px;line-height:1.1}.case-result .detail-observation{line-height:1.8}
 
 #evidence-detail::before{content:"";position:fixed;inset:0;z-index:-1;background:#050914df;backdrop-filter:blur(3px);pointer-events:auto}
+
+.detail-panel[hidden]{display:none!important}
