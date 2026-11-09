@@ -42,6 +42,9 @@ describe('YouTube Playables platform adapter', () => {
     expect(() => platform.notifyGameReady()).toThrow('before cloud data loading has settled');
     await expect(platform.saveData('progress')).rejects.toThrow('until loadData succeeds');
     await platform.loadData();
+    expect(() => platform.notifyGameReady()).toThrow('before firstFrameReady');
+    platform.notifyFirstFrameReady();
+    platform.notifyGameReady();
     platform.notifyGameReady();
     await platform.saveData('progress');
     expect(sdk.game.gameReady).toHaveBeenCalledOnce();
@@ -54,6 +57,7 @@ describe('YouTube Playables platform adapter', () => {
     const platform = new PlayablesPlatform(sdk);
     await expect(platform.loadData()).rejects.toThrow('offline');
     await expect(platform.saveData('new-game')).rejects.toThrow('until loadData succeeds');
+    platform.notifyFirstFrameReady();
     platform.notifyGameReady();
     expect(sdk.game.gameReady).toHaveBeenCalledOnce();
     expect(sdk.game.saveData).not.toHaveBeenCalled();
