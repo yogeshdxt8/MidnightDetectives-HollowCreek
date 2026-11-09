@@ -198,7 +198,9 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   await expect(page.locator('#count')).toHaveText('0');
   await expect(page.locator('#deduction-open')).toBeHidden();
 
-  // Navigate around the fountain exclusion zone and inspect each glowing clue in the 3D scene.
+  // The direct route to the eastern clue crosses the fountain collision radius.
+  // First move to the north-west side, then cross the open northern walkway.
+  await movePlayerTo(page, { x: -3.3, z: 0.6 });
   await movePlayerTo(page, { x: 1.8, z: 0.6 });
   await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('1');
