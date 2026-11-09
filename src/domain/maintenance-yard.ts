@@ -24,7 +24,7 @@ export function searchMaintenanceYard(state: MaintenanceYardState, definition: M
 }
 export function collectYardRegulator(state: MaintenanceYardState, definition: MaintenanceYardDefinition, distance: number, maxDistance: number): YardActionResult {
   if (state.status !== 'searched' || state.regulatorCollected || !Number.isFinite(distance) || distance < 0 || distance > maxDistance) return { state, accepted: false, completed: false };
-  return { state: { ...state, status: 'regulator-recovered', regulatorCollected: true, feedback: 'The brass regulator is recovered. The work order and matching tool mark remain as evidence.' }, accepted: true, completed: true };
+  return { state: { ...state, status: 'regulator-recovered', regulatorCollected: true, feedback: `The ${definition.regulatorId} is recovered. The work order and matching tool mark remain as evidence.` }, accepted: true, completed: true };
 }
 export function submitYardDeduction(state: MaintenanceYardState, definition: MaintenanceYardDefinition, deductionId: string): YardActionResult {
   if (state.status !== 'regulator-recovered' || state.deductionId !== null) return { state, accepted: false, completed: false };
