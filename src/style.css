@@ -35,3 +35,6 @@
 .records-interact{position:absolute;left:50%;bottom:142px;transform:translateX(-50%);z-index:12;padding:12px 18px;border:1px solid #d1b878;border-radius:8px;background:#3b3328;color:#f3dfb2;font:11px monospace;letter-spacing:.1em;touch-action:manipulation}.records-interact[hidden]{display:none}.records-panel{max-height:min(88vh,760px);overflow-y:auto}.records-panel[hidden]{display:none}.records-panel #records-classification[hidden],.records-panel #records-history[hidden],.records-panel #records-next-lead[hidden]{display:none}.records-panel .keeper-choice{margin:4px}
 
 .waterworks-interact{position:absolute;left:50%;bottom:142px;transform:translateX(-50%);z-index:13;padding:12px 18px;border:1px solid #82bbc0;border-radius:8px;background:#263d40;color:#def0e9;font:11px monospace;letter-spacing:.1em;touch-action:manipulation}.waterworks-interact[hidden]{display:none}.waterworks-panel{max-height:min(88vh,760px);overflow-y:auto}.waterworks-panel[hidden],.waterworks-panel #waterworks-timeline[hidden],.waterworks-panel #waterworks-link[hidden],.waterworks-panel #waterworks-next-lead[hidden]{display:none}.waterworks-panel .keeper-choice{margin:4px}
+
+/* Interactive HUD controls must receive taps even though the overlay container is transparent to input. */
+.touch-controls button{pointer-events:auto;position:relative;z-index:14;}
