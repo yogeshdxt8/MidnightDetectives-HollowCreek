@@ -253,10 +253,10 @@ function captureRuntimeSave():import('./domain/game-save').GameSaveData{
   completedDeductionIds:[...(deductionSolved?['town-square-deduction']:[]),...(maintenanceYardState.deductionId? [maintenanceYardState.deductionId]:[]),...(pumpHouseState.deductionId?[pumpHouseState.deductionId]:[])]
  });
 }
-function requestGameSave(){
- if(!currentSave)return;
+function requestGameSave(forceWhilePaused=false){
+ if(!currentSave||(gamePaused&&!forceWhilePaused))return;
  const snapshot=captureRuntimeSave();
- saveQueue=saveQueue.then(async()=>{const saved=await gamePersistence.save(snapshot);if(!saved)return;const score=calculateInvestigationScore(snapshot);if(score>lastSubmittedScore){await playablesPlatform.sendScore(score);lastSubmittedScore=score;}}).catch(error=>{console.error('Investigation save or score submission failed',error);});
+ saveQueue=saveQueue.then(async()=>{if(gamePaused&&!forceWhilePaused)return;const saved=await gamePersistence.save(snapshot);if(!saved||gamePaused)return;const score=calculateInvestigationScore(snapshot);if(score>lastSubmittedScore){await playablesPlatform.sendScore(score);lastSubmittedScore=score;}}).catch(error=>{console.error('Investigation save or score submission failed',error);});
 }
 function scheduleGameSave(){
  window.clearTimeout(saveTimer);
@@ -329,7 +329,7 @@ async function initializeGamePersistence(){
   currentSave=result.save;
   lastSubmittedScore=calculateInvestigationScore(result.save);
   if(lastSubmittedScore>0)void playablesPlatform.sendScore(lastSubmittedScore).catch(error=>console.warn('Initial Playables score submission failed',error));
-  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave();},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=true;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
+  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=true;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
   document.addEventListener('click',()=>{gameAudio.playUiCue();scheduleGameSave();});
   persistenceReady=true;
   notifyReadyWhenPossible();
