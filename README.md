@@ -96,6 +96,7 @@ The repository is the single source of truth for approved design decisions.
 
 - [Game Design Bible](docs/design/game-design-bible.md) — living game vision, approved mechanics, story constraints, transitions, progression, open decisions, and revision history.
 - [13+ Creative and Product Design Standard](docs/design/13-plus-creative-product-design-standard.md) — audience positioning, tone, visual direction, character/entity continuity, accessibility, and content standards.
+- [YouTube Playables Game Development & Integration Standard](docs/platform/youtube-playables-game-development-standard.md) — mandatory reusable platform architecture, SDK lifecycle, cloud-save rules, performance budgets, Test Suite procedure, CI/release gates, and new-game kickoff checklist.
 
 Only decisions explicitly marked approved/locked in the Game Design Bible are binding. Proposals and open questions must not silently become canon. When the creator approves a meaningful design decision, update the relevant documentation and revision history in the repository.
 
