@@ -7,6 +7,7 @@ function sdk(loadData: () => Promise<string>, saveData = vi.fn(async (_data: str
   return {
     IN_PLAYABLES_ENV: true,
     game: { firstFrameReady: vi.fn(), gameReady: vi.fn(), loadData, saveData },
+    engagement: { sendScore: vi.fn(async (_score: { readonly value: number }) => undefined) },
     system: {
       isAudioEnabled: () => true,
       onAudioEnabledChange: () => () => undefined,
