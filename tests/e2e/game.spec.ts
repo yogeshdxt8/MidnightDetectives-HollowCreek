@@ -60,7 +60,9 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
     localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(seededSave));
   });
   await page.goto('/');
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('midnight-detectives-hollow-creek.save.v2'))).not.toBeNull();
+  const storedSave = await page.evaluate(() => localStorage.getItem('midnight-detectives-hollow-creek.save.v2'));
+  expect(storedSave, 'browser save fixture must exist before restoration').not.toBeNull();
+  expect(JSON.parse(storedSave!).discoveredClueIds, 'browser storage must contain the seeded clues').toEqual(['note', 'print', 'key']);
   await expect(page.locator('#count')).toHaveText('3');
   await expect(page.locator('#relic-inventory')).toContainText('Fountain relic');
   await expect(page.locator('#evidence')).toContainText('Torn note');
