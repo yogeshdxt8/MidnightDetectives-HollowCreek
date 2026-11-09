@@ -102,7 +102,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     const plaque = addBox(.9, .68, .2, materials.sign, x, 3.35, gateZ - 1.16);
     plaque.userData['gateIndex'] = index + 1;
     plaque.userData['gateNumeral'] = numeral;
-    const numeralZ = gateZ - .91;
+    const numeralZ = gateZ - 1.42;
     const numeralBar = (offsetX: number, height: number, angle = 0) => {
       const mark = addBox(.105, height, .075, materials.gateTrim, x + offsetX, 3.35, numeralZ);
       mark.rotation.z = angle;
@@ -123,7 +123,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
 
   // The town-name sign is a separate header above the complete row of four gates.
   addBox(10.8, .3, .72, materials.stoneLight, 0, 6.48, gateZ);
-  addBox(8.55, .84, .24, materials.sign, 0, 6.12, gateZ - .48);
+  addBox(8.55, .84, .24, materials.sign, 0, 5.88, gateZ - .48);
   const signCanvas = document.createElement('canvas'); signCanvas.width = 1024; signCanvas.height = 192;
   const ctx = signCanvas.getContext('2d');
   if (ctx) {
@@ -134,7 +134,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   }
   const signTexture = new THREE.CanvasTexture(signCanvas); signTexture.colorSpace = THREE.SRGBColorSpace; textures.push(signTexture);
   const signFace = new THREE.Mesh(new THREE.PlaneGeometry(8.28, .7), new THREE.MeshBasicMaterial({ map: signTexture }));
-  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 6.12, gateZ - .28); root.add(signFace);
+  geometries.push(signFace.geometry as THREE.BufferGeometry); signFace.position.set(0, 5.88, gateZ - .66); root.add(signFace);
 
   // Older town facades, varied rooflines, recessed windows and restrained warm interiors.
   const buildings = [
