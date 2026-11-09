@@ -37,6 +37,8 @@ export class PlayablesPlatform {
   private readonly sdk: PlayablesSdk | undefined;
   private loadSettled = false;
   private loadSucceeded = false;
+  private firstFrameNotified = false;
+  private gameReadyNotified = false;
   private readonly unsubscribe: Array<() => void> = [];
 
   constructor(sdk: PlayablesSdk | undefined = getDefaultSdk()) {
@@ -62,15 +64,21 @@ export class PlayablesPlatform {
   }
 
   notifyFirstFrameReady(): void {
+    if (this.firstFrameNotified) return;
+    this.firstFrameNotified = true;
     this.sdk?.game.firstFrameReady();
   }
 
   notifyGameReady(): void {
-    if (!this.isAvailable) return;
+    if (!this.isAvailable || this.gameReadyNotified) return;
+    if (!this.firstFrameNotified) {
+      throw new Error('Game cannot be marked ready before firstFrameReady.');
+    }
     if (!this.loadSettled) {
       throw new Error('Game cannot be marked ready before cloud data loading has settled.');
     }
     this.sdk?.game.gameReady();
+    this.gameReadyNotified = true;
   }
 
   async loadData(): Promise<string> {
