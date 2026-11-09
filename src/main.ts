@@ -98,6 +98,8 @@ puzzlePanel.addEventListener('click',event=>{if(event.target===puzzlePanel)close
 document.querySelector('#puzzle-actions')?.addEventListener('click',event=>{const target=event.target;if(!(target instanceof HTMLElement))return;const button=target.closest<HTMLButtonElement>('[data-symbol]');if(!button)return;const symbol=button.dataset['symbol'];if(!symbol)return;const result=interactWithPuzzle(fountainPuzzleState,fountainPuzzle,symbol,state.discoveredClueIds);fountainPuzzleState=result.state;renderPuzzleState();if(result.completed){compartmentOpen=true;hiddenRelic.visible=true;relicState=updateRelicAvailability(relicState,fountainRelic,[fountainPuzzle.id]);document.querySelector('#status')!.textContent='FOUNTAIN SEAL OPEN';notify('A hidden compartment opens beneath the fountain.');}else if(!result.accepted){notify(fountainPuzzleState.feedback);}});
 puzzleResetButton.addEventListener('click',()=>{fountainPuzzleState=resetPuzzle(fountainPuzzleState);renderPuzzleState();});
 function closeLeadPanel(){leadPanel.hidden=true;leadPanel.style.setProperty('display','none','important');}
+document.querySelector('#lead-close')?.addEventListener('click',closeLeadPanel);
+leadPanel.addEventListener('click',event=>{if(event.target===leadPanel)closeLeadPanel();});
 function closeLocationPanel(){locationPanel.hidden=true;locationPanel.style.setProperty('display','none','important');}
 locationPanel.addEventListener('click',event=>{if(event.target===locationPanel)closeLocationPanel();});
 document.querySelector('#location-close')?.addEventListener('click',closeLocationPanel);
