@@ -37,25 +37,6 @@ test('keeps the touch investigation controls usable on a phone viewport', async 
 });
 
 test('restores solved fountain and Clock Tower evidence from browser save', async ({ page }) => {
-  const save = {
-    version: 2,
-    activeCaseId: 'case-001',
-    discoveredClueIds: ['note', 'print', 'key'],
-    solvedPuzzleIds: ['fountain-seal'],
-    completedCaseIds: [],
-    investigation: {
-      discoveredEvidenceIds: ['three-line-imprint'],
-      trackedLeadIds: ['clocktower-service-door'],
-      unlockedLocationIds: ['clocktower-service-entrance'],
-      searchedLocationIds: ['clocktower-service-entrance'],
-      solvedPuzzleIds: [],
-      askedKeeperTopicIds: [],
-      presentedKeeperEvidenceIds: [],
-      recoveredObjectIds: ['fountain-relic'],
-      completedDeductionIds: []
-    }
-  };
-
   await page.addInitScript(() => {
     const seededSave = {
       version: 2,
