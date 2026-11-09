@@ -141,9 +141,11 @@ YouTube Playables is the intended publishing platform. The implementation will a
 
 ## Project status
 
-**Current stage: Product definition and repository foundation.**
+**Current stage: Interactive investigation prototype — first vertical-slice mechanics.**
 
-The repository has been created and the initial project documentation is being established. The game itself is not yet implemented. Planned features and technical decisions are not considered complete until they have been implemented and validated in a running build.
+Implemented in the browser prototype: a procedural 3D Hollow Creek town-square blockout, a mobile touch movement control, drag-to-look camera control, proximity-gated clue collection, an evidence journal, evidence detail panels, a deduction exercise, a case report, and replay/reset. Automated TypeScript checks, unit tests, production builds, and GitHub Pages deployment are wired into GitHub Actions.
+
+This is still a prototype, not a production-ready game. The investigator is a procedural placeholder rather than an approved character model; the case and clues are technical sample content, not canon; the scene has no finished art/audio; YouTube Playables SDK integration, platform save/load, full puzzle gameplay, companion AI, and device performance validation remain outstanding. Planned features and technical decisions are not considered complete until implemented and validated.
 
 ## Canon and creative continuity
 
