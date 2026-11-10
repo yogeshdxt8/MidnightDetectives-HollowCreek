@@ -57,7 +57,7 @@ type DriveWaypoint={x:number;z:number;speed:number};
 const driveRoutes={
   approach:[{x:-1.0,z:5.5,speed:2.0}],
   dropoff:[{x:.45,z:5.28,speed:1.4},{x:1.77,z:4.67,speed:1.4},{x:2.84,z:3.56,speed:1.4},{x:3.56,z:2.04,speed:1.4},{x:3.88,z:.84,speed:1.4},{x:3.3,z:-4.8,speed:0.9}],
-  departure:[{x:4.45,z:-3.7,speed:1.8},{x:4.8,z:-1.0,speed:2.0},{x:4.65,z:2.0,speed:2.5},{x:3.2,z:5.2,speed:3.0},{x:3.2,z:12.5,speed:4.2}]
+  departure:[{x:3.5,z:-3.3,speed:1.4},{x:4.8,z:-1.0,speed:2.0},{x:4.65,z:2.0,speed:2.5},{x:3.2,z:5.2,speed:3.0},{x:3.2,z:12.5,speed:4.2}]
 } satisfies Record<string,DriveWaypoint[]>;
 let activeDriveRoute:DriveWaypoint[]=driveRoutes.approach;
 const routeNavigator=new VehicleRouteNavigator();
