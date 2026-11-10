@@ -27,6 +27,9 @@ test('keeps the touch investigation controls usable on a phone viewport', async 
   await page.goto('/');
   await expect(page.locator('#joystick')).toBeVisible();
   await expect(page.locator('#look-pad')).toBeVisible();
+  await expect(page.locator('.journal')).toBeHidden();
+  await expect(page.locator('#case-toggle')).toBeVisible();
+  await page.locator('#case-toggle').click();
   await expect(page.locator('.journal')).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     documentWidth: document.documentElement.clientWidth,
@@ -226,6 +229,7 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   await movePlayerTo(page, { x: 3.2, z: -3.7 });
   await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('3');
+  await page.locator('#case-toggle').click();
   await expect(page.locator('#deduction-open')).toBeVisible();
 
   await expect.poll(async () => page.evaluate(() => {
@@ -236,6 +240,8 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   // A real browser reload must restore the progress created through scene interactions.
   await page.reload();
   await expect(page.locator('#count')).toHaveText('3');
+  await page.locator('#case-toggle').click();
+  await expect(page.locator('.journal')).toBeVisible();
   await expect(page.locator('#evidence')).toContainText('Torn note');
   await expect(page.locator('#evidence')).toContainText('Muddy footprint');
   await expect(page.locator('#evidence')).toContainText('Brass key');
@@ -265,6 +271,7 @@ test('mobile notifications and puzzle dialog stay clear of touch controls and in
     }));
   });
   await page.goto('/');
+  await page.locator('#case-toggle').click();
   await expect(page.locator('#puzzle-open')).toBeVisible();
 
   const canvas = page.locator('#scene-root canvas');
