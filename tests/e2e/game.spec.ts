@@ -1,5 +1,28 @@
 import { expect, test } from '@playwright/test';
 
+test('arrival driver reacts to the player exit, greets, boards, and departs', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const scene = page.locator('#scene-root');
+  const waitForDriverState = async (state: string) => {
+    await page.waitForFunction(
+      expected => document.querySelector('#scene-root')?.getAttribute('data-arrival-driver-state') === expected,
+      state,
+      { timeout: 70_000 }
+    );
+  };
+  await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 70_000 });
+  await waitForDriverState('greeting-approach');
+  await waitForDriverState('greeting');
+  await waitForDriverState('returning-to-car');
+  await waitForDriverState('boarding');
+  await waitForDriverState('seated');
+  await waitForDriverState('departing');
+  await waitForDriverState('departed');
+  await expect(scene).toHaveAttribute('data-player-exit-reached', 'true');
+});
+
 test('renders the investigation interface and WebGL scene', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
