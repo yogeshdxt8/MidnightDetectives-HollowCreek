@@ -32,7 +32,7 @@ describe('vehicle parking controller', () => {
 
   it('commands a controlled low-speed approach and brakes inside the stopping radius', () => {
     const approach = computeParkingControl(
-      state({ x: 4, z: -2.8, speed: 0.8 }),
+      state({ x: 4, z: -2.8, speed: 1.2 }),
       { x: 4, z: -4.3, yaw: Math.PI / 2 },
       sedanTuning,
       envelope
