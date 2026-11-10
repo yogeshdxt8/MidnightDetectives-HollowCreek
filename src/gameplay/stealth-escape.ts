@@ -99,7 +99,7 @@ export function createStealthEscapeEncounter(
 
   // Landmark cabinet and a small hiding pocket behind it.
   const cabinet = new THREE.Group();
-  cabinet.position.set(4.15, 0, -3.75);
+  cabinet.position.set(4.15, 0, 3.75);
   cabinet.rotation.z = Math.PI / 2; // visibly toppled onto its side
   scene.add(cabinet);
   addMesh(cabinet, new THREE.BoxGeometry(1.2, .92, .72), mats.wood, 0, .46, 0);
@@ -112,7 +112,7 @@ export function createStealthEscapeEncounter(
 
   // Mandatory brass key, deliberately visible beside the overturned cabinet.
   const key = new THREE.Group();
-  key.position.set(3.25, .18, -3.35);
+  key.position.set(3.25, .18, 3.35);
   scene.add(key);
   addMesh(key, new THREE.TorusGeometry(.13, .035, 7, 14), mats.keyGlow, 0, .12, 0);
   addMesh(key, new THREE.BoxGeometry(.055, .34, .055), mats.keyGlow, .14, -.02, 0);
@@ -124,7 +124,7 @@ export function createStealthEscapeEncounter(
 
   // One authored distraction: a loose brass service bell on the opposite side of the square.
   const bell = new THREE.Group();
-  bell.position.set(-3.55, 0, -1.2);
+  bell.position.set(-3.55, 0, 3.2);
   scene.add(bell);
   addMesh(bell, new THREE.CylinderGeometry(.22, .28, .22, 12), mats.bell, 0, .16, 0);
   addMesh(bell, new THREE.SphereGeometry(.055, 8, 6), mats.metal, 0, .31, 0);
@@ -251,10 +251,10 @@ export function createStealthEscapeEncounter(
       return;
     }
     if (isNearBell() && !state.hasKey) {
-      noiseActiveUntil = currentElapsedSeconds + 5.5;
+      noiseActiveUntil = currentElapsedSeconds + 8;
       threat = 'investigating';
       threatTarget.copy(bell.position);
-      threatTimer = 5.5;
+      threatTimer = 8;
       bell.rotation.z = -.22;
       onNotify('The bell rings. The creature turns toward the sound.');
       return;
