@@ -36,6 +36,7 @@ export function createStealthEscapeEncounter(
   let stalledSeconds = 0;
   let lastPlayerPosition = player.position.clone();
   let encounterStarted = false;
+  const encounterStartPosition = player.position.clone();
   let hintElapsed = 0;
   let lastHintId = '';
   let exitProgress = 0;
@@ -227,8 +228,46 @@ export function createStealthEscapeEncounter(
     ui.action.disabled = !enabled;
   };
 
+  const resetEncounter = () => {
+    state = initialEscapeEncounterState;
+    hidden = false;
+    noiseActiveUntil = 0;
+    distractionUsed = false;
+    projectileActive = false;
+    projectileProgress = 0;
+    suspicionSeconds = 0;
+    stalledSeconds = 0;
+    hintElapsed = 0;
+    lastHintId = '';
+    exitProgress = 0;
+    threat = 'patrolling';
+    threatTimer = 0;
+    patrolIndex = 0;
+    threatTarget.copy(patrol[0]!);
+    lastKnownPlayer.copy(encounterStartPosition);
+    lastPlayerPosition.copy(encounterStartPosition);
+    player.position.copy(encounterStartPosition);
+    key.visible = true;
+    key.position.y = .18;
+    key.rotation.y = 0;
+    keyLight.intensity = 1;
+    bell.visible = true;
+    bell.rotation.set(0, 0, 0);
+    thrownStone.visible = false;
+    exit.visible = true;
+    leftDoor.rotation.y = 0;
+    rightDoor.rotation.y = 0;
+    lock.visible = true;
+    if (ui.hint) ui.hint.textContent = 'Find the key. The exit is locked.';
+    if (ui.objective) ui.objective.textContent = 'Find the key. The exit is locked.';
+    if (ui.status) ui.status.textContent = 'KEY NOT FOUND';
+    setActionLabel('', false);
+    onNotify('A new escape attempt begins.');
+  };
+
   const interact = () => {
-    if (disposed || state.escaped) return;
+    if (disposed) return;
+    if (state.escaped) { resetEncounter(); return; }
     if (hidden) {
       hidden = false;
       player.position.x = cabinet.position.x - 1.0;
@@ -306,7 +345,7 @@ export function createStealthEscapeEncounter(
       if (ui.hint) ui.hint.textContent = 'ESCAPED · CHALLENGE COMPLETE';
       if (ui.objective) ui.objective.textContent = 'Escape complete.';
       if (ui.status) ui.status.textContent = 'ESCAPE COMPLETE';
-      setActionLabel('', false);
+      setActionLabel('PLAY AGAIN', true);
       return;
     }
     currentElapsedSeconds = elapsedSeconds;
@@ -321,6 +360,7 @@ export function createStealthEscapeEncounter(
     if (!encounterStarted) {
       encounterStarted = true;
       lastPlayerPosition.copy(player.position);
+      encounterStartPosition.copy(player.position);
     }
     hintElapsed += dt;
     const moved = distance2D(player.position, lastPlayerPosition);
