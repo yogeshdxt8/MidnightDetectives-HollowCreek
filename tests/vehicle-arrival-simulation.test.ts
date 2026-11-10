@@ -4,7 +4,7 @@ import { stepVehicle, sedanTuning, type VehicleState, type VehicleInput } from '
 import { computeParkingControl, defaultParkingControllerConfig, type ParkingPose } from '../src/physics/vehicle-parking-controller';
 
 const dt = 1 / 60;
-const parkingPose: ParkingPose = { x: 3.3, z: -4.8, yaw: 1.4 };
+const parkingPose: ParkingPose = { x: 3.3, z: -4.8, yaw: 1.8 };
 const routes: Record<'approach' | 'dropoff' | 'departure', NavigationPoint[]> = {
   approach: [{ x: -1, z: 5.5, speed: 2 }],
   dropoff: [
