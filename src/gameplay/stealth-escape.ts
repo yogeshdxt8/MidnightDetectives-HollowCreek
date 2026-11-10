@@ -30,7 +30,6 @@ export function createStealthEscapeEncounter(
   let suspicionSeconds = 0;
   let stalledSeconds = 0;
   let lastPlayerPosition = player.position.clone();
-  let lastSafePosition = player.position.clone();
   let encounterStarted = false;
   let hintElapsed = 0;
   let lastHintId = '';
@@ -291,7 +290,6 @@ export function createStealthEscapeEncounter(
     if (!encounterVisible) return;
     if (!encounterStarted) {
       encounterStarted = true;
-      lastSafePosition.copy(player.position);
       lastPlayerPosition.copy(player.position);
     }
     hintElapsed += dt;
@@ -379,9 +377,6 @@ export function createStealthEscapeEncounter(
       player.position.x = THREE.MathUtils.clamp(player.position.x + awayX / awayLength * 1.1, -5.2, 5.2);
       player.position.z = THREE.MathUtils.clamp(player.position.z + awayZ / awayLength * 1.1, -9.8, 6.2);
       lastPlayerPosition.copy(player.position);
-    }
-    if (hidden || threat === 'patrolling' || threat === 'investigating') {
-      if (Math.hypot(player.position.x, player.position.z + 2.8) > 2.2) lastSafePosition.copy(player.position);
     }
 
     if (state.exitUnlocked && isNearExit()) {
