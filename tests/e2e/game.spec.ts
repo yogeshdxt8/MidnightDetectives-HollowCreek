@@ -29,6 +29,8 @@ test('keeps the touch investigation controls usable on a phone viewport', async 
   await expect(page.locator('#look-pad')).toBeVisible();
   await expect(page.locator('.journal')).toBeHidden();
   await expect(page.locator('#case-toggle')).toBeVisible();
+  await expect(page.locator('.overlay h1')).toBeHidden();
+  await expect(page.locator('.overlay > small')).toBeVisible();
   await page.locator('#case-toggle').click();
   await expect(page.locator('.journal')).toBeVisible();
   const dimensions = await page.evaluate(() => ({
