@@ -551,7 +551,7 @@ Do not claim certification or physical-device validation until those checks have
 
 ---
 
-## 12. Core stealth-escape gameplay — Approved direction
+## Core stealth-escape gameplay — Approved direction
 
 The primary gameplay is defined in the [Playables Stealth-Escape Gameplay Specification](./playables-stealth-escape-gameplay.md).
 
