@@ -199,32 +199,6 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
   }
   await page.waitForTimeout(150);
 }
-async function inspectNearestClue(page: import('@playwright/test').Page) {
-  const canvas = page.locator('#scene-root canvas');
-  const bounds = await canvas.boundingBox();
-  if (!bounds) throw new Error('Investigation scene is not visible.');
-
-  const count = page.locator('#count');
-  const before = Number(await count.textContent());
-  // The game intentionally accepts taps within 9% of the scene's smaller
-  // dimension around a clue's projected screen position. Sweep a grid with
-  // overlapping coverage instead of guessing that the marker is at screen
-  // center; every tap still goes through the real canvas pointer handler.
-  const spacing = 64;
-  for (let y = bounds.y + spacing / 2; y < bounds.y + bounds.height; y += spacing) {
-    for (let x = bounds.x + spacing / 2; x < bounds.x + bounds.width; x += spacing) {
-      await page.mouse.click(x, y);
-      await page.waitForTimeout(45);
-      const current = Number(await count.textContent());
-      if (current > before) {
-        await expect(count).toHaveText(String(before + 1));
-        return;
-      }
-    }
-  }
-  throw new Error('No visible in-range clue responded to canvas taps; inspect the Playwright trace.');
-}
-
 test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
   test.setTimeout(120_000);
   // This test covers investigation progression, not the cinematic arrival. Skip
@@ -241,20 +215,19 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   // First move to the north-west side, then cross the open northern walkway.
   await movePlayerTo(page, { x: -3.3, z: 0.6 });
   await movePlayerTo(page, { x: 1.8, z: 0.6 });
-  await inspectNearestClue(page);
+  // Pickup is proximity-based: walking through the clue radius records it;
+  // the test deliberately performs no canvas tap or inspect interaction.
   await expect(page.locator('#count')).toHaveText('1');
 
   // The fountain has a circular collision/exclusion zone centered near
   // z=-2.8. Route around its north side instead of trying to walk through it.
   await movePlayerTo(page, { x: -3.3, z: 0.6 });
   await movePlayerTo(page, { x: -3.3, z: -1.2 });
-  await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('2');
 
   await movePlayerTo(page, { x: -3.3, z: 1.5 });
   await movePlayerTo(page, { x: 3.2, z: 1.5 });
   await movePlayerTo(page, { x: 3.2, z: -3.7 });
-  await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('3');
   await page.locator('#case-toggle').click();
   await expect(page.locator('#deduction-open')).toBeVisible();
