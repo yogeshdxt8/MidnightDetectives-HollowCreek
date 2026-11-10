@@ -106,7 +106,10 @@ const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpee
   const offset=new THREE.Vector3(target.x-worldPosition.x,0,target.z-worldPosition.z);
   const distance=offset.length();
   const acceleration=7.5;
-  const brakingSpeed=Math.sqrt(Math.max(0,2*acceleration*Math.max(0,distance-.08)));
+  // Reserve the full arrival radius for braking; using only .08 lets the
+  // actor cross the .18 completion threshold at walking speed and oscillate
+  // around a waypoint forever without ever satisfying the settled condition.
+  const brakingSpeed=Math.sqrt(Math.max(0,2*acceleration*Math.max(0,distance-.2)));
   const desiredSpeed=Math.min(maxSpeed,brakingSpeed);
   const desired=distance>.025?offset.normalize().multiplyScalar(desiredSpeed):new THREE.Vector3();
   const delta=desired.sub(velocity);
