@@ -368,8 +368,6 @@ export function createStealthEscapeEncounter(
       suspicionSeconds = 0;
       threat = 'searching';
       threatTimer = 1.8;
-      entity.position.set(-3.4, 0, -1.5);
-      onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
       // A brief knock-back gives the player a readable recovery window without resetting a short Playables run.
       const awayX = player.position.x - entity.position.x;
       const awayZ = player.position.z - entity.position.z;
@@ -377,6 +375,8 @@ export function createStealthEscapeEncounter(
       player.position.x = THREE.MathUtils.clamp(player.position.x + awayX / awayLength * 1.1, -5.2, 5.2);
       player.position.z = THREE.MathUtils.clamp(player.position.z + awayZ / awayLength * 1.1, -9.8, 6.2);
       lastPlayerPosition.copy(player.position);
+      entity.position.set(-3.4, 0, -1.5);
+      onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
     }
 
     if (state.exitUnlocked && isNearExit()) {
