@@ -328,6 +328,10 @@ export function createStealthEscapeEncounter(
       } else if (threat === 'investigating') {
         threatTimer -= dt;
         if (threatTimer <= 0) threat = 'patrolling';
+      } else if (threat === 'approaching') {
+        threat = 'searching';
+        threatTimer = 1.8;
+        threatTarget.copy(lastKnownPlayer);
       } else {
         threat = 'patrolling';
       }
@@ -379,6 +383,12 @@ export function createStealthEscapeEncounter(
       if (ui.hint) ui.hint.textContent = 'ESCAPED · CHALLENGE COMPLETE';
       if (ui.objective) ui.objective.textContent = 'Escape complete.';
       if (ui.status) ui.status.textContent = 'ESCAPE COMPLETE';
+      const completedRoot = document.querySelector<HTMLElement>('#scene-root');
+      if (completedRoot) {
+        completedRoot.dataset['escapeHasKey'] = 'true';
+        completedRoot.dataset['escapeExitUnlocked'] = 'true';
+        completedRoot.dataset['escapeComplete'] = 'true';
+      }
       setActionLabel('', false);
       return;
     }
@@ -401,7 +411,8 @@ export function createStealthEscapeEncounter(
 
     const actionContext =
       hidden ? ['LEAVE COVER', true] as const :
-      isNearExit() ? [state.hasKey ? 'UNLOCK EXIT' : 'LOCKED · FIND KEY', true] as const :
+      isNearExit() ? (state.exitUnlocked ? ['GO THROUGH', false] as const : state.hasKey ? ['UNLOCK EXIT', true] as const : ['LOCKED · FIND KEY', true] as const) :
+      (threat === 'approaching' || threat === 'chasing') && isNearCabinet() ? ['HIDE', true] as const :
       isNearKey() ? ['COLLECT KEY', true] as const :
       isNearBell() && !state.hasKey ? ['MAKE NOISE', true] as const :
       isNearCabinet() ? ['HIDE', true] as const : ['', false] as const;
