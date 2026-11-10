@@ -10,6 +10,7 @@ export interface VehicleInput {
   throttle: number;
   brake: number;
   steering: number;
+  reverse?: number;
 }
 
 export interface VehicleTuning {
@@ -60,12 +61,13 @@ export function stepVehicle(
   if (h === 0) return { state: { ...current }, wheelAngularSpeed: 0, blockedByGate: false };
 
   const throttle = clamp(input.throttle, 0, 1);
+  const reverse = clamp(input.reverse ?? 0, 0, 1);
   const brake = clamp(input.brake, 0, 1);
   const steeringInput = clamp(input.steering, -1, 1);
   const targetSteering = steeringInput * tuning.maxSteeringAngle;
   const steering = current.steering + (targetSteering - current.steering) * (1 - Math.exp(-h * 7));
 
-  const driveAcceleration = throttle * tuning.engineAcceleration;
+  const driveAcceleration = (throttle - reverse) * tuning.engineAcceleration;
   const brakeAcceleration = brake * tuning.serviceBrake * Math.sign(current.speed || 1);
   const resistance = tuning.rollingResistance * Math.sign(current.speed) +
     tuning.aerodynamicDrag * current.speed * Math.abs(current.speed);
