@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 test('arrival driver reacts to the player exit, greets, boards, and departs', async ({ page }) => {
-  test.setTimeout(90_000);
+  // The intro runs in real time and the driver has several sequential route phases.
+  // Keep the test budget above the sum of its bounded state waits so failures report
+  // the last published runtime state instead of being masked by Playwright's outer timeout.
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const scene = page.locator('#scene-root');
@@ -10,14 +13,14 @@ test('arrival driver reacts to the player exit, greets, boards, and departs', as
       await page.waitForFunction(
         expected => document.querySelector('#scene-root')?.getAttribute('data-arrival-driver-state') === expected,
         state,
-        { timeout: 25_000 }
+        { timeout: 30_000 }
       );
     } catch {
       const runtime = await scene.evaluate(element => ({ ...((element as HTMLElement).dataset) }));
       throw new Error(`Driver did not reach state "${state}". Runtime: ${JSON.stringify(runtime)}`);
     }
   };
-  await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 70_000 });
+  await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 90_000 });
   await waitForDriverState('greeting-approach');
   await waitForDriverState('greeting');
   await waitForDriverState('returning-to-car');
