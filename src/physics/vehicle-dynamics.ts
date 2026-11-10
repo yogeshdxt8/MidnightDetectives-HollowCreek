@@ -93,9 +93,12 @@ export function stepVehicle(
     // predicted front extent reaches the gate plane, remove inward velocity;
     // repeated throttle input must never accumulate penetration or residual speed.
     const movingTowardGate = forwardZ > 0 && speed > 0;
-    const reachedClosedGate = frontZ >= closedGateZ;
+    const bumperClearance = 0.035;
+    // Keep the bumper on the safe side on every simulation tick, including
+    // ticks immediately after contact when throttle is still being requested.
+    const reachedClosedGate = frontZ >= closedGateZ - bumperClearance;
     if (movingTowardGate && reachedClosedGate) {
-      z = closedGateZ - forwardZ * halfLength - 0.035;
+      z = closedGateZ - forwardZ * halfLength - bumperClearance;
       speed = 0;
       blockedByGate = true;
     }
