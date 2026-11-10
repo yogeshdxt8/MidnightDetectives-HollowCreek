@@ -424,7 +424,7 @@ if(playArrivalSequence){
     if(greetingElapsed>=2.8){arrivalDriverState='returning-to-car';driverReturnPhase=0;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDialogue.style.display='none';}
   }
   if(arrivalDriverState==='returning-to-car'){
-    const returnTargets=[arrivalDoorWorld(-2.35,-1.15),arrivalDoorWorld(-2.35,1.15),arrivalDoorWorld(1.0,1.1),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
+    const returnTargets=[arrivalDoorWorld(-2.35,-1.15),arrivalDoorWorld(-2.35,1.15),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
     const target=returnTargets[driverReturnPhase]??returnTargets[returnTargets.length-1]!;
     const reached=moveArrivalActor(arrivalDriver.root,target,dt,1.45);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
