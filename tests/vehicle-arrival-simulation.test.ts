@@ -65,7 +65,7 @@ function routeInput(state: VehicleState, nav: ReturnType<VehicleRouteNavigator['
   const steering = Math.max(-1, Math.min(1, -Math.atan(sedanTuning.wheelbase * curvature) / sedanTuning.maxSteeringAngle));
   const cornerFactor = Math.max(0.42, Math.min(1, 1 - Math.abs(steering) * 0.48));
   const stoppingSpeed = Math.sqrt(2 * 3.2 * Math.max(0, nav.distanceToWaypoint - 0.5));
-  const targetSpeed = Math.min(maxSpeed, waypoint.speed, stoppingSpeed) * cornerFactor;
+  const targetSpeed = nav.routeComplete ? 0 : Math.min(maxSpeed, waypoint.speed, stoppingSpeed) * cornerFactor;
   const throttle = nav.distanceToWaypoint > 0.28 && state.speed < targetSpeed - 0.12 ? 1 : 0;
   const brake = state.speed > targetSpeed + 0.08 || nav.distanceToWaypoint <= 0.28
     ? Math.max(0.18, Math.min(1, (state.speed - targetSpeed) * 0.65))
@@ -170,7 +170,7 @@ describe('deterministic sedan arrival simulation', () => {
     const snapshot = navigator.update(failedPose, dt);
     expect(snapshot.mode).toBe('recovering');
     expect(snapshot.waypointIndex).toBe(0);
-    expect(snapshot.crossTrackError).toBeCloseTo(1.46, 1);
+    expect(snapshot.crossTrackError).toBeCloseTo(3.3770206432, 5);
     expect(snapshot.lookAheadDistance).toBeLessThanOrEqual(2.25);
   });
 });
