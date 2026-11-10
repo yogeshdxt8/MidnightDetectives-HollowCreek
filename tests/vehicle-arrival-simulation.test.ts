@@ -156,7 +156,7 @@ describe('deterministic sedan arrival simulation', () => {
     expect(dropoff.completed).toBe(true);
     expect(dropoff.parkingSettled).toBe(true);
     expect(Math.hypot(dropoff.state.x - parkingPose.x, dropoff.state.z - parkingPose.z)).toBeLessThanOrEqual(0.28);
-    expect(Math.abs(Math.atan2(Math.sin(dropoff.state.yaw - parkingPose.yaw), Math.cos(dropoff.state.yaw - parkingPose.yaw))).toBeLessThanOrEqual(0.22);
+    expect(Math.abs(Math.atan2(Math.sin(dropoff.state.yaw - parkingPose.yaw), Math.cos(dropoff.state.yaw - parkingPose.yaw)))).toBeLessThanOrEqual(0.22);
 
     const departure = simulateRoute(dropoff.state, routes.departure, 9000, undefined, false);
     expect(departure.completed).toBe(true);
