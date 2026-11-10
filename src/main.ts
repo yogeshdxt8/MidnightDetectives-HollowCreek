@@ -55,8 +55,8 @@ const circleRectClear=(x:number,z:number,yaw:number,halfLength:number,halfWidth:
 const sedanFootprintClear=(x:number,z:number,yaw:number)=>{const halfLength=1.94,halfWidth=.88,c=Math.cos(yaw),sn=Math.sin(yaw);for(const lx of [-halfLength,halfLength])for(const lz of [-halfWidth,halfWidth]){const wx=x+lx*c+lz*sn,wz=z-lx*sn+lz*c;if(townBuildingBounds.some(b=>wx>b.minX-.04&&wx<b.maxX+.04&&wz>b.minZ-.04&&wz<b.maxZ+.04))return false;}if(!circleRectClear(x,z,yaw,halfLength,halfWidth,0,-2.8,1.72))return false;return true;};
 type DriveWaypoint={x:number;z:number;speed:number};
 const driveRoutes={
-  approach:[{x:3.25,z:5.5,speed:3.8}],
-  dropoff:[{x:4.05,z:4.4,speed:2.8},{x:4.55,z:2.4,speed:2.7},{x:4.35,z:.2,speed:2.5},{x:3.75,z:-1.7,speed:2.2},{x:4.0,z:-4.3,speed:1.5}],
+  approach:[{x:-1.0,z:5.5,speed:2.0}],
+  dropoff:[{x:.45,z:5.28,speed:1.4},{x:1.77,z:4.67,speed:1.4},{x:2.84,z:3.56,speed:1.4},{x:3.56,z:2.04,speed:1.4},{x:3.88,z:.84,speed:1.4},{x:4.0,z:-4.3,speed:1.2}],
   departure:[{x:4.45,z:-3.7,speed:1.8},{x:4.8,z:-1.0,speed:2.0},{x:4.65,z:2.0,speed:2.5},{x:3.2,z:5.2,speed:3.0},{x:3.2,z:12.5,speed:4.2}]
 } satisfies Record<string,DriveWaypoint[]>;
 let activeDriveRoute:DriveWaypoint[]=driveRoutes.approach;
@@ -68,7 +68,7 @@ let routeRecoveryAttempts=0;
 let routeWaypointOffset=0;
 let lastCollisionReason='none';
 let parkingSnapshot:ReturnType<typeof computeParkingControl>|null=null;
-const sedanParkingPose:ParkingPose={x:4,z:-4.3,yaw:Math.atan2(2.6,.25)};
+const sedanParkingPose:ParkingPose={x:4,z:-4.3,yaw:Math.atan2(5.14,.12)};
 const sedanParkingEnvelope={centerX:sedanParkingPose.x,centerZ:sedanParkingPose.z,yaw:sedanParkingPose.yaw,halfLength:defaultParkingControllerConfig.envelopeHalfLength,halfWidth:defaultParkingControllerConfig.envelopeHalfWidth};
 const routeName=(route:DriveWaypoint[])=>route===driveRoutes.approach?'approach':route===driveRoutes.dropoff?'dropoff':'departure';
 const setDriveRoute=(route:DriveWaypoint[])=>{
