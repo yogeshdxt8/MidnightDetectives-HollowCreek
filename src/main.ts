@@ -316,9 +316,9 @@ function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sce
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
-  if(t<5){applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(t<16){applySedanPhysics(dt,3.2,-4.3,3.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else if(t<32.2){
+  if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
+  else if(t<16){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,3.2,-4.3,3.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
+  else if(t<32.2){setDriveRoute(driveRoutes.dropoff);
     // Park outside the fountain's expanded collision footprint; the sedan's full body stays clear.
     applySedanPhysics(dt,3.2,-4.3,0,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
@@ -377,7 +377,7 @@ if(playArrivalSequence){
   }
   if(t>=32.2){
     // Leave only after the driver is seated and the door is closed; accelerate under vehicle dynamics.
-    applySedanPhysics(dt,3.2,12.5,4.8,true);
+    setDriveRoute(driveRoutes.departure);applySedanPhysics(dt,3.2,12.5,4.8,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,2.2,1.4,dt);headlampRight.intensity=headlampLeft.intensity;
   }
   if(t>=41&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
