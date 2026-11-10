@@ -480,3 +480,15 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
 .escape-action[hidden]{display:none!important}
 .escape-action:disabled{opacity:.5}
 @media(max-width:480px){#app.stealth-mode .overlay h1{font-size:clamp(25px,8vw,34px)}#app.stealth-mode .overlay strong{top:128px;font-size:11px}.escape-action{right:14px;bottom:22px;min-width:112px;min-height:52px}.touch-controls #joystick{left:14px;bottom:14px;width:104px;height:104px}}
+
+
+/* Override the legacy compact-phone rule that hid all objective text. */
+#app.stealth-mode main > .overlay h1,
+#app.stealth-mode main > .overlay p {
+  display: block !important;
+  visibility: visible !important;
+}
+#app.stealth-mode main > .overlay strong {
+  display: block !important;
+  visibility: visible !important;
+}
