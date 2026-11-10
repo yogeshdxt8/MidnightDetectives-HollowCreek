@@ -75,7 +75,7 @@ const rain=new THREE.Points(rainGeometry,new THREE.PointsMaterial({color:'#a9c9e
 const lightningGroup=new THREE.Group();scene.add(lightningGroup);
 const lightningFlash=new THREE.PointLight('#d9eaff',0,42,1.5);lightningFlash.position.set(-3,10,-8);scene.add(lightningFlash);
 let nextLightningAt=1.1;let lightningOffAt=0;let stormStarted=true;
-let arrivalFinishedAt=0;
+
 const makeLightning=()=>{lightningGroup.clear();const points:THREE.Vector3[]=[];let x=(Math.random()-.5)*13,y=10,z=-10+(Math.random()-.5)*5;points.push(new THREE.Vector3(x,y,z));for(let i=0;i<6;i++){x+=(Math.random()-.5)*2.3;y-=1.55;z+=(Math.random()-.5)*1.2;points.push(new THREE.Vector3(x,y,z));}const geometry=new THREE.BufferGeometry().setFromPoints(points);const bolt=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#e8f4ff'}));lightningGroup.add(bolt);};
 
 const fourGatesEnvironment=createFourGatesEnvironment();scene.add(fourGatesEnvironment.root);
@@ -258,7 +258,7 @@ if(t<3.2){const progress=THREE.MathUtils.smoothstep(t,0,3.2);arrivalCar.position
 else{arrivalCar.position.z=.15;headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.75,1.8,dt);headlampRight.intensity=headlampLeft.intensity;}
 if(t>1.1&&gateOpenedAt===0){gateOpenedAt=t;gateLeaves[0]!.position.x=-5.2;gateLeaves[1]!.position.x=5.2;}
 if(t>3.35&&t<4.1)driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-1.2,7,dt);
-if(t>=4.1&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalFinishedAt=t;driverDoorPivot.rotation.y=-1.2;player.position.set(1.85,0,.35);player.visible=true;arrivalDriver.root.visible=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
+if(t>=4.1&&!arrivalSequenceStarted){arrivalSequenceStarted=true;driverDoorPivot.rotation.y=-1.2;player.position.set(1.85,0,.35);player.visible=true;arrivalDriver.root.visible=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
 if(t>5.7&&t<6.25){arrivalDriver.root.position.x=THREE.MathUtils.damp(arrivalDriver.root.position.x,-1.25,3,dt);arrivalDriver.root.rotation.y=-Math.PI/2;}
 if(t>=6.2&&t<8.5){arrivalDogs.forEach((dog,i)=>{dog.visible=true;const targetX=(i<2?-1:1)*(1.25+(i%2)*.65);const targetZ=1.1+Math.floor(i/2)*.75;dog.position.x=THREE.MathUtils.damp(dog.position.x,targetX,1.15,dt);dog.position.z=THREE.MathUtils.damp(dog.position.z,targetZ,1.15,dt);dog.rotation.y=dog.position.x<0?Math.PI/2:-Math.PI/2;dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*10+i))*.11;});if(!dogsBarking){dogsBarking=true;arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<4;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*280);void gameAudio.playThunder();}}
 if(t>=8.5&&t<10.5){arrivalDialogue.textContent='The dogs are blocking the road!';}
