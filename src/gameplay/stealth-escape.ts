@@ -30,6 +30,7 @@ export function createStealthEscapeEncounter(
   let suspicionSeconds = 0;
   let stalledSeconds = 0;
   let lastPlayerPosition = player.position.clone();
+  let lastSafePosition = player.position.clone();
   let hintElapsed = 0;
   let lastHintId = '';
   let exitProgress = 0;
@@ -364,9 +365,13 @@ export function createStealthEscapeEncounter(
       threat = 'searching';
       threatTimer = 1.8;
       entity.position.set(-3.4, 0, -1.5);
-      onNotify('The creature caught you. Try another route.');
-      // Keep the prototype forgiving: the player retains their key if already collected.
-      player.position.set(0, 0, 5.2);
+      onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
+      // A forgiving encounter checkpoint preserves the key and avoids forcing a repeat walk through the fountain.
+      player.position.copy(lastSafePosition);
+      lastPlayerPosition.copy(lastSafePosition);
+    }
+    if (hidden || threat === 'patrolling' || threat === 'investigating') {
+      if (Math.hypot(player.position.x, player.position.z + 2.8) > 2.2) lastSafePosition.copy(player.position);
     }
 
     if (state.exitUnlocked && isNearExit()) {
