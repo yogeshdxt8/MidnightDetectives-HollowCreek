@@ -6,6 +6,7 @@ export interface EscapeEncounterState {
   readonly exitUnlocked: boolean;
   readonly escaped: boolean;
   readonly keyFound: boolean;
+  readonly showKeyLocationHint: boolean;
   readonly playerNearKey: boolean;
   readonly playerNearExit: boolean;
   readonly playerStalledNearKey: boolean;
@@ -28,6 +29,7 @@ export const initialEscapeEncounterState: EscapeEncounterState = {
   exitUnlocked: false,
   escaped: false,
   keyFound: false,
+  showKeyLocationHint: false,
   playerNearKey: false,
   playerNearExit: false,
   playerStalledNearKey: false,
@@ -69,7 +71,7 @@ export function getEscapeHint(
   if (state.playerStalledNearKey && state.distractionAvailable) {
     return { id: 'distract', message: 'Make a noise to draw it away.' };
   }
-  if (!state.keyFound) {
+  if (!state.keyFound && state.showKeyLocationHint) {
     return {
       id: 'key-location',
       message: context.keyLocationHint ?? 'Look near the overturned cabinet.',
