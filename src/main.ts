@@ -194,7 +194,7 @@ caseToggle?.addEventListener('click',()=>{
  caseToggle.textContent=open?'CLOSE CASE':'CASE · '+(document.querySelector('#count')?.textContent??'0')+'/3';
 });
 const caseCount=document.querySelector('#count');
-caseCount?.addEventListener('DOMSubtreeModified',()=>{if(!document.querySelector<HTMLElement>('#app')?.classList.contains('case-open')&&caseToggle)caseToggle.textContent='CASE · '+(caseCount.textContent??'0')+'/3';});
+if(caseCount&&caseToggle){new MutationObserver(()=>{if(!document.querySelector<HTMLElement>('#app')?.classList.contains('case-open'))caseToggle.textContent='CASE · '+(caseCount.textContent??'0')+'/3';}).observe(caseCount,{childList:true,characterData:true,subtree:true});}
 const joystick=document.querySelector<HTMLElement>('#joystick');const stick=document.querySelector<HTMLElement>('#stick');const move={x:0,y:0};let joystickPointer:number|null=null;
 function updateJoystick(e:PointerEvent){if(!joystick||!stick)return;const r=joystick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.34,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy),scale=len>max?max/len:1;move.x=dx*scale/max;move.y=dy*scale/max;stick.style.transform=`translate(${move.x*max}px,${move.y*max}px)`;}
 joystick?.addEventListener('pointerdown',e=>{e.preventDefault();joystickPointer=e.pointerId;joystick.setPointerCapture(e.pointerId);updateJoystick(e);});
