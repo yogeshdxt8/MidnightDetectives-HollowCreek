@@ -82,10 +82,13 @@ test('starts with immediate control and a clear key-and-exit objective', async (
 
 test('completes the mandatory key, return, unlock and physical escape sequence', async ({ page }) => {
   test.setTimeout(90_000);
+  const runtimeErrors: string[] = [];
+  page.on('pageerror', error => runtimeErrors.push(error.stack ?? error.message));
+  page.on('console', message => { if (message.type() === 'error') runtimeErrors.push(message.text()); });
   await page.goto('/');
   await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
-  // Trigger the authored bell distraction on the north-west side, then cross the open north route to the key.
+  // Trigger the authored bell distraction on the north-east side, then cross the open north route to the key.
   await movePlayerTo(page, { x: 3.55, z: 3.2 });
   await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
   await page.locator('#escape-action').click();
@@ -108,6 +111,7 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('true');
   await expect(page.locator('#hint')).toHaveText('ESCAPED · CHALLENGE COMPLETE');
   await expect(page.locator('#status')).toHaveText('ESCAPE COMPLETE');
+  expect(runtimeErrors).toEqual([]);
 });
 
 test('shows a single contextual action and keeps the touch HUD inside a phone viewport', async ({ page }) => {
