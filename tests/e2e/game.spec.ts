@@ -20,7 +20,12 @@ test('arrival driver reacts to the player exit, greets, boards, and departs', as
       throw new Error(`Driver did not reach state "${state}". Runtime: ${JSON.stringify(runtime)}`);
     }
   };
-  await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 90_000 });
+  try {
+    await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 90_000 });
+  } catch {
+    const runtime = await scene.evaluate(element => ({ ...((element as HTMLElement).dataset) }));
+    throw new Error(`Passenger exit did not complete. Runtime: ${JSON.stringify(runtime)}`);
+  }
   await waitForDriverState('greeting-approach');
   await waitForDriverState('greeting');
   await waitForDriverState('returning-to-car');
