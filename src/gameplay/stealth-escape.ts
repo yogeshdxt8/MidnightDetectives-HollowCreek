@@ -294,6 +294,7 @@ export function createStealthEscapeEncounter(
       hidden = true;
       player.position.x = cabinet.position.x + 1.05;
       player.position.z = cabinet.position.z + .45;
+      lastPlayerPosition.copy(player.position);
       onNotify('You hide behind the overturned cabinet.');
       return;
     }
