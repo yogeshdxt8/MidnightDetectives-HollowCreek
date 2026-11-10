@@ -38,8 +38,8 @@ const clues:readonly Clue[]=[{id:'note',title:'Torn note',description:'A torn no
 const root=document.querySelector<HTMLDivElement>('#scene-root');if(!root)throw new Error('Missing scene root');
 const sceneRoot=root;const scene=new THREE.Scene();scene.background=new THREE.Color('#17243a');scene.fog=new THREE.FogExp2('#17243a',.027);
 const camera=new THREE.PerspectiveCamera(48,1,.1,100);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;sceneRoot.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight('#a9c4e8','#1b2434',1.25));const moon=new THREE.DirectionalLight('#c8d8f0',1.05);moon.position.set(-5,10,6);scene.add(moon);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;sceneRoot.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight('#b9cbea','#202b40',1.45));const moon=new THREE.DirectionalLight('#d5e2f5',1.35);moon.position.set(-5,10,6);scene.add(moon);const characterRim=new THREE.DirectionalLight('#8daed8',.72);characterRim.position.set(4,4,5);scene.add(characterRim);const squareFill=new THREE.PointLight('#d39a61',.48,18,2);squareFill.position.set(0,4,-7);scene.add(squareFill);
 const fourGatesEnvironment=createFourGatesEnvironment();scene.add(fourGatesEnvironment.root);
 const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.65,.5,12),new THREE.MeshStandardMaterial({color:'#667184'}));fountain.position.set(0,.25,-2.8);scene.add(fountain);
 const water=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.08,12),new THREE.MeshStandardMaterial({color:'#536f89',metalness:.3,roughness:.25}));water.position.set(0,.55,-2.8);scene.add(water);
