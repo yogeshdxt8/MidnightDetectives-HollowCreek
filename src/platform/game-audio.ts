@@ -24,6 +24,27 @@ export class GameAudio {
     if (this.enabled && this.context && this.context.state !== 'closed' && this.context.state !== 'running') void this.context.resume().catch(() => undefined);
   }
 
+  async playThunder(): Promise<void> {
+    if (!this.enabled || this.paused || !this.context || this.context.state !== 'running') return;
+    try {
+      const now = this.context.currentTime;
+      const oscillator = this.context.createOscillator();
+      const gain = this.context.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(58, now);
+      oscillator.frequency.exponentialRampToValueAtTime(27, now + 1.8);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+      oscillator.connect(gain);
+      gain.connect(this.context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 2.25);
+    } catch {
+      // Thunder is atmospheric only; audio failure must never block gameplay.
+    }
+  }
+
   async playUiCue(): Promise<void> {
     if (!this.enabled || this.paused || typeof window === 'undefined') return;
     const AudioContextConstructor = window.AudioContext;
