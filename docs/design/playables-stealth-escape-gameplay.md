@@ -81,18 +81,25 @@ The key and exit must be visually distinguishable. Use shape, iconography, text,
 
 ## 7. Hint system — mandatory quality requirement
 
-Hints must be contextual, actionable, and progressively clearer. They should help the player understand the next useful action without immediately solving every challenge.
+The following player-facing hint messages and their state conditions are the approved baseline. They must be implemented as gameplay logic, not left as documentation-only examples. Hints must be contextual, actionable, and progressively clearer. They should help the player understand the next useful action without immediately solving every challenge.
 
 ### Always-on guidance
-- At encounter start, state the objective plainly: **Find the key and unlock the exit.**
-- If the key is not immediately visible, give a short, specific directional or landmark clue.
+- At encounter start, show: **Find the key. The exit is locked.**
+- If the player has not found the key and has made no meaningful progress, show a specific location hint: **Look near the overturned cabinet.** The actual landmark must match the level's key placement; never hard-code a cabinet hint into a level without that landmark.
+- When the creature is approaching and its current perception/route makes the player unsafe, show: **Hide! It is coming this way.** Trigger from actual approach/detection state, not a timer alone.
+- If the player is stuck near the key while the entity blocks the route or watches the key area, and a valid distraction is available, show: **Make a noise to draw it away.** Never show this hint if no usable distraction exists.
+- When the key is collected, update the objective to: **The exit is unlocked with the key. Get there!** (The door remains physically locked until the player returns and interacts.)
+- At the exit with the key, show the contextual action: **Unlock exit**. After unlocking, guide the player through the doorway if needed.
 - When the player approaches a relevant hiding place, distraction object, key, or exit, show the appropriate contextual interaction.
 - When the entity changes state, provide a readable cue through its behaviour and, where useful, a concise UI label or sound cue.
 
 ### Progressive hints
-1. **Soft hint:** After a meaningful period without progress, point attention toward the relevant landmark, cover, patrol pattern, or distraction opportunity.
-2. **Action hint:** If the player remains stuck or repeats an unsuccessful approach, state a concrete next action, such as waiting until the entity investigates the noise or using the nearby object to draw it away.
-3. **Explicit hint:** After repeated failures or continued inability to progress, explain the key route and the safest available opportunity in plain language.
+1. **Objective hint (immediate):** **Find the key. The exit is locked.**
+2. **Key-location hint (no progress):** **Look near the overturned cabinet.** Use the actual authored landmark for that stage.
+3. **Threat hint (creature approaching):** **Hide! It is coming this way.** Trigger only when the entity is actually approaching or has a credible line-of-sight threat.
+4. **Distraction hint (stuck near key):** **Make a noise to draw it away.** Trigger only when the player is stalled near the key, the entity is obstructing the approach, and a valid distraction can be used.
+5. **Key collected (objective transition):** **The exit is unlocked with the key. Get there!** This means the player now has the key needed to unlock the door; the player must still return and interact with the door.
+6. **At exit (interaction):** **Unlock exit.** After the unlock interaction succeeds, the door opens and the player can escape.
 
 Hints should respond to the player's actual state. Do not tell the player to use a distraction if no usable distraction is available, or to wait if the entity is not going to create a safe opening. Never give contradictory instructions.
 
@@ -119,9 +126,13 @@ Optional rewards must not be required to unlock the exit. Avoid daily streaks, f
 
 The first Abandoned Residence prototype is acceptable only when:
 
-- The player understands the key-and-exit objective within the opening moments.
-- The key's location is discoverable without random searching.
+- The player receives control immediately and sees the exact opening hint: **Find the key. The exit is locked.**
+- The key's location is discoverable without random searching; the location hint uses a real level landmark.
 - The exit clearly communicates that it is locked and requires the key.
+- Collecting the key does not automatically unlock the exit or finish the encounter.
+- After collecting the key, the player physically returns to the exit, sees **Unlock exit**, and deliberately interacts to open it.
+- The encounter completes only after the player passes through the opened exit.
+- The five approved hint messages appear only when their corresponding gameplay conditions are true.
 - The entity's patrol and attention states are readable.
 - The player can succeed by waiting for a safe opportunity.
 - The player can also succeed by using the authored distraction opportunity.
