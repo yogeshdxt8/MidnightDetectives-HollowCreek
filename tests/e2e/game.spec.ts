@@ -6,11 +6,16 @@ test('arrival driver reacts to the player exit, greets, boards, and departs', as
   await page.goto('/');
   const scene = page.locator('#scene-root');
   const waitForDriverState = async (state: string) => {
-    await page.waitForFunction(
-      expected => document.querySelector('#scene-root')?.getAttribute('data-arrival-driver-state') === expected,
-      state,
-      { timeout: 70_000 }
-    );
+    try {
+      await page.waitForFunction(
+        expected => document.querySelector('#scene-root')?.getAttribute('data-arrival-driver-state') === expected,
+        state,
+        { timeout: 25_000 }
+      );
+    } catch {
+      const runtime = await scene.evaluate(element => ({ ...((element as HTMLElement).dataset) }));
+      throw new Error(`Driver did not reach state "${state}". Runtime: ${JSON.stringify(runtime)}`);
+    }
   };
   await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 70_000 });
   await waitForDriverState('greeting-approach');
