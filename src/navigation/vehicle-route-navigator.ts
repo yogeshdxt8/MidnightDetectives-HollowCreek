@@ -162,15 +162,22 @@ export class VehicleRouteNavigator {
       const finalWaypoint = this.waypointIndex === this.waypoints.length - 1;
       const distanceToEndpoint = distanceBetween(pose, this.waypoints[this.waypointIndex]!);
       const reached = distanceToEndpoint <= this.config.waypointRadius;
+      // Intermediate waypoints may be passed inside their corridor, but the
+      // terminal waypoint is a physical stop target: crossing its plane is not
+      // arrival. Keep tracking it (including reverse recovery when behind) until
+      // the vehicle is actually within the terminal radius.
       const passedInsideCorridor =
+        !finalWaypoint &&
         projection.fraction >= 1 &&
         Math.abs(projection.crossTrack) <= this.config.passCorridorHalfWidth;
 
       if (!reached && !passedInsideCorridor) break;
 
       if (finalWaypoint) {
-        this.mode = 'complete';
-        this.recoveryElapsed = 0;
+        if (reached) {
+          this.mode = 'complete';
+          this.recoveryElapsed = 0;
+        }
         break;
       }
 
