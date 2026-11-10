@@ -450,7 +450,8 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
   }
   .overlay h1,
   .overlay p {
-    display: none;
+    display: none !important;
+    visibility: hidden !important;
   }
   .overlay > small {
     display: inline-flex;
