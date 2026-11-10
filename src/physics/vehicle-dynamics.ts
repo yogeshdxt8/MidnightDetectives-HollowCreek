@@ -65,7 +65,6 @@ export function stepVehicle(
   const targetSteering = steeringInput * tuning.maxSteeringAngle;
   const steering = current.steering + (targetSteering - current.steering) * (1 - Math.exp(-h * 7));
 
-  const direction = Math.sign(current.speed || (throttle > 0 ? 1 : -1));
   const driveAcceleration = throttle * tuning.engineAcceleration;
   const brakeAcceleration = brake * tuning.serviceBrake * Math.sign(current.speed || 1);
   const resistance = tuning.rollingResistance * Math.sign(current.speed) +
