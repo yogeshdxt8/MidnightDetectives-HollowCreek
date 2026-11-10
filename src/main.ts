@@ -550,4 +550,4 @@ async function initializeGamePersistence(){
 void initializeGamePersistence();
 
 animate();
-window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);observer.disconnect();gameAudio.dispose();playablesPlatform.dispose();renderer.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});window.clearTimeout(toastTimer);},{once:true});
+window.addEventListener('pagehide',()=>{sceneRoot.dataset['pageHidden']='true';cancelAnimationFrame(frame);observer.disconnect();gameAudio.dispose();playablesPlatform.dispose();renderer.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});window.clearTimeout(toastTimer);},{once:true});
