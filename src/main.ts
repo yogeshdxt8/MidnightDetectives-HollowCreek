@@ -69,7 +69,10 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const localX=dx*c-dz*sn,localZ=dx*sn+dz*c;
   const distance=Math.hypot(dx,dz);
   const lookAhead=Math.max(1.8,Math.min(4.2,1.35+Math.abs(sedanState.speed)*.72));
-  const alpha=Math.atan2(localZ,Math.max(.05,localX));
+  // Preserve the target quadrant when a waypoint falls behind the vehicle. Clamping
+  // localX to a positive value collapses rear targets into +/-90 degrees, causing
+  // the pure-pursuit controller to orbit instead of recovering the route.
+  const alpha=Math.atan2(localZ,localX);
   // Pure-pursuit bicycle steering: curvature is based on a look-ahead point,
   // not a direct heading snap. Positive steering turns the car toward world -Z.
   const curvature=2*Math.sin(alpha)/Math.max(lookAhead,distance*.35);
