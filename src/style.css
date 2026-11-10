@@ -282,3 +282,45 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
     margin:0;
   }
 }
+
+
+/* Portrait HUD correction: restore normal document flow after legacy offset rules. */
+@media (max-width: 699px) {
+  main > .overlay {
+    inset: 0 0 auto 0 !important;
+    display: block;
+    padding: 16px 18px 20px !important;
+    background: linear-gradient(180deg, #080d19f5 0%, #080d19e8 72%, #080d19b8 100%) !important;
+  }
+  main > .overlay small,
+  main > .overlay h1,
+  main > .overlay p {
+    position: static !important;
+    top: auto !important;
+    transform: none !important;
+  }
+  main > .overlay small {
+    display: block;
+    max-width: 56%;
+    margin: 0 0 8px;
+    font-size: 9px;
+    line-height: 1.4;
+  }
+  main > .overlay h1 {
+    display: block;
+    width: min(58%, 310px);
+    max-width: 310px !important;
+    margin: 0 0 8px !important;
+    font-size: clamp(24px, 6.2vw, 34px) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -.04em;
+  }
+  main > .overlay p {
+    display: block;
+    width: min(58%, 300px);
+    max-width: 300px !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+}
