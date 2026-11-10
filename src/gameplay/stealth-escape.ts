@@ -244,6 +244,8 @@ export function createStealthEscapeEncounter(
     threatTimer = 0;
     patrolIndex = 0;
     threatTarget.copy(patrol[0]!);
+    entity.position.set(3.4, 0, -1.5);
+    entity.rotation.y = -Math.PI / 2;
     lastKnownPlayer.copy(encounterStartPosition);
     lastPlayerPosition.copy(encounterStartPosition);
     player.position.copy(encounterStartPosition);
@@ -482,7 +484,7 @@ export function createStealthEscapeEncounter(
         completedRoot.dataset['escapeExitUnlocked'] = 'true';
         completedRoot.dataset['escapeComplete'] = 'true';
       }
-      setActionLabel('', false);
+      setActionLabel('PLAY AGAIN', true);
       return;
     }
 
