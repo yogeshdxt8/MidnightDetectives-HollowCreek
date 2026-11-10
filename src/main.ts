@@ -406,7 +406,7 @@ if(playArrivalSequence){
     arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();
   }
   if(arrivalDriverState==='greeting-approach'){
-    const greetingRoute=[arrivalDoorWorld(-2.35,1.15),arrivalDoorWorld(-2.35,-1.15),driverGreetingTarget];
+    const greetingRoute=[arrivalDoorWorld(-.1,1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-2.35,-1.48),driverGreetingTarget];
     const reached=moveArrivalActor(arrivalDriver.root,greetingRoute[driverGreetingPhase]!,dt,1.35);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
     arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.25,stride*.17);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
@@ -424,7 +424,7 @@ if(playArrivalSequence){
     if(greetingElapsed>=2.8){arrivalDriverState='returning-to-car';driverReturnPhase=0;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDialogue.style.display='none';}
   }
   if(arrivalDriverState==='returning-to-car'){
-    const returnTargets=[arrivalDoorWorld(-2.35,-1.15),arrivalDoorWorld(-2.35,1.15),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
+    const returnTargets=[arrivalDoorWorld(-2.35,-1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
     const target=returnTargets[driverReturnPhase]??returnTargets[returnTargets.length-1]!;
     const reached=moveArrivalActor(arrivalDriver.root,target,dt,1.45);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
