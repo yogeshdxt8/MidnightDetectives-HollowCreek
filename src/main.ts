@@ -53,7 +53,7 @@ const sedanFootprintClear=(x:number,z:number,yaw:number)=>{const halfLength=1.94
 type DriveWaypoint={x:number;z:number;speed:number};
 const driveRoutes={
   approach:[{x:3.25,z:5.5,speed:3.8}],
-  dropoff:[{x:4.05,z:4.4,speed:2.8},{x:4.55,z:2.4,speed:2.7},{x:4.35,z:.2,speed:2.5},{x:3.75,z:-1.7,speed:2.2},{x:3.2,z:-4.3,speed:1.5}],
+  dropoff:[{x:4.05,z:4.4,speed:2.8},{x:4.55,z:2.4,speed:2.7},{x:4.35,z:.2,speed:2.5},{x:3.75,z:-1.7,speed:2.2},{x:4.0,z:-4.3,speed:1.5}],
   departure:[{x:4.45,z:-3.7,speed:1.8},{x:4.8,z:-1.0,speed:2.0},{x:4.65,z:2.0,speed:2.5},{x:3.2,z:5.2,speed:3.0},{x:3.2,z:12.5,speed:4.2}]
 } satisfies Record<string,DriveWaypoint[]>;
 let activeDriveRoute:DriveWaypoint[]=driveRoutes.approach;
@@ -318,10 +318,10 @@ if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(t<16){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,3.2,-4.3,3.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
+  else if(t<16){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
   else if(t<32.2){setDriveRoute(driveRoutes.dropoff);
     // Park outside the fountain's expanded collision footprint; the sedan's full body stays clear.
-    applySedanPhysics(dt,3.2,-4.3,0,true);
+    applySedanPhysics(dt,4.0,-4.3,0,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
