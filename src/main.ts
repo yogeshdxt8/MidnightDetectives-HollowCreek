@@ -562,7 +562,7 @@ if(playArrivalSequence){
     setDriveRoute(driveRoutes.departure);applySedanPhysics(dt,3.2,12.5,4.8,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,2.2,1.4,dt);headlampRight.intensity=headlampLeft.intensity;
     const finalWaypoint=driveRoutes.departure[driveRoutes.departure.length-1]!;
-    if(Math.hypot(finalWaypoint.x-sedanState.x,finalWaypoint.z-sedanState.z)<.8&&Math.abs(sedanState.speed)<.12){if(arrivalWorkflowAI.emit('departure-route-completed')){driverDepartedReached=true;arrivalCar.visible=false;}}
+    if(driveRouteComplete&&Math.abs(sedanState.speed)<.12){if(arrivalWorkflowAI.emit('departure-route-completed')){driverDepartedReached=true;arrivalCar.visible=false;}}
   }
   if(arrivalWorkflowAI.isComplete()&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
 }if(!stormStarted){stormStarted=true;rain.material.opacity=.82;stormFog.density=.043;}
