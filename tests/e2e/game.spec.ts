@@ -1,41 +1,55 @@
 import { expect, test } from '@playwright/test';
 
 test('arrival driver reacts to the player exit, greets, boards, and departs', async ({ page }) => {
-  // The intro runs in real time and the driver has several sequential route phases.
-  // Keep the test budget above the sum of its bounded state waits so failures report
-  // the last published runtime state instead of being masked by Playwright's outer timeout.
-  test.setTimeout(180_000);
+  // Low-end headless WebGL can produce fewer frames than wall-clock time suggests.
+  // The workflow is event-gated, so wait for latched physical milestones rather
+  // than polling transient state names that can change between browser polls.
+  test.setTimeout(360_000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const scene = page.locator('#scene-root');
-  const waitForDriverState = async (state: string) => {
+  const waitForMilestone = async (attribute: string, expected = 'true', timeout = 240_000) => {
     try {
       await page.waitForFunction(
-        expected => document.querySelector('#scene-root')?.getAttribute('data-arrival-driver-state') === expected,
-        state,
-        { timeout: 30_000 }
+        ({ attribute, expected }) => document.querySelector('#scene-root')?.getAttribute(attribute) === expected,
+        { attribute, expected },
+        { timeout }
       );
     } catch {
       const runtime = await scene.evaluate(element => ({ ...((element as HTMLElement).dataset) }));
-      throw new Error(`Driver did not reach state "${state}". Runtime: ${JSON.stringify(runtime)}`);
+      throw new Error(`Arrival milestone ${attribute}=${expected} was not reached. Runtime: ${JSON.stringify(runtime)}`);
     }
   };
-  try {
-    await page.waitForFunction(() => document.querySelector('#scene-root')?.getAttribute('data-player-exit-reached') === 'true', null, { timeout: 90_000 });
-  } catch {
-    const runtime = await scene.evaluate(element => ({ ...((element as HTMLElement).dataset) }));
-    throw new Error(`Passenger exit did not complete. Runtime: ${JSON.stringify(runtime)}`);
-  }
-  await waitForDriverState('greeting-approach');
-  await waitForDriverState('greeting');
-  await waitForDriverState('returning-to-car');
-  await waitForDriverState('boarding');
-  await waitForDriverState('seated');
-  await waitForDriverState('departing');
-  await waitForDriverState('departed');
-  await expect(scene).toHaveAttribute('data-player-exit-reached', 'true');
-});
 
+  await waitForMilestone('data-player-exit-reached');
+  await waitForMilestone('data-driver-seated-reached');
+  await waitForMilestone('data-driver-departed-reached');
+  await expect(scene).toHaveAttribute('data-arrival-driver-state', 'departed');
+  await expect(scene).toHaveAttribute('data-arrival-car-parked', 'true');
+  await expect(scene).toHaveAttribute('data-driver-door-opened', 'true');
+  await expect(scene).toHaveAttribute('data-passenger-door-opened', 'true');
+
+  const events = await scene.getAttribute('data-arrival-workflow-events');
+  expect(events?.split(',')).toEqual([
+    'dropoff-reached',
+    'car-parked',
+    'driver-door-opened',
+    'driver-exited',
+    'driver-door-closed',
+    'passenger-door-opened',
+    'passenger-exited',
+    'player-clear-of-car',
+    'greeting-position-reached',
+    'greeting-finished',
+    'driver-at-door',
+    'driver-boarded',
+    'driver-door-close-requested',
+    'driver-door-closed-after-boarding',
+    'departure-route-completed'
+  ]);
+  await expect(scene).toHaveAttribute('data-player-exit-reached', 'true');
+  await expect(scene).toHaveAttribute('data-arrival-ai-rejected-events', '0');
+});
 test('renders the investigation interface and WebGL scene', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
