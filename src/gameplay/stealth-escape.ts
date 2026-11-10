@@ -104,7 +104,7 @@ export function createStealthEscapeEncounter(
 
   // Landmark cabinet and a small hiding pocket behind it.
   const cabinet = new THREE.Group();
-  cabinet.position.set(4.15, 0, 3.75);
+  cabinet.position.set(-4.15, 0, 3.75);
   cabinet.rotation.z = Math.PI / 2; // visibly toppled onto its side
   scene.add(cabinet);
   addMesh(cabinet, new THREE.BoxGeometry(1.2, .92, .72), mats.wood, 0, .46, 0);
@@ -117,7 +117,7 @@ export function createStealthEscapeEncounter(
 
   // Mandatory brass key, deliberately visible beside the overturned cabinet.
   const key = new THREE.Group();
-  key.position.set(3.25, .18, 3.35);
+  key.position.set(-3.25, .18, 3.35);
   scene.add(key);
   addMesh(key, new THREE.TorusGeometry(.13, .035, 7, 14), mats.keyGlow, 0, .12, 0);
   addMesh(key, new THREE.BoxGeometry(.055, .34, .055), mats.keyGlow, .14, -.02, 0);
@@ -129,7 +129,7 @@ export function createStealthEscapeEncounter(
 
   // One authored distraction: a loose brass service bell on the opposite side of the square.
   const bell = new THREE.Group();
-  bell.position.set(-3.55, 0, 3.2);
+  bell.position.set(3.55, 0, 3.2);
   scene.add(bell);
   addMesh(bell, new THREE.CylinderGeometry(.22, .28, .22, 12), mats.bell, 0, .16, 0);
   addMesh(bell, new THREE.SphereGeometry(.055, 8, 6), mats.metal, 0, .31, 0);
@@ -162,16 +162,15 @@ export function createStealthEscapeEncounter(
   addMesh(entity, new THREE.SphereGeometry(.22, 12, 10), mats.mask, 0, 1.52, .035);
   addMesh(entity, new THREE.BoxGeometry(.065, .34, .065), mats.coatDark, -.43, .92, 0);
   addMesh(entity, new THREE.BoxGeometry(.065, .34, .065), mats.coatDark, .43, .92, 0);
-  entity.position.set(-3.4, 0, -1.5);
-  entity.rotation.y = Math.PI / 2;
+  entity.position.set(3.4, 0, -1.5);
+  entity.rotation.y = -Math.PI / 2;
 
   const patrol: THREE.Vector3[] = [
-    new THREE.Vector3(-3.55, 0, -1.25),
-    new THREE.Vector3(-2.7, 0, -5.5),
-    new THREE.Vector3(2.25, 0, -5.75),
-    new THREE.Vector3(3.55, 0, -1.15),
-    new THREE.Vector3(2.2, 0, 1.05),
-    new THREE.Vector3(-2.3, 0, 1.0),
+    new THREE.Vector3(2.7, 0, -5.5),
+    new THREE.Vector3(-2.25, 0, -5.75),
+    new THREE.Vector3(-3.55, 0, -1.15),
+    new THREE.Vector3(-2.2, 0, 1.05),
+    new THREE.Vector3(2.3, 0, 1.0),
   ];
   let patrolIndex = 1;
   let threat: 'patrolling' | 'investigating' | 'approaching' | 'searching' | 'chasing' = 'patrolling';
@@ -406,7 +405,7 @@ export function createStealthEscapeEncounter(
       player.position.x = THREE.MathUtils.clamp(player.position.x + awayX / awayLength * 1.1, -5.2, 5.2);
       player.position.z = THREE.MathUtils.clamp(player.position.z + awayZ / awayLength * 1.1, -9.8, 6.2);
       lastPlayerPosition.copy(player.position);
-      entity.position.set(-3.4, 0, -1.5);
+      entity.position.set(3.4, 0, -1.5);
       onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
     }
 
