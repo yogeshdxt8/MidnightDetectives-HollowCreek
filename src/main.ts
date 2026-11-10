@@ -541,7 +541,7 @@ async function initializeGamePersistence(){
   currentSave=result.save;
   const restoredScore=calculateInvestigationScore(result.save);
   if(restoredScore>0){saveQueue=saveQueue.then(async()=>{if(gamePaused)return;await playablesPlatform.sendScore(restoredScore);lastSubmittedScore=Math.max(lastSubmittedScore,restoredScore);}).catch(error=>{console.warn('Initial Playables score submission failed',error);});}
-  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;clock.start();gameAudio.resume();gameInteractable=gameReadyNotified;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
+  playablesPlatform.registerLifecycle({onPause:()=>{if(gamePaused)return;gamePaused=true;sceneRoot.dataset['gamePaused']='true';sceneRoot.dataset['pauseSource']='playables-sdk';gameInteractable=false;resetJoystickInput();window.clearTimeout(saveTimer);window.clearTimeout(toastTimer);toast?.classList.remove('show');gameAudio.pause();clock.stop();cancelAnimationFrame(frame);requestGameSave(true);},onResume:()=>{if(!gamePaused)return;gamePaused=false;sceneRoot.dataset['gamePaused']='false';sceneRoot.dataset['pauseSource']='resumed';clock.start();gameAudio.resume();gameInteractable=gameReadyNotified;animate();},onAudioEnabledChange:enabled=>{gameAudio.setEnabled(enabled);}});
   document.addEventListener('click',()=>{gameAudio.playUiCue();scheduleGameSave();});
   persistenceReady=true;
   notifyReadyWhenPossible();
