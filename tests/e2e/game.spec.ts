@@ -85,9 +85,11 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await page.goto('/');
   await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
-  // Approach the key from the north side of the fountain, keeping clear of its collision radius.
-  await movePlayerTo(page, { x: 3.25, z: 1.5 });
-  await movePlayerTo(page, { x: 3.25, z: -3.35 });
+  // Trigger the authored bell distraction on the north-west side, then cross the open north route to the key.
+  await movePlayerTo(page, { x: -3.55, z: 3.2 });
+  await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
+  await page.locator('#escape-action').click();
+  await movePlayerTo(page, { x: 3.25, z: 3.35 });
   await expect(page.locator('#escape-action')).toHaveText('COLLECT KEY');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-has-key')).toBe('true');
