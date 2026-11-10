@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('arrival driver reacts to the player exit, greets, boards, and departs', async ({ page }) => {
+test('arrival driver receives GO immediately after passenger clears, boards, and departs', async ({ page }) => {
   // Low-end headless WebGL can produce fewer frames than wall-clock time suggests.
   // The workflow is event-gated, so wait for latched physical milestones rather
   // than polling transient state names that can change between browser polls.
@@ -39,8 +39,7 @@ test('arrival driver reacts to the player exit, greets, boards, and departs', as
     'passenger-door-opened',
     'passenger-exited',
     'player-clear-of-car',
-    'greeting-position-reached',
-    'greeting-finished',
+    'driver-go-commanded',
     'driver-at-door',
     'driver-boarded',
     'driver-door-close-requested',
