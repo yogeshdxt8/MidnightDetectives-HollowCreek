@@ -99,6 +99,7 @@ export function createStealthEscapeEncounter(
   // Landmark cabinet and a small hiding pocket behind it.
   const cabinet = new THREE.Group();
   cabinet.position.set(4.15, 0, -3.75);
+  cabinet.rotation.z = Math.PI / 2; // visibly toppled onto its side
   scene.add(cabinet);
   addMesh(cabinet, new THREE.BoxGeometry(1.2, .92, .72), mats.wood, 0, .46, 0);
   addMesh(cabinet, new THREE.BoxGeometry(1.28, .12, .8), mats.woodLight, 0, .94, 0);
