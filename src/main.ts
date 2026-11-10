@@ -63,6 +63,7 @@ const routeNavigator=new VehicleRouteNavigator();
 let navigationSnapshot:ReturnType<VehicleRouteNavigator['update']>|null=null;
 let driveRouteComplete=false;
 let driverBlockedSeconds=0;
+let routeRecoveryAttempts=0;
 let lastCollisionReason='none';
 const routeName=(route:DriveWaypoint[])=>route===driveRoutes.approach?'approach':route===driveRoutes.dropoff?'dropoff':'departure';
 const setDriveRoute=(route:DriveWaypoint[])=>{
@@ -70,6 +71,7 @@ const setDriveRoute=(route:DriveWaypoint[])=>{
     activeDriveRoute=route;
     driveRouteComplete=false;
     driverBlockedSeconds=0;
+    routeRecoveryAttempts=0;
     routeNavigator.setRoute(routeName(route),{x:sedanState.x,z:sedanState.z},route);
     navigationSnapshot=null;
   }
@@ -78,7 +80,19 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   if(!navigationSnapshot||navigationSnapshot.routeId!==routeName(activeDriveRoute)){
     routeNavigator.setRoute(routeName(activeDriveRoute),{x:sedanState.x,z:sedanState.z},activeDriveRoute);
   }
-  const nav=routeNavigator.update(sedanState,dt);
+  let nav=routeNavigator.update(sedanState,dt);
+  // A bounded route rebase is the recovery action: reconnect the actual vehicle
+  // pose to the remaining authored waypoints. This is intentionally a small,
+  // deterministic local operation (no runtime search or heavyweight physics).
+  // If repeated recovery cannot restore tracking, brake to a safe stop.
+  if(nav.replanRequested&&routeRecoveryAttempts<2){
+    const remainingRoute=activeDriveRoute.slice(nav.waypointIndex);
+    if(remainingRoute.length>0){
+      routeRecoveryAttempts+=1;
+      routeNavigator.setRoute(routeName(activeDriveRoute),{x:sedanState.x,z:sedanState.z},remainingRoute);
+      nav=routeNavigator.update(sedanState,dt);
+    }
+  }
   navigationSnapshot=nav;
   driveRouteComplete=nav.routeComplete;
   const waypoint=activeDriveRoute[Math.min(nav.waypointIndex,activeDriveRoute.length-1)]!;
@@ -101,9 +115,10 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const cornerFactor=THREE.MathUtils.clamp(1-Math.abs(steering)*.48,.42,1);
   const brakingDistance=Math.max(0,endpointDistance-.5);
   const stoppingSpeed=Math.sqrt(2*3.2*brakingDistance);
-  const routeSpeed=driveRouteComplete||forceStop?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
-  const throttle=forceStop||driveRouteComplete?0:(endpointDistance>.28&&sedanState.speed<routeSpeed-.12?1:0);
-  const brake=forceStop||driveRouteComplete?1:(sedanState.speed>routeSpeed+.08||endpointDistance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
+  const recoveryFailed=nav.mode==='replan-required';
+  const routeSpeed=driveRouteComplete||forceStop||recoveryFailed?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
+  const throttle=forceStop||driveRouteComplete||recoveryFailed?0:(endpointDistance>.28&&sedanState.speed<routeSpeed-.12?1:0);
+  const brake=forceStop||driveRouteComplete||recoveryFailed?1:(sedanState.speed>routeSpeed+.08||endpointDistance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
   const previous={...sedanState};
   const result=stepVehicle(sedanState,{throttle,brake,steering},dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
   let blocked=false;
