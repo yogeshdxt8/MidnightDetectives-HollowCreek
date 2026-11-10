@@ -71,6 +71,10 @@ describe('contextual hint selection', () => {
       .toBe('The exit is unlocked with the key. Get there!');
   });
 
+  it('guides the player through the door after unlocking it', () => {
+    expect(getEscapeHint({ ...nearExitWithKey, exitUnlocked: true }).message).toBe('The door is open. Escape!');
+  });
+
   it('shows the unlock prompt only when the player has the key and is at the exit', () => {
     expect(getEscapeHint(nearExitWithKey)).toEqual({ id: 'unlock-exit', message: 'Unlock exit.' });
   });
