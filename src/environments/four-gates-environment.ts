@@ -98,21 +98,22 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     const numeral = ['I', 'II', 'III', 'IV'][index]!;
     // Raised gold frame and solid 3D Roman numerals avoid texture/back-face
     // ambiguity on mobile GPUs and remain legible at the gameplay camera distance.
-    addBox(1.02, .8, .18, materials.gateTrim, x, 3.35, gateZ - 1.12);
-    const plaque = addBox(.9, .68, .2, materials.sign, x, 3.35, gateZ - 1.16);
+    addBox(1.42, 1.02, .2, materials.gateTrim, x, 3.35, gateZ - 1.12);
+    const plaque = addBox(1.28, .88, .22, materials.sign, x, 3.35, gateZ - 1.16);
     plaque.userData['gateIndex'] = index + 1;
     plaque.userData['gateNumeral'] = numeral;
+    // Broad, emissive strokes are intentionally oversized for portrait-phone readability.
     const numeralZ = gateZ - .88;
     const numeralBar = (offsetX: number, height: number, angle = 0) => {
-      const mark = addBox(.105, height, .075, materials.gateTrim, x + offsetX, 3.35, numeralZ);
+      const mark = addBox(.17, height, .09, materials.signText, x + offsetX, 3.35, numeralZ);
       mark.rotation.z = angle;
       mark.userData['gateNumeral'] = numeral;
       mark.userData['gateIndex'] = index + 1;
     };
-    if (numeral === 'I') numeralBar(0, .48);
-    if (numeral === 'II') { numeralBar(-.13, .48); numeralBar(.13, .48); }
-    if (numeral === 'III') { numeralBar(-.25, .48); numeralBar(0, .48); numeralBar(.25, .48); }
-    if (numeral === 'IV') { numeralBar(-.23, .48); numeralBar(.04, .48, -.42); numeralBar(.29, .48, .42); }
+    if (numeral === 'I') numeralBar(0, .68);
+    if (numeral === 'II') { numeralBar(-.19, .68); numeralBar(.19, .68); }
+    if (numeral === 'III') { numeralBar(-.34, .68); numeralBar(0, .68); numeralBar(.34, .68); }
+    if (numeral === 'IV') { numeralBar(-.34, .68); numeralBar(-.02, .68, -.48); numeralBar(.34, .68, .48); }
     // A warm crown lamp marks each entrance without washing out the ironwork.
     const crown = addBox(.16, .16, .16, materials.lamp, x, 4.02, gateZ - 1.14);
     crown.userData['gatePortal'] = index + 1;
