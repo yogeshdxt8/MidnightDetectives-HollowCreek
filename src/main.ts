@@ -319,7 +319,7 @@ if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as TH
 if(t>=nextLightningAt){makeLightning();lightningGroup.visible=true;lightningFlash.intensity=5.5;lightningOffAt=t+.16;nextLightningAt=t+3.2+Math.random()*3.2;void gameAudio.playThunder();}
 if(t>=lightningOffAt){lightningGroup.visible=false;lightningFlash.intensity=THREE.MathUtils.damp(lightningFlash.intensity,0,18,dt);}
 }
-const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw)),right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));const direction=forward.clone().multiplyScalar(-move.y).add(right.multiplyScalar(move.x));if(direction.lengthSq()>.001){direction.normalize();const speed=3.1,nx=THREE.MathUtils.clamp(player.position.x+direction.x*speed*dt,-5.5,5.5),nz=THREE.MathUtils.clamp(player.position.z+direction.z*speed*dt,-8.3,6.5);// Resolve movement per axis so a circular obstacle can be skirted instead
+const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw)),right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));sceneRoot.dataset['cameraYaw']=cameraYaw.toFixed(4);const direction=forward.clone().multiplyScalar(-move.y).add(right.multiplyScalar(move.x));if(direction.lengthSq()>.001){direction.normalize();const speed=3.1,nx=THREE.MathUtils.clamp(player.position.x+direction.x*speed*dt,-5.5,5.5),nz=THREE.MathUtils.clamp(player.position.z+direction.z*speed*dt,-8.3,6.5);// Resolve movement per axis so a circular obstacle can be skirted instead
 // of freezing the player whenever the diagonal step intersects its boundary.
 const clearAt=(x:number,z:number)=>Math.hypot(x,z+2.8)>1.95;
 const canMoveX=clearAt(nx,player.position.z);
