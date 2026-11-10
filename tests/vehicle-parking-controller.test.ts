@@ -56,7 +56,7 @@ describe('vehicle parking controller', () => {
     expect(approach.input.brake).toBeGreaterThan(0);
 
     const nearTarget = computeParkingControl(
-      state({ z: -4.05, speed: 0.16 }),
+      state({ z: -4.1, speed: 0.16 }),
       { x: 4, z: -4.3, yaw: Math.PI / 2 },
       sedanTuning,
       envelope
