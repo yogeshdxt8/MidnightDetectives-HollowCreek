@@ -87,7 +87,7 @@ describe('vehicle route navigator', () => {
     const navigator = new VehicleRouteNavigator();
     navigator.setRoute('terminal', { x: 0, z: 0 }, [{ x: 5, z: 0, speed: 0.5 }]);
 
-    const approaching = navigator.update(pose(4, 0.5), 1 / 60);
+    const approaching = navigator.update(pose(4.5, 0.5), 1 / 60);
     expect(approaching.routeComplete).toBe(true);
     expect(approaching.mode).toBe('complete');
   });
