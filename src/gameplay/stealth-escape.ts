@@ -425,11 +425,11 @@ export function createStealthEscapeEncounter(
       threatTarget.copy(entity.position);
     }
 
-    if (threat !== 'searching') {
+    if (threat !== 'searching' || distance2D(entity.position, threatTarget) > .3) {
       const dx = threatTarget.x - entity.position.x, dz = threatTarget.z - entity.position.z;
       const d = Math.hypot(dx, dz);
       if (d > .12) {
-        const speed = threat === 'chasing' ? 2.65 : threat === 'investigating' ? 1.85 : threat === 'approaching' ? 1.5 : 1.18;
+        const speed = threat === 'chasing' ? 2.65 : threat === 'investigating' ? 1.85 : threat === 'approaching' ? 1.5 : threat === 'searching' ? .95 : 1.18;
         const step = Math.min(d, speed * dt);
         entity.position.x += dx / d * step;
         entity.position.z += dz / d * step;
