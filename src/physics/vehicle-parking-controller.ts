@@ -38,7 +38,7 @@ export const defaultParkingControllerConfig: ParkingControllerConfig = {
   stoppingRadius: 0.22,
   headingWeight: 0.75,
   positionTolerance: 0.28,
-  headingTolerance: 0.12,
+  headingTolerance: 0.22,
   speedTolerance: 0.1,
   envelopeHalfLength: 2.18,
   envelopeHalfWidth: 1.08
