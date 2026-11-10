@@ -250,6 +250,13 @@ export function createStealthEscapeEncounter(
       }
       return;
     }
+    if ((threat === 'approaching' || threat === 'chasing') && isNearCabinet()) {
+      hidden = true;
+      player.position.x = cabinet.position.x + 1.05;
+      player.position.z = cabinet.position.z + .45;
+      onNotify('You hide behind the overturned cabinet.');
+      return;
+    }
     if ((isNearBell() || stalledSeconds > 5 || threat === 'approaching' || threat === 'chasing') && canUseDistraction()) {
       distractionUsed = true;
       noiseActiveUntil = currentElapsedSeconds + 8;
@@ -460,7 +467,7 @@ export function createStealthEscapeEncounter(
       (threat === 'approaching' || threat === 'chasing') && isNearCabinet() ? ['HIDE', true] as const :
       canUseDistraction() && (isNearBell() || (stalledSeconds > 5 && distance2D(player.position, key.position) < 2.8) || threat === 'approaching' || threat === 'chasing') ? ['MAKE NOISE', true] as const :
       isNearKey() ? ['COLLECT KEY', true] as const :
-      isNearBell() && !state.hasKey ? ['MAKE NOISE', true] as const :
+      canUseDistraction() && isNearBell() ? ['MAKE NOISE', true] as const :
       isNearCabinet() ? ['HIDE', true] as const : ['', false] as const;
     setActionLabel(actionContext[0], actionContext[1]);
 
