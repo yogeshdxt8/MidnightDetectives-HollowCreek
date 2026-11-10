@@ -108,6 +108,9 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
   const radius = bounds.width * 0.34;
   const hint = page.locator('#hint');
   const initial = await readPlayerPosition(page);
+  const initialCameraYaw = await page.locator('#scene-root').evaluate(element =>
+    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+  );
   if (!Number.isFinite(initial.x) || !Number.isFinite(initial.z)) {
     throw new Error('Live investigator coordinates were not published by the scene.');
   }
@@ -186,6 +189,13 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
     );
   }
 
+  const finalCameraYaw = await page.locator('#scene-root').evaluate(element =>
+    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+  );
+  const cameraYawDelta = Math.atan2(Math.sin(finalCameraYaw - initialCameraYaw), Math.cos(finalCameraYaw - initialCameraYaw));
+  if (Math.abs(cameraYawDelta) > 0.01) {
+    throw new Error(`Joystick movement unexpectedly rotated the camera by ${cameraYawDelta.toFixed(3)} radians.`);
+  }
   await page.waitForTimeout(150);
 }
 async function inspectNearestClue(page: import('@playwright/test').Page) {
