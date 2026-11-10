@@ -403,7 +403,11 @@ export function createStealthEscapeEncounter(
         }
       } else if (threat === 'searching') {
         threatTimer -= dt;
-        if (threatTimer <= 0) threat = 'patrolling';
+        if (threatTimer <= 0) {
+          threat = 'patrolling';
+          patrolIndex = (patrolIndex + 1) % patrol.length;
+          threatTarget.copy(patrol[patrolIndex]!);
+        }
       } else if (threat === 'investigating') {
         threatTimer -= dt;
         if (threatTimer <= 0) threat = 'patrolling';
