@@ -106,16 +106,6 @@ export function computeParkingControl(
     1
   );
 
-  const remaining = Math.max(0, positionError - config.stoppingRadius);
-  const speedLimit = Math.sqrt(2 * tuning.serviceBrake * 0.55 * remaining);
-  const targetSpeed = positionError <= config.positionTolerance
-    ? 0
-    : Math.min(config.maximumSpeed, speedLimit);
-  const throttle = state.speed < targetSpeed - 0.08 ? 1 : 0;
-  const brake = state.speed > targetSpeed + 0.06 || positionError <= config.positionTolerance
-    ? clamp((state.speed - targetSpeed) * 0.8, 0.2, 1)
-    : 0;
-
   const insideEnvelope = isSedanInsideParkingEnvelope(
     state,
     {
@@ -125,10 +115,26 @@ export function computeParkingControl(
       yaw: target.yaw
     }
   );
+  const headingAligned = Math.abs(headingError) <= config.headingTolerance;
+  const poseInsideTolerance = positionError <= config.positionTolerance && headingAligned;
   const settled = insideEnvelope &&
-    positionError <= config.positionTolerance &&
-    Math.abs(headingError) <= config.headingTolerance &&
+    poseInsideTolerance &&
     Math.abs(state.speed) <= config.speedTolerance;
+
+  // The stopping radius is a braking-distance input, not permission to stop
+  // outside the parking envelope. A car can be within the positional tolerance
+  // while its overhang still lies beyond the bay boundary. Keep a capped crawl
+  // command until the complete footprint and heading are valid.
+  const terminalPoseValid = insideEnvelope && poseInsideTolerance;
+  const remaining = Math.max(0, positionError - Math.min(config.stoppingRadius, 0.04));
+  const speedLimit = Math.sqrt(2 * tuning.serviceBrake * 0.55 * remaining);
+  const targetSpeed = terminalPoseValid
+    ? 0
+    : Math.min(config.maximumSpeed, speedLimit);
+  const throttle = state.speed < targetSpeed - 0.08 ? 1 : 0;
+  const brake = state.speed > targetSpeed + 0.06 || terminalPoseValid
+    ? clamp((state.speed - targetSpeed) * 0.8, 0.2, 1)
+    : 0;
 
   return {
     input: { throttle, brake, steering },
