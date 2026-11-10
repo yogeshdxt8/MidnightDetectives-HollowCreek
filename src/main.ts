@@ -48,6 +48,9 @@ const gatePlaneZ=-13.6;
 // Resolve the intro flag before constructing either seated character rig.
 const playArrivalSequence=!sessionStorage.getItem('hollow-creek-arrival-seen');
 const applySedanPhysics=(dt:number,targetX:number,targetZ:number,maxSpeed:number,gateOpen:boolean)=>{const dx=targetX-sedanState.x,dz=targetZ-sedanState.z,distance=Math.hypot(dx,dz);const desiredYaw=Math.atan2(-dz,dx);let yawError=desiredYaw-sedanState.yaw;while(yawError>Math.PI)yawError-=Math.PI*2;while(yawError< -Math.PI)yawError+=Math.PI*2;const steering=THREE.MathUtils.clamp(yawError*1.8,-1,1);const safeSpeed=Math.min(maxSpeed,Math.sqrt(Math.max(0,2*3.8*distance)));const throttle=distance>.12&&sedanState.speed<safeSpeed-.12?1:0;const brake=sedanState.speed>safeSpeed+.08||distance<=.12?Math.min(1,Math.max(.35,(sedanState.speed-safeSpeed)*.7)):0;const result=stepVehicle(sedanState,{throttle,brake,steering},dt,sedanTuning,gateOpen?undefined:gatePlaneZ);sedanState=result.state;arrivalCar.position.set(sedanState.x,0,sedanState.z);arrivalCar.rotation.y=sedanState.yaw;carWheels.forEach(w=>w.rotation.z+=result.wheelAngularSpeed*dt);return result;};
+// Character locomotion uses acceleration, braking distance, ground contact and conservative obstacle clearance.
+const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpeed=1.8)=>{const velocity=(actor.userData['arrivalVelocity'] as THREE.Vector3|undefined)??new THREE.Vector3();actor.userData['arrivalVelocity']=velocity;const offset=new THREE.Vector3(target.x-actor.position.x,0,target.z-actor.position.z);const distance=offset.length();const acceleration=7.5;const brakingSpeed=Math.sqrt(Math.max(0,2*acceleration*Math.max(0,distance-.08)));const desiredSpeed=Math.min(maxSpeed,brakingSpeed);const desired=distance>.025?offset.normalize().multiplyScalar(desiredSpeed):new THREE.Vector3();const delta=desired.sub(velocity);const maxDelta=acceleration*dt;if(delta.length()>maxDelta)delta.setLength(maxDelta);velocity.add(delta);const step=velocity.clone().multiplyScalar(dt);const tryPosition=actor.position.clone().add(step);tryPosition.y=0;const clear=(x:number,z:number)=>{const fountainClear=Math.hypot(x,z+2.8)>1.65+0.42;const local=arrivalCar.worldToLocal(new THREE.Vector3(x,0,z));const carClear=actor.parent!==arrivalCar&&(Math.abs(local.x)>2.05||Math.abs(local.z)>.98);return fountainClear&&carClear;};if(clear(tryPosition.x,tryPosition.z))actor.position.copy(tryPosition);else{const xOnly=clear(actor.position.x+step.x,actor.position.z);const zOnly=clear(actor.position.x,actor.position.z+step.z);if(xOnly)actor.position.x+=step.x;if(zOnly)actor.position.z+=step.z;if(!xOnly&&!zOnly)velocity.multiplyScalar(.15);}actor.position.y=0;if(velocity.length()>.04)actor.rotation.y=Math.atan2(velocity.x,velocity.z);if(distance<.07&&velocity.length()<.12){velocity.set(0,0,0);return true;}return false;};
+const arrivalDoorWorld=(localX:number,localZ:number)=>arrivalCar.localToWorld(new THREE.Vector3(localX,0,localZ));
 const arrivalDriver=createDetectiveCharacter();arrivalDriver.root.scale.setScalar(.78);arrivalDriver.root.position.set(0,0,.38);arrivalDriver.root.rotation.y=Math.PI/2;arrivalDriver.root.visible=!playArrivalSequence;arrivalCar.add(arrivalDriver.root);
 const arrivalGate=new THREE.Group();scene.add(arrivalGate);arrivalGate.position.z=gatePlaneZ;const gateMetal=new THREE.MeshStandardMaterial({color:'#293747',metalness:.82,roughness:.32});const gateGold=new THREE.MeshStandardMaterial({color:'#b99b65',metalness:.6,roughness:.4});
 const gateLeaves:THREE.Group[]=[];for(const side of [-1,1]){const leaf=new THREE.Group();leaf.position.set(side*2.6,0,0);arrivalGate.add(leaf);const frame=new THREE.Mesh(new THREE.BoxGeometry(2.6,.16,.16),gateGold);frame.position.set(-side*1.3,2.2,0);leaf.add(frame);for(let i=0;i<12;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.075,2.2,.075),gateMetal);bar.position.set(-side*(.12+i*.215),1.1,0);leaf.add(bar);}gateLeaves.push(leaf);}
@@ -88,7 +91,7 @@ let nextLightningAt=1.1;let lightningOffAt=0;let stormStarted=true;
 const makeLightning=()=>{lightningGroup.clear();const points:THREE.Vector3[]=[];let x=(Math.random()-.5)*13,y=10,z=-10+(Math.random()-.5)*5;points.push(new THREE.Vector3(x,y,z));for(let i=0;i<6;i++){x+=(Math.random()-.5)*2.3;y-=1.55;z+=(Math.random()-.5)*1.2;points.push(new THREE.Vector3(x,y,z));}const geometry=new THREE.BufferGeometry().setFromPoints(points);const bolt=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#e8f4ff'}));lightningGroup.add(bolt);};
 
 const fourGatesEnvironment=createFourGatesEnvironment();scene.add(fourGatesEnvironment.root);
-const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.65,.5,12),new THREE.MeshStandardMaterial({color:'#667184'}));fountain.position.set(0,.25,-2.8);scene.add(fountain);
+const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.65,.5,12),new THREE.MeshStandardMaterial({color:'#667184'}));fountain.position.set(0,.25,-2.8);fountain.userData['collisionRadius']=1.65;scene.add(fountain);
 const water=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.08,12),new THREE.MeshStandardMaterial({color:'#536f89',metalness:.3,roughness:.25}));water.position.set(0,.55,-2.8);scene.add(water);
 const compartment=new THREE.Group();compartment.position.set(0,.61,-2.8);scene.add(compartment);
 const cavity=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.035,16),new THREE.MeshStandardMaterial({color:'#080e19',roughness:1}));
@@ -267,11 +270,10 @@ if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(t<16){applySedanPhysics(dt,4.1,-2.8,4.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else { 
-    // Hold at the fountain-side drop-off point. Keep applying braking/hold dynamics;
-    // do not send the sedan back across the square or hide it after the passenger exits.
-    applySedanPhysics(dt,4.1,-2.8,0,true);
+  else if(t<16){applySedanPhysics(dt,4.5,-5.8,4.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
+  else if(t<32.2){
+    // Park outside the fountain's expanded collision footprint; the sedan's full body stays clear.
+    applySedanPhysics(dt,4.5,-5.8,0,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
@@ -279,41 +281,58 @@ if(playArrivalSequence){
   if(t>=16.8&&t<17&&!arrivalDriver.root.userData['exited']){
     arrivalCar.updateMatrixWorld(true);scene.attach(arrivalDriver.root);arrivalDriver.root.scale.setScalar(1);
     // Reveal the driver only after the body has cleared the cabin, at the real door threshold.
-    const doorThreshold=arrivalCar.localToWorld(new THREE.Vector3(-.1,0,1.02));
-    arrivalDriver.root.position.copy(doorThreshold);driverExitStart.copy(doorThreshold);arrivalDriver.root.visible=true;
+    const doorThreshold=arrivalDoorWorld(-.1,1.02);
+    arrivalDriver.root.position.copy(doorThreshold);driverExitStart.copy(doorThreshold);arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDriver.root.visible=true;
     arrivalDriver.root.userData['exited']=true;
   }
-  if(t>=17&&t<19){
-    const p=THREE.MathUtils.smoothstep(t,17,19);
-    arrivalDriver.root.position.lerpVectors(driverExitStart,new THREE.Vector3(4.65,0,-2.8),p);
-    arrivalDriver.root.rotation.y=Math.PI/2;
-    arrivalDriver.leftLeg.rotation.x=Math.sin(t*5)*.24;arrivalDriver.rightLeg.rotation.x=-Math.sin(t*5)*.24;
-    arrivalDriver.leftArm.rotation.x=-.25;arrivalDriver.rightArm.rotation.x=-.25;
+  if(t>=17&&t<19.8){
+    const reached=moveArrivalActor(arrivalDriver.root,new THREE.Vector3(5.95,0,-5.35),dt,1.65);
+    const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
+    arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.28,stride*.16);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
+    arrivalDriver.leftArm.rotation.x=-.18;arrivalDriver.rightArm.rotation.x=-.18;
+    if(reached){arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;}
   }
   if(t>=19&&t<20){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,1.22,7,dt);}
   if(t>=20&&t<20.2&&!player.userData['exitedPassenger']){
     arrivalCar.updateMatrixWorld(true);scene.attach(player);player.scale.setScalar(1);
-    // Keep the standing procedural rig hidden while seated (its upright pose clips the roof).
-    // Reveal it at the passenger-door threshold, then continue the outward walking motion.
-    player.position.copy(arrivalCar.localToWorld(new THREE.Vector3(-.18,0,-.98)));
-    player.visible=true;player.userData['exitedPassenger']=true;
+    // Step down at the passenger-side sill; the rig remains ground-aligned and collision-aware.
+    player.position.copy(arrivalDoorWorld(-.18,-1.02));player.position.y=0;
+    player.userData['arrivalVelocity']=new THREE.Vector3();player.visible=true;player.userData['exitedPassenger']=true;
   }
-  if(t>=20.2&&t<23){
-    const p=THREE.MathUtils.smoothstep(t,20.2,23);
-    const start=arrivalCar.localToWorld(new THREE.Vector3(-.18,0,-.34));
-    const finish=arrivalCar.localToWorld(new THREE.Vector3(-.18,0,-1.85));
-    player.position.lerpVectors(start,finish,p);player.rotation.y=arrivalCar.rotation.y-Math.PI/4;
-    leftLeg.rotation.x=Math.sin(t*6)*.28;rightLeg.rotation.x=-Math.sin(t*6)*.28;
-    leftArm.rotation.x=-Math.sin(t*6)*.16;rightArm.rotation.x=Math.sin(t*6)*.16;
+  if(t>=20.2&&t<23.8){
+    const exitTarget=arrivalDoorWorld(-.18,-2.15);
+    const reached=moveArrivalActor(player,exitTarget,dt,1.35);
+    const stride=(player.userData['arrivalVelocity'] as THREE.Vector3).length();
+    leftLeg.rotation.x=Math.sin(t*7)*Math.min(.3,stride*.2);rightLeg.rotation.x=-leftLeg.rotation.x;
+    leftArm.rotation.x=-Math.sin(t*7)*Math.min(.16,stride*.11);rightArm.rotation.x=-leftArm.rotation.x;
+    if(reached){leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
   }
   if(t>=23&&t<23.5){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
   if(t>=23&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
   if(t>=24&&t<28){
-    arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const dx=targetX-dog.position.x,dz=targetZ-dog.position.z,distance=Math.hypot(dx,dz);const step=Math.min(distance,3.2*dt);if(distance>.001){dog.position.x+=dx/distance*step;dog.position.z+=dz/distance*step;}dog.rotation.y=Math.atan2(player.position.x-dog.position.x,player.position.z-dog.position.z);dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=Math.sin(t*13+i+legIndex)*.38;}});
+    arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const reached=moveArrivalActor(dog,new THREE.Vector3(targetX,0,targetZ),dt,2.35);const dogSpeed=(dog.userData['arrivalVelocity'] as THREE.Vector3).length();dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=reached?0:Math.sin(t*13+i+legIndex)*Math.min(.38,dogSpeed*.2);}});
     if(!dogsBarking){dogsBarking=true;arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<8;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*260);}
   }
-  if(t>=28&&t<31){if(!driverReturnStarted){driverReturnStart.copy(arrivalDriver.root.position);driverReturnStarted=true;}const p=THREE.MathUtils.smoothstep(t,28,31);const doorWorld=arrivalCar.localToWorld(new THREE.Vector3(-.1,0,1.4));arrivalDriver.root.position.lerpVectors(driverReturnStart,doorWorld,p);arrivalDriver.root.rotation.y=-Math.PI/2;arrivalDriver.leftLeg.rotation.x=Math.sin(t*5)*.22;arrivalDriver.rightLeg.rotation.x=-Math.sin(t*5)*.22;}
-  if(t>=31&&t<32){if(!driverReentered){arrivalCar.attach(arrivalDriver.root);arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.rotation.y=Math.PI/2;driverReentered=true;}driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);arrivalDriver.root.visible=false;}
+  if(t>=28&&t<30.7){
+    if(!driverReturnStarted){driverReturnStart.copy(arrivalDriver.root.position);driverReturnStarted=true;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
+    const reached=moveArrivalActor(arrivalDriver.root,arrivalDoorWorld(-.1,1.08),dt,1.45);
+    const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
+    arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.25,stride*.17);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
+    if(reached){arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;}
+  }
+  if(t>=30.7&&t<32.2){
+    if(!driverReentered){arrivalCar.updateMatrixWorld(true);arrivalCar.attach(arrivalDriver.root);arrivalDriver.root.position.set(-.1,0,1.08);arrivalDriver.root.rotation.y=Math.PI/2;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();driverReentered=true;}
+    const seatProgress=THREE.MathUtils.smoothstep(t,30.7,31.45);
+    arrivalDriver.root.position.lerp(new THREE.Vector3(-.1,0,.38),1-Math.exp(-dt*5.5));
+    arrivalDriver.root.rotation.y=THREE.MathUtils.damp(arrivalDriver.root.rotation.y,Math.PI/2,7,dt);
+    if(seatProgress>.98){arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.visible=false;}
+    if(t>31.5)driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
+  }
+  if(t>=32.2){
+    // Leave only after the driver is seated and the door is closed; accelerate under vehicle dynamics.
+    applySedanPhysics(dt,4.5,12.5,4.8,true);
+    headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,2.2,1.4,dt);headlampRight.intensity=headlampLeft.intensity;
+  }
   if(t>=41&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
 }if(!stormStarted){stormStarted=true;rain.material.opacity=.82;stormFog.density=.043;}
 if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<rainCount;i++){rainPositions[i*3+1]=(rainPositions[i*3+1]??0)-dt*13;if((rainPositions[i*3+1]??0)<0){rainPositions[i*3+1]=10+Math.random()*3;rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+2]=(Math.random()-.5)*24;}}rainAttribute.needsUpdate=true;
@@ -328,7 +347,7 @@ const canMoveZ=clearAt(canMoveX?nx:playerWorldPosition.x,nz);
 if(canMoveX)player.position.x=nx;
 if(canMoveZ)player.position.z=nz;
 const collisionClear=canMoveX||canMoveZ;
-sceneRoot.dataset['collisionClear']=String(collisionClear);player.rotation.y=Math.atan2(direction.x,direction.z);walkTime+=dt*10;player.position.y=Math.abs(Math.sin(walkTime*2))*.045;const swing=Math.sin(walkTime)*.48;leftLeg.rotation.x=swing;rightLeg.rotation.x=-swing;leftArm.rotation.x=-swing*.72;rightArm.rotation.x=swing*.72;}else if(playerCanMove){player.position.y=0;leftLeg.rotation.x=THREE.MathUtils.damp(leftLeg.rotation.x,0,12,dt);rightLeg.rotation.x=THREE.MathUtils.damp(rightLeg.rotation.x,0,12,dt);leftArm.rotation.x=THREE.MathUtils.damp(leftArm.rotation.x,0,12,dt);rightArm.rotation.x=THREE.MathUtils.damp(rightArm.rotation.x,0,12,dt);}compartmentReveal=THREE.MathUtils.damp(compartmentReveal,compartmentOpen?1:0,3.2,dt);lidHinge.rotation.x=-compartmentReveal*1.28;hiddenRelic.position.y=.1+Math.sin(t*2.4)*.035;relicLight.intensity=compartmentReveal*1.7;const playerWorld=player.getWorldPosition(new THREE.Vector3());const distance=7.2,height=3.4,desired=new THREE.Vector3(playerWorld.x+Math.sin(cameraYaw)*distance,playerWorld.y+height,playerWorld.z+Math.cos(cameraYaw)*distance);camera.position.lerp(desired,1-Math.exp(-dt*5));camera.lookAt(new THREE.Vector3(playerWorld.x,playerWorld.y+1.25,playerWorld.z));const relicWorld=hiddenRelic.getWorldPosition(new THREE.Vector3());const relicDistance=Math.hypot(player.position.x-relicWorld.x,player.position.z-relicWorld.z);relicButton.hidden=relicState.status!=='available'||relicDistance>relicRange;locationMarker.visible=investigationChain.locationStatus!=='locked';locationMarker.rotation.y=t*.8;const locationDistance=Math.hypot(player.position.x-locationMarker.position.x,player.position.z-locationMarker.position.z);locationButton.hidden=investigationChain.locationStatus==='locked'||(investigationChain.locationStatus==='unlocked'&&locationDistance>2.5);const keeperDistance=Math.hypot(player.position.x-keeperNpc.position.x,player.position.z-keeperNpc.position.z);keeperButton.hidden=keeperState.status==='unavailable'||keeperDistance>2.8;const valeDistance=Math.hypot(player.position.x-yardNpc.position.x,player.position.z-yardNpc.position.z);valeButton.hidden=valeState.status!=='available'||valeDistance>2.8;const pumpDistance=Math.hypot(player.position.x-pumpMarker.position.x,player.position.z-pumpMarker.position.z);pumpButton.hidden=pumpHouseState.status==='locked'||pumpDistance>2.8;const recordsDistance=Math.hypot(player.position.x-recordsMarker.position.x,player.position.z-recordsMarker.position.z);recordsButton.hidden=recordsState.status==='locked'||recordsDistance>2.8;const waterworksDistance=Math.hypot(player.position.x-waterworksMarker.position.x,player.position.z-waterworksMarker.position.z);waterworksButton.hidden=waterworksState.status==='locked'||waterworksDistance>2.8;waterworksMarker.rotation.y=t*.65;timingGear.rotation.z=Math.sin(t*.8)*.12;recordsMarker.rotation.y=t*.7;pumpMarker.rotation.y=t*.8;pumpWheel.rotation.x=t*.5;const yardDistance=Math.hypot(player.position.x-yardSearchMarker.position.x,player.position.z-yardSearchMarker.position.z);yardButton.hidden=maintenanceYardState.status!=='available'||yardDistance>2.8;const regulatorDistance=Math.hypot(player.position.x-yardRegulator.position.x,player.position.z-yardRegulator.position.z);regulatorButton.hidden=maintenanceYardState.status!=='searched'||regulatorDistance>2.3;yardSearchMarker.rotation.y=t*.7;yardRegulator.rotation.y=t*.4;const hint=document.querySelector<HTMLElement>('#hint');if(hint&&state.discoveredClueIds.length<3){let nearest:THREE.Mesh|undefined;let nearestDistance=Infinity;for(const mesh of clueMeshes){const id=mesh.userData['clueId'];if(typeof id!=='string'||state.discoveredClueIds.includes(id))continue;const distance=Math.hypot(player.position.x-mesh.position.x,player.position.z-mesh.position.z);if(distance<nearestDistance){nearest=mesh;nearestDistance=distance;}}hint.textContent=nearest&&nearestDistance<=3.1?'NEARBY: TAP THE GLOWING CLUE':'EXPLORE THE SQUARE TO FIND CLUES';}clueMeshes.forEach((mesh,i)=>{mesh.rotation.y=t*.7+i;mesh.position.y=positions[i]![1]+Math.sin(t*1.8+i*1.7)*.12;});renderer.render(scene,camera);if(!firstFrameNotified){firstFrameNotified=true;playablesPlatform.notifyFirstFrameReady();notifyReadyWhenPossible();}}
+sceneRoot.dataset['collisionClear']=String(collisionClear);player.rotation.y=Math.atan2(direction.x,direction.z);walkTime+=dt*10;player.position.y=Math.abs(Math.sin(walkTime*2))*.045;const swing=Math.sin(walkTime)*.48;leftLeg.rotation.x=swing;rightLeg.rotation.x=-swing;leftArm.rotation.x=-swing*.72;rightArm.rotation.x=swing*.72;}else if(playerCanMove){player.position.y=0;leftLeg.rotation.x=THREE.MathUtils.damp(leftLeg.rotation.x,0,12,dt);rightLeg.rotation.x=THREE.MathUtils.damp(rightLeg.rotation.x,0,12,dt);leftArm.rotation.x=THREE.MathUtils.damp(leftArm.rotation.x,0,12,dt);rightArm.rotation.x=THREE.MathUtils.damp(rightArm.rotation.x,0,12,dt);}compartmentReveal=THREE.MathUtils.damp(compartmentReveal,compartmentOpen?1:0,3.2,dt);lidHinge.rotation.x=-compartmentReveal*1.28;hiddenRelic.position.y=.1+Math.sin(t*2.4)*.035;relicLight.intensity=compartmentReveal*1.7;const playerWorld=player.getWorldPosition(new THREE.Vector3());const arrivalShot=playArrivalSequence&&t<41;const distance=arrivalShot?10.4:7.2,height=arrivalShot?5.1:3.4;const cameraFocus=arrivalShot?new THREE.Vector3(playerWorld.x*.72,playerWorld.y+1.45,playerWorld.z-1.05):new THREE.Vector3(playerWorld.x,playerWorld.y+1.25,playerWorld.z);const desired=new THREE.Vector3(cameraFocus.x+Math.sin(cameraYaw)*distance,cameraFocus.y+height,cameraFocus.z+Math.cos(cameraYaw)*distance);camera.position.lerp(desired,1-Math.exp(-dt*(arrivalShot?2.8:5)));camera.lookAt(cameraFocus);const relicWorld=hiddenRelic.getWorldPosition(new THREE.Vector3());const relicDistance=Math.hypot(player.position.x-relicWorld.x,player.position.z-relicWorld.z);relicButton.hidden=relicState.status!=='available'||relicDistance>relicRange;locationMarker.visible=investigationChain.locationStatus!=='locked';locationMarker.rotation.y=t*.8;const locationDistance=Math.hypot(player.position.x-locationMarker.position.x,player.position.z-locationMarker.position.z);locationButton.hidden=investigationChain.locationStatus==='locked'||(investigationChain.locationStatus==='unlocked'&&locationDistance>2.5);const keeperDistance=Math.hypot(player.position.x-keeperNpc.position.x,player.position.z-keeperNpc.position.z);keeperButton.hidden=keeperState.status==='unavailable'||keeperDistance>2.8;const valeDistance=Math.hypot(player.position.x-yardNpc.position.x,player.position.z-yardNpc.position.z);valeButton.hidden=valeState.status!=='available'||valeDistance>2.8;const pumpDistance=Math.hypot(player.position.x-pumpMarker.position.x,player.position.z-pumpMarker.position.z);pumpButton.hidden=pumpHouseState.status==='locked'||pumpDistance>2.8;const recordsDistance=Math.hypot(player.position.x-recordsMarker.position.x,player.position.z-recordsMarker.position.z);recordsButton.hidden=recordsState.status==='locked'||recordsDistance>2.8;const waterworksDistance=Math.hypot(player.position.x-waterworksMarker.position.x,player.position.z-waterworksMarker.position.z);waterworksButton.hidden=waterworksState.status==='locked'||waterworksDistance>2.8;waterworksMarker.rotation.y=t*.65;timingGear.rotation.z=Math.sin(t*.8)*.12;recordsMarker.rotation.y=t*.7;pumpMarker.rotation.y=t*.8;pumpWheel.rotation.x=t*.5;const yardDistance=Math.hypot(player.position.x-yardSearchMarker.position.x,player.position.z-yardSearchMarker.position.z);yardButton.hidden=maintenanceYardState.status!=='available'||yardDistance>2.8;const regulatorDistance=Math.hypot(player.position.x-yardRegulator.position.x,player.position.z-yardRegulator.position.z);regulatorButton.hidden=maintenanceYardState.status!=='searched'||regulatorDistance>2.3;yardSearchMarker.rotation.y=t*.7;yardRegulator.rotation.y=t*.4;const hint=document.querySelector<HTMLElement>('#hint');if(hint&&state.discoveredClueIds.length<3){let nearest:THREE.Mesh|undefined;let nearestDistance=Infinity;for(const mesh of clueMeshes){const id=mesh.userData['clueId'];if(typeof id!=='string'||state.discoveredClueIds.includes(id))continue;const distance=Math.hypot(player.position.x-mesh.position.x,player.position.z-mesh.position.z);if(distance<nearestDistance){nearest=mesh;nearestDistance=distance;}}hint.textContent=nearest&&nearestDistance<=3.1?'NEARBY: TAP THE GLOWING CLUE':'EXPLORE THE SQUARE TO FIND CLUES';}clueMeshes.forEach((mesh,i)=>{mesh.rotation.y=t*.7+i;mesh.position.y=positions[i]![1]+Math.sin(t*1.8+i*1.7)*.12;});renderer.render(scene,camera);if(!firstFrameNotified){firstFrameNotified=true;playablesPlatform.notifyFirstFrameReady();notifyReadyWhenPossible();}}
 
 const playablesPlatform=new PlayablesPlatform();
 const gameAudio=new GameAudio(playablesPlatform.audioEnabled);
