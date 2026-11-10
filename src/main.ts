@@ -61,7 +61,7 @@ let driveWaypointIndex=0;
 let driverBlockedSeconds=0;
 const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driverBlockedSeconds=0;}};
 const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;if(Math.hypot(point.x-sedanState.x,point.z-sedanState.z)>.72)break;driveWaypointIndex++;}};
-const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean)=>{
+const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean,forceStop=false)=>{
   advanceDriveWaypoint();
   const waypoint=activeDriveRoute[driveWaypointIndex]??{x:_targetX,z:_targetZ,speed:maxSpeed};
   const dx=waypoint.x-sedanState.x,dz=waypoint.z-sedanState.z;
@@ -78,8 +78,8 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const brakingDistance=Math.max(0,distance-.5);
   const stoppingSpeed=Math.sqrt(2*3.2*brakingDistance);
   const routeSpeed=Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
-  const throttle=distance>.28&&sedanState.speed<routeSpeed-.12?1:0;
-  const brake=sedanState.speed>routeSpeed+.08||distance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0;
+  const throttle=forceStop?0:(distance>.28&&sedanState.speed<routeSpeed-.12?1:0);
+  const brake=forceStop?1:(sedanState.speed>routeSpeed+.08||distance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
   const previous={...sedanState};
   const result=stepVehicle(sedanState,{throttle,brake,steering},dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
   let blocked=false;
@@ -369,9 +369,13 @@ if(playArrivalSequence){
   else if(!arrivalCarParked){
     // Keep following the complete drop-off route. Never start the exit animation while
     // the sedan is still travelling or freeze it merely because an intro timer elapsed.
-    setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.2,true);
+    setDriveRoute(driveRoutes.dropoff);
+    const approachDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
+    // Capture the terminal parking phase before the pure-pursuit controller can orbit
+    // the final waypoint. Apply a full service brake, then latch the stationary state.
+    applySedanPhysics(dt,4.0,-4.3,3.2,true,approachDistance<=1.35);
     const parkedDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
-    if(parkedDistance<.78&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};}
+    if(parkedDistance<1.35&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};}
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,arrivalCarParked?.7:2.4,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
