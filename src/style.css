@@ -324,3 +324,118 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
     line-height: 1.35 !important;
   }
 }
+
+
+/* Full-screen mobile game layout: prioritize the playable world over page chrome. */
+@media (max-width: 699px) {
+  html, body, #app {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #app {
+    position: relative;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+  #app > header,
+  #app > footer {
+    display: none;
+  }
+  #app > main {
+    position: relative;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  #scene-root, #scene-root canvas {
+    width: 100%;
+    height: 100%;
+  }
+  .overlay {
+    inset: 0 0 auto 0;
+    padding: calc(env(safe-area-inset-top) + 18px) 18px 24px;
+    background: linear-gradient(180deg, #080d19ed 0%, #080d19a8 68%, transparent 100%);
+  }
+  .overlay h1 {
+    max-width: min(70%, 340px);
+    margin: 10px 0 7px;
+    font-size: clamp(25px, 7vw, 36px);
+    line-height: 1.04;
+  }
+  .overlay p {
+    max-width: min(68%, 320px);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .touch-controls #joystick {
+    left: max(18px, env(safe-area-inset-left));
+    bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px));
+    width: clamp(88px, 25vw, 112px);
+    height: clamp(88px, 25vw, 112px);
+  }
+  #stick { width: 42px; height: 42px; }
+  #look-pad {
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
+    font-size: 9px;
+  }
+  .board-open {
+    top: calc(env(safe-area-inset-top) + 16px);
+    right: 14px;
+    min-height: 42px;
+    padding: 10px 11px;
+    font-size: 9px;
+  }
+  .case-toggle {
+    position: absolute;
+    z-index: 22;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(88px, calc(env(safe-area-inset-bottom) + 78px));
+    min-height: 42px;
+    padding: 10px 14px;
+    border: 1px solid #d8bd8090;
+    border-radius: 22px;
+    background: #101a2beF;
+    color: #f1dfb7;
+    font: 10px monospace;
+    letter-spacing: .1em;
+    touch-action: manipulation;
+  }
+  .journal {
+    display: none;
+    position: absolute;
+    z-index: 21;
+    left: 12px;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom) + 74px);
+    max-height: min(54dvh, 440px);
+    overflow-y: auto;
+    padding: 16px;
+    border-radius: 14px;
+    background: #101a2bf5;
+    box-shadow: 0 12px 44px #000b;
+    overscroll-behavior: contain;
+  }
+  #app.case-open .journal { display: block; }
+  #app.case-open .case-toggle { bottom: calc(env(safe-area-inset-bottom) + 18px); }
+  .journal h2 { font-size: 19px; }
+  .journal p { font-size: 12px; line-height: 1.45; }
+  .journal > b span { font-size: 22px; }
+  .relic-interact, .location-interact, .keeper-interact, .yard-interact,
+  .regulator-interact, .vale-interact, .pump-interact, .records-interact,
+  .waterworks-interact {
+    bottom: calc(env(safe-area-inset-bottom) + 142px);
+    max-width: calc(100% - 36px);
+  }
+  #toast { bottom: calc(env(safe-area-inset-bottom) + 148px); }
+}
