@@ -202,7 +202,7 @@ export function createStealthEscapeEncounter(
       distractionAvailable: !state.hasKey && bell.visible,
       showKeyLocationHint: hintElapsed > 13,
     }, { keyLocationHint: 'Look near the overturned cabinet.' });
-    if (ui.hint && (force || next.id !== lastHintId)) {
+    if (ui.hint && (force || next.id !== lastHintId || ui.hint.textContent !== next.message)) {
       ui.hint.textContent = next.message;
       lastHintId = next.id;
     }
@@ -278,7 +278,14 @@ export function createStealthEscapeEncounter(
   document.addEventListener('keydown', onKeyDown);
 
   const update = (deltaSeconds: number, elapsedSeconds: number) => {
-    if (disposed || state.escaped) return;
+    if (disposed) return;
+    if (state.escaped) {
+      if (ui.hint) ui.hint.textContent = 'ESCAPED · CHALLENGE COMPLETE';
+      if (ui.objective) ui.objective.textContent = 'Escape complete.';
+      if (ui.status) ui.status.textContent = 'ESCAPE COMPLETE';
+      setActionLabel('', false);
+      return;
+    }
     currentElapsedSeconds = elapsedSeconds;
     const dt = Math.min(deltaSeconds, .05);
     const encounterVisible = elapsedSeconds >= introDurationSeconds;
