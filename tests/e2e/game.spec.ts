@@ -241,20 +241,19 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   // First move to the north-west side, then cross the open northern walkway.
   await movePlayerTo(page, { x: -3.3, z: 0.6 });
   await movePlayerTo(page, { x: 1.8, z: 0.6 });
-  await inspectNearestClue(page);
+  // Pickup is proximity-based: walking through the clue radius records it;
+  // the test deliberately performs no canvas tap or inspect interaction.
   await expect(page.locator('#count')).toHaveText('1');
 
   // The fountain has a circular collision/exclusion zone centered near
   // z=-2.8. Route around its north side instead of trying to walk through it.
   await movePlayerTo(page, { x: -3.3, z: 0.6 });
   await movePlayerTo(page, { x: -3.3, z: -1.2 });
-  await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('2');
 
   await movePlayerTo(page, { x: -3.3, z: 1.5 });
   await movePlayerTo(page, { x: 3.2, z: 1.5 });
   await movePlayerTo(page, { x: 3.2, z: -3.7 });
-  await inspectNearestClue(page);
   await expect(page.locator('#count')).toHaveText('3');
   await page.locator('#case-toggle').click();
   await expect(page.locator('#deduction-open')).toBeVisible();
