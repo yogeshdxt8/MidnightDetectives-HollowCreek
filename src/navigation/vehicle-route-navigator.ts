@@ -159,7 +159,8 @@ export class VehicleRouteNavigator {
     // later segment cannot steal progress and cause a corner to be cut.
     while (this.waypointIndex < this.waypoints.length) {
       const finalWaypoint = this.waypointIndex === this.waypoints.length - 1;
-      const reached = projection.distance <= this.config.waypointRadius;
+      const distanceToEndpoint = distanceBetween(pose, this.waypoints[this.waypointIndex]!);
+      const reached = distanceToEndpoint <= this.config.waypointRadius;
       const passedInsideCorridor =
         projection.fraction >= 1 &&
         Math.abs(projection.crossTrack) <= this.config.passCorridorHalfWidth;
