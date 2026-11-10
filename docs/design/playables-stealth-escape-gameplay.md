@@ -108,6 +108,7 @@ Hints must not appear so aggressively that they interrupt skilled play. They mus
 ## 8. Failure, retry, and progress
 
 - Failure restarts the current encounter quickly.
+- After a successful escape, reuse the contextual action button as **Play Again**. Restart the encounter immediately without replaying the sedan intro.
 - Preserve campaign progress and any previously completed stages.
 - Reset only the current encounter's temporary entity, distraction, and key state, unless the encounter design explicitly says otherwise.
 - Do not make the player repeat a long cinematic or solved content after failure.
