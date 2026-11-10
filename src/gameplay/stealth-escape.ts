@@ -27,6 +27,11 @@ export function createStealthEscapeEncounter(
   let disposed = false;
   let hidden = false;
   let noiseActiveUntil = 0;
+  let distractionUsed = false;
+  let projectileActive = false;
+  let projectileProgress = 0;
+  const projectileStart = new THREE.Vector3();
+  const projectileEnd = new THREE.Vector3();
   let suspicionSeconds = 0;
   let stalledSeconds = 0;
   let lastPlayerPosition = player.position.clone();
@@ -129,6 +134,8 @@ export function createStealthEscapeEncounter(
   addMesh(bell, new THREE.CylinderGeometry(.22, .28, .22, 12), mats.bell, 0, .16, 0);
   addMesh(bell, new THREE.SphereGeometry(.055, 8, 6), mats.metal, 0, .31, 0);
   addMesh(bell, new THREE.BoxGeometry(.34, .07, .34), mats.wood, 0, .035, 0);
+  const thrownStone = addMesh(scene, new THREE.SphereGeometry(.075, 8, 6), mats.woodLight, 0, 0, 0);
+  thrownStone.visible = false;
 
   // A visible locked exit placed inside the existing walkable town-square bounds.
   const exit = new THREE.Group();
@@ -190,6 +197,7 @@ export function createStealthEscapeEncounter(
   const isNearCabinet = () => distance2D(player.position, cabinet.position) < 1.25;
   const isNearKey = () => state.hasKey === false && distance2D(player.position, key.position) < 1.05;
   const isNearBell = () => distance2D(player.position, bell.position) < 1.25;
+  const canUseDistraction = () => !state.hasKey && !distractionUsed && distance2D(player.position, bell.position) < 10.5;
   const isNearExit = () => distance2D(player.position, exit.position) < 1.55;
 
   const showHint = (force = false) => {
@@ -199,7 +207,7 @@ export function createStealthEscapeEncounter(
       playerNearExit: isNearExit(),
       playerStalledNearKey: stalledSeconds > 5 && distance2D(player.position, key.position) < 2.8,
       entityThreat: threat === 'approaching' || threat === 'chasing' ? 'approaching' : threat,
-      distractionAvailable: !state.hasKey && bell.visible,
+      distractionAvailable: canUseDistraction(),
       showKeyLocationHint: hintElapsed > 13,
     }, { keyLocationHint: 'Look near the overturned cabinet.' });
     if (ui.hint && (force || next.id !== lastHintId || ui.hint.textContent !== next.message)) {
@@ -242,6 +250,20 @@ export function createStealthEscapeEncounter(
       }
       return;
     }
+    if ((isNearBell() || stalledSeconds > 5 || threat === 'approaching' || threat === 'chasing') && canUseDistraction()) {
+      distractionUsed = true;
+      noiseActiveUntil = currentElapsedSeconds + 8;
+      threat = 'investigating';
+      threatTarget.copy(bell.position);
+      threatTimer = 8;
+      projectileStart.copy(player.position).add(new THREE.Vector3(0, .9, 0));
+      projectileEnd.copy(bell.position).add(new THREE.Vector3(0, .25, 0));
+      projectileProgress = 0;
+      projectileActive = true;
+      thrownStone.visible = true;
+      onNotify('You throw a stone. The bell rings, drawing the creature away.');
+      return;
+    }
     if (isNearKey()) {
       state = collectEscapeKey({ ...state, playerNearKey: true });
       key.visible = false;
@@ -251,12 +273,7 @@ export function createStealthEscapeEncounter(
       return;
     }
     if (isNearBell() && !state.hasKey) {
-      noiseActiveUntil = currentElapsedSeconds + 8;
-      threat = 'investigating';
-      threatTarget.copy(bell.position);
-      threatTimer = 8;
-      bell.rotation.z = -.22;
-      onNotify('The bell rings. The creature turns toward the sound.');
+      onNotify('The bell is ready. Tap to throw a stone and ring it.');
       return;
     }
     if (isNearCabinet()) {
@@ -386,6 +403,17 @@ export function createStealthEscapeEncounter(
       onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
     }
 
+    if (projectileActive) {
+      projectileProgress = Math.min(1, projectileProgress + dt / .65);
+      thrownStone.position.lerpVectors(projectileStart, projectileEnd, projectileProgress);
+      thrownStone.position.y += Math.sin(projectileProgress * Math.PI) * 1.25;
+      if (projectileProgress >= 1) {
+        projectileActive = false;
+        thrownStone.visible = false;
+        bell.rotation.z = -.22;
+      }
+    }
+
     if (state.exitUnlocked && isNearExit()) {
       exitProgress += dt;
       const open = Math.min(1, exitProgress * 2.4);
@@ -430,6 +458,7 @@ export function createStealthEscapeEncounter(
       hidden ? ['LEAVE COVER', true] as const :
       isNearExit() ? (state.exitUnlocked ? ['GO THROUGH', false] as const : state.hasKey ? ['UNLOCK EXIT', true] as const : ['LOCKED · FIND KEY', true] as const) :
       (threat === 'approaching' || threat === 'chasing') && isNearCabinet() ? ['HIDE', true] as const :
+      canUseDistraction() && (isNearBell() || (stalledSeconds > 5 && distance2D(player.position, key.position) < 2.8) || threat === 'approaching' || threat === 'chasing') ? ['MAKE NOISE', true] as const :
       isNearKey() ? ['COLLECT KEY', true] as const :
       isNearBell() && !state.hasKey ? ['MAKE NOISE', true] as const :
       isNearCabinet() ? ['HIDE', true] as const : ['', false] as const;
@@ -451,7 +480,7 @@ export function createStealthEscapeEncounter(
       disposed = true;
       ui.action?.removeEventListener('click', interact);
       document.removeEventListener('keydown', onKeyDown);
-      scene.remove(cabinet, key, bell, exit, entity);
+      scene.remove(cabinet, key, bell, thrownStone, exit, entity);
       for (const item of geometry) item.dispose();
       for (const material of Object.values(mats)) material.dispose();
       if (ui.action) ui.action.hidden = true;
