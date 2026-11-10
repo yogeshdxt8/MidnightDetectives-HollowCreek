@@ -266,9 +266,13 @@ if(playArrivalSequence){
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
   else if(t<16){applySedanPhysics(dt,3.25,-5.65,4.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else if(t<35){applySedanPhysics(dt,3.25,-5.65,0,true);headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);headlampRight.intensity=headlampLeft.intensity;}
-  else if(t<41){applySedanPhysics(dt,3.25,12,4.4,true);headlampLeft.intensity=headlampRight.intensity=2.6;}
-  else{arrivalCar.visible=false;arrivalDriver.root.visible=false;}
+  else { 
+    // Hold at the fountain-side drop-off point. Keep applying braking/hold dynamics;
+    // do not send the sedan back across the square or hide it after the passenger exits.
+    applySedanPhysics(dt,3.25,-5.65,0,true);
+    headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
+    headlampRight.intensity=headlampLeft.intensity;
+  }
   if(t>=16&&t<16.8){driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-1.18,7,dt);}
   if(t>=16.8&&t<17&&!arrivalDriver.root.userData['exited']){
     arrivalCar.updateMatrixWorld(true);scene.attach(arrivalDriver.root);
