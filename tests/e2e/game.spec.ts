@@ -15,9 +15,6 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }) {
   const centerY = bounds.y + bounds.height / 2;
   const radius = bounds.width * .34;
   const initial = await readPlayerPosition(page);
-  const initialYaw = await page.locator('#scene-root').evaluate(element =>
-    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
-  );
   const timeoutMs = Math.ceil(Math.hypot(target.x - initial.x, target.z - initial.z) / 3.1 * 1000 * 5 + 8000);
   const deadline = Date.now() + timeoutMs;
   let previous = initial;
