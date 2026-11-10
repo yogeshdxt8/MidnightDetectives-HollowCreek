@@ -30,6 +30,21 @@ describe('vehicle parking controller', () => {
     expect(isSedanInsideParkingEnvelope(state({ yaw: 0 }), envelope)).toBe(false);
   });
 
+  it('fits the full sedan footprint at the controller heading tolerance without relaxing collision checks', () => {
+    const targetYaw = Math.PI / 2;
+    const envelopeAtTarget = {
+      centerX: 4,
+      centerZ: -4.3,
+      yaw: targetYaw,
+      halfLength: defaultParkingControllerConfig.envelopeHalfLength,
+      halfWidth: defaultParkingControllerConfig.envelopeHalfWidth
+    };
+    expect(isSedanInsideParkingEnvelope(
+      state({ yaw: targetYaw + 0.18 }),
+      envelopeAtTarget
+    )).toBe(true);
+  });
+
   it('commands a controlled low-speed approach and brakes inside the stopping radius', () => {
     const approach = computeParkingControl(
       state({ x: 4, z: -2.8, speed: 1.2 }),
