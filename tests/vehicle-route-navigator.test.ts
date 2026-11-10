@@ -33,6 +33,44 @@ describe('vehicle route navigator', () => {
     expect(outsideCornerCorridor.mode).toBe('recovering');
   });
 
+  it('constrains look-ahead before a sharp upcoming corner', () => {
+    const navigator = new VehicleRouteNavigator();
+    navigator.setRoute('tight-corner', { x: 0, z: 0 }, [
+      { x: 0, z: 3, speed: 1.5 },
+      { x: 3, z: 3, speed: 1 }
+    ]);
+
+    const result = navigator.update(pose(0, 1.8, 2.5), 1 / 60);
+
+    expect(result.waypointIndex).toBe(0);
+    expect(result.lookAheadDistance).toBeLessThan(1.8);
+    expect(result.lookAheadPoint.x).toBeCloseTo(0, 5);
+    expect(result.lookAheadPoint.z).toBeGreaterThan(1.8);
+    expect(result.lookAheadPoint.z).toBeLessThanOrEqual(3.3);
+  });
+
+  it('keeps the failed arrival pose in bounded recovery instead of aiming through a later corner', () => {
+    const navigator = new VehicleRouteNavigator();
+    navigator.setRoute('dropoff', { x: 3.25, z: 5.5 }, [
+      { x: 4.05, z: 4.4, speed: 2.8 },
+      { x: 4.55, z: 2.4, speed: 2.7 },
+      { x: 4.35, z: 0.2, speed: 2.5 },
+      { x: 3.75, z: -1.7, speed: 2.2 },
+      { x: 4, z: -4.3, speed: 1.5 }
+    ]);
+
+    const failedPose = { x: 7.29, z: 2.43, yaw: 1.1847, speed: 0.666 };
+    const result = navigator.update(failedPose, 1 / 60);
+
+    expect(result.waypointIndex).toBe(0);
+    expect(result.mode).toBe('recovering');
+    expect(result.lookAheadDistance).toBeLessThanOrEqual(2.25);
+    expect(result.lookAheadPoint).toEqual(expect.objectContaining({
+      x: expect.any(Number),
+      z: expect.any(Number)
+    }));
+  });
+
   it('does not skip a corner when the vehicle is laterally displaced', () => {
     const navigator = new VehicleRouteNavigator();
     navigator.setRoute('right-angle', { x: 0, z: 0 }, [
