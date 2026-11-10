@@ -16,7 +16,7 @@ const routes: Record<'approach' | 'dropoff' | 'departure', NavigationPoint[]> = 
     { x: 3.3, z: -4.8, speed: 0.9 }
   ],
   departure: [
-    { x: 4.45, z: -3.7, speed: 1.8 },
+    { x: 3.5, z: -3.3, speed: 1.4 },
     { x: 4.8, z: -1, speed: 2 },
     { x: 4.65, z: 2, speed: 2.5 },
     { x: 3.2, z: 5.2, speed: 3 },
