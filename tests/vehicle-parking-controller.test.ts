@@ -57,6 +57,30 @@ describe('vehicle parking controller', () => {
     expect(computeParkingControl(state(), target, sedanTuning, envelope).settled).toBe(true);
   });
 
+  it('continues a low-speed correction at the previously failed stopped-but-not-parked pose', () => {
+    const target = { x: 4, z: -4.3, yaw: Math.atan2(5.14, 0.12) };
+    const failedPose = state({
+      x: 4.015830872501567,
+      z: -4.115795994888321,
+      yaw: 1.6295315176341159,
+      speed: 0,
+      steering: 0.48
+    });
+    const result = computeParkingControl(failedPose, target, sedanTuning, {
+      centerX: target.x,
+      centerZ: target.z,
+      yaw: target.yaw,
+      halfLength: defaultParkingControllerConfig.envelopeHalfLength,
+      halfWidth: defaultParkingControllerConfig.envelopeHalfWidth
+    });
+
+    expect(result.positionError).toBeLessThan(defaultParkingControllerConfig.positionTolerance);
+    expect(result.insideEnvelope).toBe(false);
+    expect(result.settled).toBe(false);
+    expect(result.input.throttle).toBe(1);
+    expect(result.input.brake).toBe(0);
+  });
+
   it('steers toward the target pose when position and heading are both misaligned', () => {
     const result = computeParkingControl(
       state({ x: 4.7, z: -3.9, yaw: 1.1, speed: 0.3 }),
