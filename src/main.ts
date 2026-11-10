@@ -59,9 +59,10 @@ const driveRoutes={
 } satisfies Record<string,DriveWaypoint[]>;
 let activeDriveRoute:DriveWaypoint[]=driveRoutes.approach;
 let driveWaypointIndex=0;
+let driveWaypointAnchor={x:sedanState.x,z:sedanState.z};
 let driverBlockedSeconds=0;
-const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driverBlockedSeconds=0;}};
-const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;if(Math.hypot(point.x-sedanState.x,point.z-sedanState.z)>.72)break;driveWaypointIndex++;}};
+const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driveWaypointAnchor={x:sedanState.x,z:sedanState.z};driverBlockedSeconds=0;}};
+const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;const segmentX=point.x-driveWaypointAnchor.x,segmentZ=point.z-driveWaypointAnchor.z;const passed=(sedanState.x-point.x)*segmentX+(sedanState.z-point.z)*segmentZ>=0;const reached=Math.hypot(point.x-sedanState.x,point.z-sedanState.z)<=.72;if(!reached&&!passed)break;driveWaypointAnchor={x:point.x,z:point.z};driveWaypointIndex++;}};
 const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean,forceStop=false)=>{
   advanceDriveWaypoint();
   const waypoint=activeDriveRoute[driveWaypointIndex]??{x:_targetX,z:_targetZ,speed:maxSpeed};
