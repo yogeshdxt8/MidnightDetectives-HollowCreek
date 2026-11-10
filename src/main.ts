@@ -130,16 +130,18 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const routeSpeed=driveRouteComplete||forceStop||recoveryFailed?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
   const targetVelocity=reversing?-routeSpeed:routeSpeed;
   const velocityError=targetVelocity-sedanState.speed;
-  const throttle=!reversing&&!forceStop&&!driveRouteComplete&&!recoveryFailed&&velocityError>.12?1:0;
-  const reverse=!reversing&&!forceStop&&!driveRouteComplete&&!recoveryFailed?0:
-    (!forceStop&&!driveRouteComplete&&!recoveryFailed&&velocityError<-.12?1:0);
-  const brake=forceStop||driveRouteComplete||recoveryFailed
-    ?1
-    :(Math.abs(sedanState.speed-targetVelocity)>.08&&
-      Math.sign(sedanState.speed)===Math.sign(targetVelocity)&&
-      Math.abs(sedanState.speed)>Math.abs(targetVelocity)+.08
-        ?THREE.MathUtils.clamp((Math.abs(sedanState.speed)-Math.abs(targetVelocity))*.65,.18,1)
-        :(targetVelocity===0&&Math.abs(sedanState.speed)>.08?1:0));
+  const canDrive=!forceStop&&!driveRouteComplete&&!recoveryFailed;
+  const throttle=canDrive&&targetVelocity>.05&&velocityError>.12&&sedanState.speed>=-.08?1:0;
+  const reverse=canDrive&&targetVelocity<-.05&&velocityError<-.12&&sedanState.speed<=.08?1:0;
+  const movingAgainstTarget=targetVelocity>0?sedanState.speed<-.08:
+    targetVelocity<0?sedanState.speed>.08:false;
+  const overspeed=targetVelocity===0
+    ?Math.abs(sedanState.speed)>.08
+    :Math.abs(sedanState.speed)>Math.abs(targetVelocity)+.08;
+  const brake=forceStop||driveRouteComplete||recoveryFailed?1:
+    (movingAgainstTarget||overspeed
+      ?THREE.MathUtils.clamp(Math.abs(sedanState.speed-targetVelocity)*.65,.18,1)
+      :0);
   const parkingActive=Boolean(parkingTarget)&&Math.hypot(parkingTarget!.x-sedanState.x,parkingTarget!.z-sedanState.z)<=2.5;
   parkingSnapshot=parkingActive
     ? computeParkingControl(sedanState,parkingTarget!,sedanTuning,sedanParkingEnvelope)
