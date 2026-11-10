@@ -7,8 +7,7 @@ export type ArrivalWorkflowState =
   | 'opening-passenger-door'
   | 'passenger-exiting'
   | 'player-clearing-car'
-  | 'greeting-approach'
-  | 'greeting'
+  | 'go-commanded'
   | 'returning-to-car'
   | 'boarding'
   | 'seated'
@@ -25,8 +24,7 @@ export type ArrivalWorkflowEvent =
   | 'passenger-door-opened'
   | 'passenger-exited'
   | 'player-clear-of-car'
-  | 'greeting-position-reached'
-  | 'greeting-finished'
+  | 'driver-go-commanded'
   | 'driver-at-door'
   | 'driver-boarded'
   | 'driver-door-close-requested'
@@ -41,9 +39,8 @@ const transitions: Readonly<Record<ArrivalWorkflowState, Partial<Record<ArrivalW
   'closing-driver-door': { 'driver-door-closed': 'opening-passenger-door' },
   'opening-passenger-door': { 'passenger-door-opened': 'passenger-exiting' },
   'passenger-exiting': { 'passenger-exited': 'player-clearing-car' },
-  'player-clearing-car': { 'player-clear-of-car': 'greeting-approach' },
-  'greeting-approach': { 'greeting-position-reached': 'greeting' },
-  greeting: { 'greeting-finished': 'returning-to-car' },
+  'player-clearing-car': { 'player-clear-of-car': 'go-commanded' },
+  'go-commanded': { 'driver-go-commanded': 'returning-to-car' },
   'returning-to-car': { 'driver-at-door': 'boarding' },
   boarding: { 'driver-boarded': 'seated' },
   seated: { 'driver-door-close-requested': 'closing-driver-door-after-boarding' },
