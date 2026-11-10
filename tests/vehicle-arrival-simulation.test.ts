@@ -111,7 +111,7 @@ function simulateRoute(
       ? Math.min(1.35, Math.sqrt(2 * 1.4 * Math.max(0, approachDistance - 1)))
       : waypoint.speed;
     const input = terminalActive
-      ? computeParkingControl(state, parkingTarget, sedanTuning, {
+      ? computeParkingControl(state, parkingTarget!, sedanTuning, {
           centerX: parkingTarget.x,
           centerZ: parkingTarget.z,
           yaw: parkingTarget.yaw,
