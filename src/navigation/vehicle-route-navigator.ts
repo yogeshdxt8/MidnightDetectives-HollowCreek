@@ -38,6 +38,7 @@ export interface NavigationSnapshot {
   distanceToWaypoint: number;
   target: NavigationTarget;
   lookAheadPoint: NavigationTarget;
+  lookAheadDistance: number;
   recoveryElapsed: number;
   replanRequested: boolean;
   routeComplete: boolean;
@@ -178,13 +179,40 @@ export class VehicleRouteNavigator {
     }
 
     const target = this.waypoints[this.waypointIndex] ?? this.waypoints[this.waypoints.length - 1]!;
-    const lookAheadDistance = Math.max(
+    const desiredLookAhead = Math.max(
       this.config.lookAheadBase,
       Math.min(
         this.config.maximumLookAhead,
         this.config.lookAheadBase + Math.abs(pose.speed) * this.config.lookAheadSpeedFactor
       )
     );
+    // Pure-pursuit targets beyond a sharp corner pull the vehicle across the
+    // inside of the bend. Shorten the arc-length look-ahead near a corner,
+    // allowing only a small blend beyond the active endpoint.
+    const currentEnd = this.waypoints[this.waypointIndex]!;
+    const remainingToCorner = distanceBetween(projection, currentEnd);
+    const next = this.waypoints[this.waypointIndex + 1];
+    let cornerLimitedLookAhead = desiredLookAhead;
+    if (next) {
+      const segmentStart = this.waypointIndex === 0
+        ? this.routeStart
+        : this.waypoints[this.waypointIndex - 1]!;
+      const incomingX = currentEnd.x - segmentStart.x;
+      const incomingZ = currentEnd.z - segmentStart.z;
+      const outgoingX = next.x - currentEnd.x;
+      const outgoingZ = next.z - currentEnd.z;
+      const incomingLength = Math.hypot(incomingX, incomingZ);
+      const outgoingLength = Math.hypot(outgoingX, outgoingZ);
+      if (incomingLength > 1e-8 && outgoingLength > 1e-8) {
+        const directionDot = Math.max(-1, Math.min(1,
+          (incomingX * outgoingX + incomingZ * outgoingZ) / (incomingLength * outgoingLength)
+        ));
+        const turnSeverity = (1 - directionDot) * 0.5;
+        const cornerBlend = (0.2 + Math.min(0.35, outgoingLength * 0.12)) * turnSeverity;
+        cornerLimitedLookAhead = Math.min(desiredLookAhead, remainingToCorner + cornerBlend);
+      }
+    }
+    const lookAheadDistance = Math.max(0.2, cornerLimitedLookAhead);
     const lookAheadPoint = this.pointAheadOnRoute(projection, lookAheadDistance);
     const absoluteCrossTrack = Math.abs(projection.crossTrack);
 
@@ -212,6 +240,7 @@ export class VehicleRouteNavigator {
       distanceToWaypoint: distanceBetween(pose, target),
       target: { x: target.x, z: target.z },
       lookAheadPoint,
+      lookAheadDistance,
       recoveryElapsed: this.recoveryElapsed,
       replanRequested: this.mode === 'replan-required',
       routeComplete: this.mode === 'complete'
@@ -285,6 +314,7 @@ export class VehicleRouteNavigator {
       distanceToWaypoint: distanceBetween(pose, target),
       target: { x: target.x, z: target.z },
       lookAheadPoint: { x: target.x, z: target.z },
+      lookAheadDistance: 0,
       recoveryElapsed: this.recoveryElapsed,
       replanRequested: this.mode === 'replan-required',
       routeComplete: this.mode === 'complete'
