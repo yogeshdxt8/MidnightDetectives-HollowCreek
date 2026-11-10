@@ -96,7 +96,51 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   return {...result,state:sedanState,blockedByGate:result.blockedByGate||blocked};
 };
 // Character locomotion uses acceleration, braking distance, ground contact and conservative obstacle clearance.
-const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpeed=1.8)=>{const velocity=(actor.userData['arrivalVelocity'] as THREE.Vector3|undefined)??new THREE.Vector3();actor.userData['arrivalVelocity']=velocity;const offset=new THREE.Vector3(target.x-actor.position.x,0,target.z-actor.position.z);const distance=offset.length();const acceleration=7.5;const brakingSpeed=Math.sqrt(Math.max(0,2*acceleration*Math.max(0,distance-.08)));const desiredSpeed=Math.min(maxSpeed,brakingSpeed);const desired=distance>.025?offset.normalize().multiplyScalar(desiredSpeed):new THREE.Vector3();const delta=desired.sub(velocity);const maxDelta=acceleration*dt;if(delta.length()>maxDelta)delta.setLength(maxDelta);velocity.add(delta);const step=velocity.clone().multiplyScalar(dt);const tryPosition=actor.position.clone().add(step);tryPosition.y=0;const clear=(x:number,z:number)=>{const fountainClear=Math.hypot(x,z+2.8)>1.65+.48;const local=arrivalCar.worldToLocal(new THREE.Vector3(x,0,z));const inDriverDoorApproach=actor===arrivalDriver.root&&local.x> -1.25&&local.x<.2&&local.z>.55&&local.z<1.38;const carClear=actor.parent===arrivalCar||inDriverDoorApproach||(Math.abs(local.x)>2.12||Math.abs(local.z)>1.02);const buildingsClear=townBuildingBounds.every(b=>x<b.minX-.42||x>b.maxX+.42||z<b.minZ-.42||z>b.maxZ+.42);return fountainClear&&carClear&&buildingsClear;};if(clear(tryPosition.x,tryPosition.z))actor.position.copy(tryPosition);else{const xOnly=clear(actor.position.x+step.x,actor.position.z);const zOnly=clear(actor.position.x,actor.position.z+step.z);if(xOnly)actor.position.x+=step.x;if(zOnly)actor.position.z+=step.z;if(!xOnly&&!zOnly)velocity.multiplyScalar(.15);}actor.position.y=0;if(velocity.length()>.04)actor.rotation.y=Math.atan2(velocity.x,velocity.z);if(distance<.07&&velocity.length()<.12){velocity.set(0,0,0);return true;}return false;};
+const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpeed=1.8)=>{
+  const velocity=(actor.userData['arrivalVelocity'] as THREE.Vector3|undefined)??new THREE.Vector3();
+  actor.userData['arrivalVelocity']=velocity;
+  // Targets and collision geometry are expressed in world space. Character rigs may
+  // be reparented during the sedan exit/boarding sequence, so never mix local position
+  // with world-space waypoints.
+  const worldPosition=actor.getWorldPosition(new THREE.Vector3());
+  const offset=new THREE.Vector3(target.x-worldPosition.x,0,target.z-worldPosition.z);
+  const distance=offset.length();
+  const acceleration=7.5;
+  const brakingSpeed=Math.sqrt(Math.max(0,2*acceleration*Math.max(0,distance-.08)));
+  const desiredSpeed=Math.min(maxSpeed,brakingSpeed);
+  const desired=distance>.025?offset.normalize().multiplyScalar(desiredSpeed):new THREE.Vector3();
+  const delta=desired.sub(velocity);
+  const maxDelta=acceleration*dt;
+  if(delta.length()>maxDelta)delta.setLength(maxDelta);
+  velocity.add(delta);
+  const step=velocity.clone().multiplyScalar(dt);
+  const tryPosition=worldPosition.clone().add(step);
+  tryPosition.y=0;
+  const clear=(x:number,z:number)=>{
+    const fountainClear=Math.hypot(x,z+2.8)>1.65+.48;
+    const local=arrivalCar.worldToLocal(new THREE.Vector3(x,0,z));
+    const inDriverDoorApproach=actor===arrivalDriver.root&&local.x> -1.25&&local.x<.2&&local.z>.55&&local.z<1.38;
+    const carClear=actor.parent===arrivalCar||inDriverDoorApproach||(Math.abs(local.x)>2.12||Math.abs(local.z)>1.02);
+    const buildingsClear=townBuildingBounds.every(b=>x<b.minX-.42||x>b.maxX+.42||z<b.minZ-.42||z>b.maxZ+.42);
+    return fountainClear&&carClear&&buildingsClear;
+  };
+  let nextPosition:THREE.Vector3|undefined;
+  if(clear(tryPosition.x,tryPosition.z))nextPosition=tryPosition;
+  else{
+    const xOnly=clear(worldPosition.x+step.x,worldPosition.z);
+    const zOnly=clear(worldPosition.x,worldPosition.z+step.z);
+    if(xOnly||zOnly)nextPosition=worldPosition.clone().add(new THREE.Vector3(xOnly?step.x:0,0,zOnly?step.z:0));
+    else velocity.multiplyScalar(.15);
+  }
+  if(nextPosition){
+    if(actor.parent)actor.position.copy(actor.parent.worldToLocal(nextPosition));
+    else actor.position.copy(nextPosition);
+  }
+  actor.position.y=0;
+  if(velocity.length()>.04)actor.rotation.y=Math.atan2(velocity.x,velocity.z);
+  if(distance<.07&&velocity.length()<.12){velocity.set(0,0,0);return true;}
+  return false;
+};
 const arrivalDoorWorld=(localX:number,localZ:number)=>arrivalCar.localToWorld(new THREE.Vector3(localX,0,localZ));
 const arrivalDriver=createDetectiveCharacter();arrivalDriver.root.scale.setScalar(.78);arrivalDriver.root.position.set(0,0,.38);arrivalDriver.root.rotation.y=Math.PI/2;arrivalDriver.root.visible=!playArrivalSequence;arrivalCar.add(arrivalDriver.root);
 const arrivalGate=new THREE.Group();scene.add(arrivalGate);arrivalGate.position.z=gatePlaneZ;const gateMetal=new THREE.MeshStandardMaterial({color:'#293747',metalness:.82,roughness:.32});const gateGold=new THREE.MeshStandardMaterial({color:'#b99b65',metalness:.6,roughness:.4});
