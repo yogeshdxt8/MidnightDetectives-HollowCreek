@@ -75,7 +75,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
   const gateCenters = [-3.9, -1.3, 1.3, 3.9];
   gateCenters.forEach((x, index) => {
     // Recessed portal interior: near-black stone makes the iron silhouette legible.
-    addBox(2.12, 3.82, .2, materials.sign, x, 2.88, gateZ + .36);
+    addBox(2.12, 3.82, .2, materials.sign, x, 2.88, gateZ - 1.55);
     // Individually framed jambs with projecting bases and capitals.
     for (const side of [-1, 1]) {
       const jambX = x + side * 1.13;
