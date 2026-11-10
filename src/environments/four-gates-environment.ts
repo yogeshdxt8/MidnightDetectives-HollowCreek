@@ -87,13 +87,7 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     addBox(2.58, .48, .58, materials.stoneLight, x, 5.0, gateZ - .7);
     addBox(.42, .58, .24, materials.gateTrim, x, 5.04, gateZ - 1.02);
     // Iron cross rails and vertical bars, clearly separated from the dark recess.
-    addBox(2.12, .095, .14, materials.iron, x, 1.12, gateZ - 1.02);
-    addBox(2.12, .095, .14, materials.iron, x, 2.34, gateZ - 1.02);
-    for (let bar = 0; bar < 9; bar++) {
-      const bx = x - .96 + bar * .24;
-      addBox(.065, 1.18, .085, materials.iron, bx, 1.73, gateZ - 1.04);
-      addBox(.13, .13, .11, materials.gateTrim, bx, 2.4, gateZ - 1.06);
-    }
+    // The playable hinged gate leaves are supplied by the arrival physics rig.
     // Oversized, high-contrast Roman numeral on a dedicated illuminated plaque.
     const numeral = ['I', 'II', 'III', 'IV'][index]!;
     // Raised gold frame and solid 3D Roman numerals avoid texture/back-face

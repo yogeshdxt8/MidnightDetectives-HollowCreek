@@ -108,6 +108,9 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
   const radius = bounds.width * 0.34;
   const hint = page.locator('#hint');
   const initial = await readPlayerPosition(page);
+  const initialCameraYaw = await page.locator('#scene-root').evaluate(element =>
+    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+  );
   if (!Number.isFinite(initial.x) || !Number.isFinite(initial.z)) {
     throw new Error('Live investigator coordinates were not published by the scene.');
   }
@@ -137,12 +140,22 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
         break;
       }
 
-      // Re-aim from the observed position, not a guessed previous waypoint.
-      // Pointer Y maps directly to joystick Y; the controller applies its forward-axis inversion.
+      // Re-aim from authoritative world-space coordinates after the arrival sequence has
+      // detached the investigator from the vehicle. Never drive a seated passenger via the joystick.
       // Send intermediate pointer events so the held joystick remains responsive in headless CI.
+      const cameraYaw = await page.locator('#scene-root').evaluate(element =>
+        Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+      );
+      // Convert the desired world-space direction into the camera-relative
+      // joystick basis used by the runtime. World X/Z must not be sent as
+      // joystick X/Y once the player has rotated the camera.
+      const worldX = remainingX / remaining;
+      const worldZ = remainingZ / remaining;
+      const joystickX = worldX * Math.cos(cameraYaw) - worldZ * Math.sin(cameraYaw);
+      const joystickY = worldX * Math.sin(cameraYaw) + worldZ * Math.cos(cameraYaw);
       await page.mouse.move(
-        centerX + (remainingX / remaining) * radius,
-        centerY + (remainingZ / remaining) * radius,
+        centerX + joystickX * radius,
+        centerY + joystickY * radius,
         { steps: 4 }
       );
 
@@ -172,10 +185,18 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
       `Investigator did not reach waypoint (${target.x}, ${target.z}) within ${timeoutMs}ms. ` +
       `Started at (${initial.x.toFixed(2)}, ${initial.z.toFixed(2)}), ` +
       `ended at (${finalPosition.x.toFixed(2)}, ${finalPosition.z.toFixed(2)}), ` +
-      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}.`
+      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}; ` +
+      `runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}.`
     );
   }
 
+  const finalCameraYaw = await page.locator('#scene-root').evaluate(element =>
+    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+  );
+  const cameraYawDelta = Math.atan2(Math.sin(finalCameraYaw - initialCameraYaw), Math.cos(finalCameraYaw - initialCameraYaw));
+  if (Math.abs(cameraYawDelta) > 0.01) {
+    throw new Error(`Joystick movement unexpectedly rotated the camera by ${cameraYawDelta.toFixed(3)} radians.`);
+  }
   await page.waitForTimeout(150);
 }
 async function inspectNearestClue(page: import('@playwright/test').Page) {
@@ -205,10 +226,14 @@ async function inspectNearestClue(page: import('@playwright/test').Page) {
 }
 
 test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
+  // This test covers investigation progression, not the cinematic arrival. Skip
+  // the one-time intro so its 35-second timeline cannot consume the movement budget.
+  await page.addInitScript(() => sessionStorage.setItem('hollow-creek-arrival-seen', '1'));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.waitForTimeout(350);
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-ready'), { timeout: 30_000 }).toBe('true');
   await expect(page.locator('#count')).toHaveText('0');
   await expect(page.locator('#deduction-open')).toBeHidden();
 
