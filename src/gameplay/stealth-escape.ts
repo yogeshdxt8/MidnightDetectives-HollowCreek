@@ -172,7 +172,7 @@ export function createStealthEscapeEncounter(
     new THREE.Vector3(-2.2, 0, 1.05),
     new THREE.Vector3(2.3, 0, 1.0),
   ];
-  let patrolIndex = 1;
+  let patrolIndex = 0;
   let threat: 'patrolling' | 'investigating' | 'approaching' | 'searching' | 'chasing' = 'patrolling';
   let threatTarget = patrol[patrolIndex]!.clone();
   let threatTimer = 0;
@@ -406,6 +406,8 @@ export function createStealthEscapeEncounter(
       player.position.z = THREE.MathUtils.clamp(player.position.z + awayZ / awayLength * 1.1, -9.8, 6.2);
       lastPlayerPosition.copy(player.position);
       entity.position.set(3.4, 0, -1.5);
+      patrolIndex = 0;
+      threatTarget.copy(patrol[patrolIndex]!);
       onNotify('The creature caught your trail. Hide or distract it, then keep moving.');
     }
 
