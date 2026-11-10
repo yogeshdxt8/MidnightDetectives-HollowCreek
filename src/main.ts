@@ -138,7 +138,7 @@ const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpee
   }
   actor.position.y=0;
   if(velocity.length()>.04)actor.rotation.y=Math.atan2(velocity.x,velocity.z);
-  if(distance<.07&&velocity.length()<.12){velocity.set(0,0,0);return true;}
+  if(distance<.18&&velocity.length()<.18){velocity.set(0,0,0);return true;}
   return false;
 };
 const arrivalDoorWorld=(localX:number,localZ:number)=>arrivalCar.localToWorld(new THREE.Vector3(localX,0,localZ));
