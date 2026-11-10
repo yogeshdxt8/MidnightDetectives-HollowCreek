@@ -111,6 +111,11 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('true');
   await expect(page.locator('#hint')).toHaveText('ESCAPED · CHALLENGE COMPLETE');
   await expect(page.locator('#status')).toHaveText('ESCAPE COMPLETE');
+  await expect(page.locator('#escape-action')).toHaveText('PLAY AGAIN');
+  await page.locator('#escape-action').click();
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('false');
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-has-key', 'false');
+  await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
   expect(runtimeErrors).toEqual([]);
 });
 
