@@ -525,7 +525,7 @@ if(playArrivalSequence){
     arrivalWorkflowAI.emit('driver-go-commanded');
   }
   if(arrivalWorkflowAI.state==='returning-to-car'){
-    const returnTargets=[arrivalDoorWorld(-2.35,-1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
+    const returnTargets=[arrivalDoorWorld(2.35,-1.48),arrivalDoorWorld(2.35,1.48),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
     const target=returnTargets[driverReturnPhase]??returnTargets[returnTargets.length-1]!;
     const reached=moveArrivalActor(arrivalDriver.root,target,dt,1.45);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
