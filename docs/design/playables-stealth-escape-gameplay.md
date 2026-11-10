@@ -34,9 +34,9 @@ The first prototype should contain one mandatory key, one entity, one compact lo
 
 ### B. Player-created distraction
 
-- The player uses a clearly indicated environmental object or action to attract the entity's attention.
-- The distraction has predictable feedback: the object makes a sound or other readable signal, and the entity visibly reacts and moves to investigate.
-- The distraction creates a temporary opportunity; it must not permanently disable the threat.
+- The player can throw a small stone toward the authored service bell from a readable range, using the same contextual action button.
+- Show the stone travelling visibly to the bell; the bell rings and the entity visibly turns and moves to investigate it.
+- The distraction creates a temporary opportunity; it must not permanently disable the threat. The player can use it once per encounter in the first prototype.
 - The player chooses when and where to trigger it, creating meaningful risk/reward.
 - The first prototype should teach one distraction verb only. Avoid a complex inventory of throwable objects or multi-step crafting.
 
