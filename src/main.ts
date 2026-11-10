@@ -377,7 +377,10 @@ if(playArrivalSequence){
     // Capture the terminal parking phase before the pure-pursuit controller can orbit
     // the final waypoint. Apply a full service brake, then latch the stationary state.
     const stoppingDistance=(sedanState.speed*sedanState.speed)/(2*sedanTuning.serviceBrake);
-    if(approachDistance<=1.2+stoppingDistance+.08)arrivalParkingBrake=true;
+    // Begin terminal braking early enough to stop inside the complete parking capture radius.
+    // The previous 1.2-unit lead-in could engage after the sedan had already crossed
+    // the final waypoint's safe stopping envelope at speed.
+    if(approachDistance<=1.35+stoppingDistance+.35)arrivalParkingBrake=true;
     applySedanPhysics(dt,4.0,-4.3,3.2,true,arrivalParkingBrake);
     const parkedDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
     if(parkedDistance<1.35&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};}
