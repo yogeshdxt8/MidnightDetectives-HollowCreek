@@ -68,7 +68,7 @@ let routeRecoveryAttempts=0;
 let routeWaypointOffset=0;
 let lastCollisionReason='none';
 let parkingSnapshot:ReturnType<typeof computeParkingControl>|null=null;
-const sedanParkingPose:ParkingPose={x:3.3,z:-4.8,yaw:1.8};
+const sedanParkingPose:ParkingPose={x:3.3,z:-4.8,yaw:1.4};
 const sedanParkingEnvelope={centerX:sedanParkingPose.x,centerZ:sedanParkingPose.z,yaw:sedanParkingPose.yaw,halfLength:defaultParkingControllerConfig.envelopeHalfLength,halfWidth:defaultParkingControllerConfig.envelopeHalfWidth};
 const routeName=(route:DriveWaypoint[])=>route===driveRoutes.approach?'approach':route===driveRoutes.dropoff?'dropoff':'departure';
 const setDriveRoute=(route:DriveWaypoint[])=>{
