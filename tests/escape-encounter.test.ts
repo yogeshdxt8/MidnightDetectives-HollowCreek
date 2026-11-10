@@ -36,15 +36,22 @@ describe('mandatory key-return-exit flow', () => {
 });
 
 describe('contextual hint selection', () => {
-  it('shows the exact opening objective', () => {
+  it('shows the exact opening objective immediately', () => {
     expect(getEscapeHint(initialEscapeEncounterState)).toEqual({
+      id: 'find-key',
+      message: 'Find the key. The exit is locked.',
+    });
+  });
+
+  it('escalates to the key landmark hint only after no progress', () => {
+    expect(getEscapeHint({ ...initialEscapeEncounterState, showKeyLocationHint: true })).toEqual({
       id: 'key-location',
       message: 'Look near the overturned cabinet.',
     });
   });
 
   it('supports a level-authored landmark instead of a misleading hard-coded cabinet', () => {
-    expect(getEscapeHint(initialEscapeEncounterState, { keyLocationHint: 'Look inside the broken desk.' }).message)
+    expect(getEscapeHint({ ...initialEscapeEncounterState, showKeyLocationHint: true }, { keyLocationHint: 'Look inside the broken desk.' }).message)
       .toBe('Look inside the broken desk.');
   });
 
