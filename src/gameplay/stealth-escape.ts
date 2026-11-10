@@ -31,6 +31,7 @@ export function createStealthEscapeEncounter(
   let stalledSeconds = 0;
   let lastPlayerPosition = player.position.clone();
   let lastSafePosition = player.position.clone();
+  let encounterStarted = false;
   let hintElapsed = 0;
   let lastHintId = '';
   let exitProgress = 0;
@@ -288,6 +289,11 @@ export function createStealthEscapeEncounter(
     exit.visible = encounterVisible;
     entity.visible = encounterVisible;
     if (!encounterVisible) return;
+    if (!encounterStarted) {
+      encounterStarted = true;
+      lastSafePosition.copy(player.position);
+      lastPlayerPosition.copy(player.position);
+    }
     hintElapsed += dt;
     const moved = distance2D(player.position, lastPlayerPosition);
     if (moved > .035) {
