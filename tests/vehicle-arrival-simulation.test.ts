@@ -38,15 +38,16 @@ function footprintClear(state: VehicleState): boolean {
       const x = state.x + lx * c + lz * s;
       const z = state.z - lx * s + lz * c;
       if (buildingBounds.some(b => x > b.minX - 0.04 && x < b.maxX + 0.04 && z > b.minZ - 0.04 && z < b.maxZ + 0.04)) return false;
-      const dx = -x;
-      const dz = -2.8 - z;
-      const localX = dx * c - dz * s;
-      const localZ = dx * s + dz * c;
-      const nearestX = Math.max(-1.94, Math.min(1.94, localX));
-      const nearestZ = Math.max(-0.88, Math.min(0.88, localZ));
-      if (Math.hypot(localX - nearestX, localZ - nearestZ) < 1.72) return false;
+
     }
   }
+  const dx = -state.x;
+  const dz = -2.8 - state.z;
+  const localX = dx * c - dz * s;
+  const localZ = dx * s + dz * c;
+  const nearestX = Math.max(-1.94, Math.min(1.94, localX));
+  const nearestZ = Math.max(-0.88, Math.min(0.88, localZ));
+  if (Math.hypot(localX - nearestX, localZ - nearestZ) < 1.72) return false;
   return true;
 }
 
@@ -101,6 +102,12 @@ function simulateRoute(
     const terminalActive = parkingTarget &&
       Math.hypot(parkingTarget.x - state.x, parkingTarget.z - state.z) <= 2.5;
     const waypoint = route[Math.min(waypointOffset + nav.waypointIndex, route.length - 1)]!;
+    const approachDistance = parkingTarget
+      ? Math.hypot(parkingTarget.x - state.x, parkingTarget.z - state.z)
+      : Number.POSITIVE_INFINITY;
+    const phaseSpeedLimit = parkingTarget
+      ? Math.min(1.35, Math.sqrt(2 * 1.4 * Math.max(0, approachDistance - 1)))
+      : waypoint.speed;
     const input = terminalActive
       ? computeParkingControl(state, parkingTarget, sedanTuning, {
           centerX: parkingTarget.x,
@@ -109,7 +116,7 @@ function simulateRoute(
           halfLength: defaultParkingControllerConfig.envelopeHalfLength,
           halfWidth: defaultParkingControllerConfig.envelopeHalfWidth
         }).input
-      : routeInput(state, nav, waypoint, waypoint.speed);
+      : routeInput(state, nav, waypoint, phaseSpeedLimit);
 
     const result = stepVehicle(state, input, dt, sedanTuning);
     if (!footprintClear(result.state)) {
