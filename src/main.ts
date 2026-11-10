@@ -142,7 +142,11 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
     (movingAgainstTarget||overspeed
       ?THREE.MathUtils.clamp(Math.abs(sedanState.speed-targetVelocity)*.65,.18,1)
       :0);
-  const parkingActive=Boolean(parkingTarget)&&Math.hypot(parkingTarget!.x-sedanState.x,parkingTarget!.z-sedanState.z)<=2.5;
+  // A completed route must always hand off to terminal pose control, even if
+  // the vehicle crossed the capture radius due to momentum or a recovered route.
+  // Route completion is not parking completion; the pose controller owns the
+  // final footprint, heading and zero-speed checks from this point onward.
+  const parkingActive=Boolean(parkingTarget)&&(driveRouteComplete||Math.hypot(parkingTarget!.x-sedanState.x,parkingTarget!.z-sedanState.z)<=2.5);
   parkingSnapshot=parkingActive
     ? computeParkingControl(sedanState,parkingTarget!,sedanTuning,sedanParkingEnvelope)
     : null;
