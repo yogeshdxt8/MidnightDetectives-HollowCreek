@@ -81,6 +81,7 @@ function simulateRoute(
   navigator.setRoute('simulation', { x: initial.x, z: initial.z }, route);
   let state = { ...initial };
   let attempts = 0;
+  let waypointOffset = 0;
   let maxCrossTrack = 0;
   let parkingSettled = false;
 
@@ -91,6 +92,7 @@ function simulateRoute(
       const remaining = route.slice(nav.waypointIndex);
       if (remaining.length) {
         attempts += 1;
+        waypointOffset += nav.waypointIndex;
         navigator.setRoute('simulation', { x: state.x, z: state.z }, remaining);
         nav = navigator.update(state, dt);
       }
@@ -98,7 +100,7 @@ function simulateRoute(
 
     const terminalActive = parkingTarget &&
       Math.hypot(parkingTarget.x - state.x, parkingTarget.z - state.z) <= 2.5;
-    const waypoint = route[Math.min(nav.waypointIndex, route.length - 1)]!;
+    const waypoint = route[Math.min(waypointOffset + nav.waypointIndex, route.length - 1)]!;
     const input = terminalActive
       ? computeParkingControl(state, parkingTarget, sedanTuning, {
           centerX: parkingTarget.x,
