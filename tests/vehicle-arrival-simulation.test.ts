@@ -71,12 +71,16 @@ function routeInput(state: VehicleState, nav: ReturnType<VehicleRouteNavigator['
   const targetSpeed = nav.routeComplete ? 0 : Math.min(maxSpeed, waypoint.speed, stoppingSpeed) * cornerFactor;
   const targetVelocity = reversing ? -targetSpeed : targetSpeed;
   const velocityError = targetVelocity - state.speed;
-  const throttle = !reversing && velocityError > 0.12 ? 1 : 0;
-  const reverse = reversing && velocityError < -0.12 ? 1 : 0;
-  const brake = Math.abs(state.speed) > Math.abs(targetVelocity) + 0.08 &&
-    Math.sign(state.speed) === Math.sign(targetVelocity)
-      ? Math.max(0.18, Math.min(1, (Math.abs(state.speed) - Math.abs(targetVelocity)) * 0.65))
-      : targetVelocity === 0 && Math.abs(state.speed) > 0.08 ? 1 : 0;
+  const throttle = targetVelocity > 0.05 && velocityError > 0.12 && state.speed >= -0.08 ? 1 : 0;
+  const reverse = targetVelocity < -0.05 && velocityError < -0.12 && state.speed <= 0.08 ? 1 : 0;
+  const movingAgainstTarget = targetVelocity > 0 ? state.speed < -0.08 :
+    targetVelocity < 0 ? state.speed > 0.08 : false;
+  const overspeed = targetVelocity === 0
+    ? Math.abs(state.speed) > 0.08
+    : Math.abs(state.speed) > Math.abs(targetVelocity) + 0.08;
+  const brake = movingAgainstTarget || overspeed
+    ? Math.max(0.18, Math.min(1, Math.abs(state.speed - targetVelocity) * 0.65))
+    : 0;
   return { throttle, reverse, brake, steering };
 }
 
