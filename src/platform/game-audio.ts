@@ -45,6 +45,31 @@ export class GameAudio {
     }
   }
 
+  async playDogBark(): Promise<void> {
+    if (!this.enabled || this.paused || !this.context || this.context.state !== 'running') return;
+    try {
+      const now = this.context.currentTime;
+      const oscillator = this.context.createOscillator();
+      const gain = this.context.createGain();
+      const filter = this.context.createBiquadFilter();
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(190, now);
+      oscillator.frequency.exponentialRampToValueAtTime(82, now + 0.16);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.055, now + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      oscillator.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.21);
+    } catch {
+      // Bark effects are atmospheric only.
+    }
+  }
+
   async playUiCue(): Promise<void> {
     if (!this.enabled || this.paused || typeof window === 'undefined') return;
     const AudioContextConstructor = window.AudioContext;
