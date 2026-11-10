@@ -81,6 +81,28 @@ describe('vehicle parking controller', () => {
     expect(result.input.brake).toBe(0);
   });
 
+  it('keeps a terminal crawl when the center is close but the sedan footprint still exceeds the envelope', () => {
+    const target = { x: 4, z: -4.3, yaw: Math.atan2(5.14, 0.12) };
+    const nearButNotInside = state({
+      x: 4.004162469688286,
+      z: -4.2793481733656415,
+      yaw: 1.6583725777766536,
+      speed: 0,
+      steering: 0.48
+    });
+    const result = computeParkingControl(nearButNotInside, target, sedanTuning, {
+      centerX: target.x,
+      centerZ: target.z,
+      yaw: target.yaw,
+      halfLength: defaultParkingControllerConfig.envelopeHalfLength,
+      halfWidth: defaultParkingControllerConfig.envelopeHalfWidth
+    });
+    expect(result.positionError).toBeLessThan(0.04);
+    expect(result.insideEnvelope).toBe(false);
+    expect(result.settled).toBe(false);
+    expect(result.input.throttle).toBe(1);
+  });
+
   it('steers toward the target pose when position and heading are both misaligned', () => {
     const result = computeParkingControl(
       state({ x: 4.7, z: -3.9, yaw: 1.1, speed: 0.3 }),
