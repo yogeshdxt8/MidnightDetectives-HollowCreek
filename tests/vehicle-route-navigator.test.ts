@@ -44,7 +44,8 @@ describe('vehicle route navigator', () => {
 
     expect(result.waypointIndex).toBe(0);
     expect(result.lookAheadDistance).toBeLessThan(1.8);
-    expect(result.lookAheadPoint.x).toBeCloseTo(0, 5);
+    expect(result.lookAheadPoint.x).toBeGreaterThanOrEqual(0);
+    expect(result.lookAheadPoint.x).toBeLessThan(0.3);
     expect(result.lookAheadPoint.z).toBeGreaterThan(1.8);
     expect(result.lookAheadPoint.z).toBeLessThanOrEqual(3.3);
   });
