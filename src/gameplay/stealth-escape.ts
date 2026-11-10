@@ -21,6 +21,7 @@ export function createStealthEscapeEncounter(
   scene: THREE.Scene,
   player: THREE.Object3D,
   onNotify: (message: string) => void,
+  introDurationSeconds = 0,
 ): StealthEscapeEncounter {
   let state: EscapeEncounterState = initialEscapeEncounterState;
   let disposed = false;
@@ -32,6 +33,7 @@ export function createStealthEscapeEncounter(
   let hintElapsed = 0;
   let lastHintId = '';
   let exitProgress = 0;
+  let currentElapsedSeconds = 0;
 
   const ui = {
     objective: document.querySelector<HTMLElement>('#escape-objective'),
@@ -247,7 +249,7 @@ export function createStealthEscapeEncounter(
       return;
     }
     if (isNearBell() && !state.hasKey) {
-      noiseActiveUntil = performance.now() / 1000 + 5.5;
+      noiseActiveUntil = currentElapsedSeconds + 5.5;
       threat = 'investigating';
       threatTarget.copy(bell.position);
       threatTimer = 5.5;
@@ -275,7 +277,15 @@ export function createStealthEscapeEncounter(
 
   const update = (deltaSeconds: number, elapsedSeconds: number) => {
     if (disposed || state.escaped) return;
+    currentElapsedSeconds = elapsedSeconds;
     const dt = Math.min(deltaSeconds, .05);
+    const encounterVisible = elapsedSeconds >= introDurationSeconds;
+    cabinet.visible = encounterVisible;
+    key.visible = encounterVisible && !state.hasKey;
+    bell.visible = encounterVisible && !state.hasKey;
+    exit.visible = encounterVisible;
+    entity.visible = encounterVisible;
+    if (!encounterVisible) return;
     hintElapsed += dt;
     const moved = distance2D(player.position, lastPlayerPosition);
     if (moved > .035) {
@@ -351,7 +361,7 @@ export function createStealthEscapeEncounter(
       entity.position.set(-3.4, 0, -1.5);
       onNotify('The creature caught you. Try another route.');
       // Keep the prototype forgiving: the player retains their key if already collected.
-      player.position.set(0, 5.2, 0);
+      player.position.set(0, 0, 5.2);
     }
 
     if (state.exitUnlocked && isNearExit()) {
@@ -376,6 +386,14 @@ export function createStealthEscapeEncounter(
       // State is intentionally unchanged here; the door only unlocks via explicit interaction.
     }
 
+    const sceneRoot = document.querySelector<HTMLElement>('#scene-root');
+    if (sceneRoot) {
+      sceneRoot.dataset['escapeHasKey'] = String(state.hasKey);
+      sceneRoot.dataset['escapeExitUnlocked'] = String(state.exitUnlocked);
+      sceneRoot.dataset['escapeComplete'] = String(state.escaped);
+      sceneRoot.dataset['entityThreat'] = threat;
+      sceneRoot.dataset['playerHidden'] = String(hidden);
+    }
     if (ui.status && !state.escaped) {
       ui.status.textContent = state.hasKey ? (state.exitUnlocked ? 'EXIT OPEN' : 'KEY FOUND · RETURN') : threat.toUpperCase();
     }
@@ -407,7 +425,7 @@ export function createStealthEscapeEncounter(
       scene.remove(cabinet, key, bell, exit, entity);
       for (const item of geometry) item.dispose();
       for (const material of Object.values(mats)) material.dispose();
-      ui.action?.setAttribute('hidden', '');
+      if (ui.action) ui.action.hidden = true;
       document.querySelector<HTMLElement>('#app')?.classList.remove('stealth-mode');
     },
   };
