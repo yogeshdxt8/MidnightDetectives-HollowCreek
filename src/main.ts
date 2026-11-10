@@ -60,9 +60,29 @@ const driveRoutes={
 let activeDriveRoute:DriveWaypoint[]=driveRoutes.approach;
 let driveWaypointIndex=0;
 let driveWaypointAnchor={x:sedanState.x,z:sedanState.z};
+let driveRouteComplete=false;
 let driverBlockedSeconds=0;
-const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driveWaypointAnchor={x:sedanState.x,z:sedanState.z};driverBlockedSeconds=0;}};
-const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;const segmentX=point.x-driveWaypointAnchor.x,segmentZ=point.z-driveWaypointAnchor.z;const passed=(sedanState.x-point.x)*segmentX+(sedanState.z-point.z)*segmentZ>=0;const reached=Math.hypot(point.x-sedanState.x,point.z-sedanState.z)<=.72;if(!reached&&!passed)break;driveWaypointAnchor={x:point.x,z:point.z};driveWaypointIndex++;}};
+const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driveWaypointAnchor={x:sedanState.x,z:sedanState.z};driveRouteComplete=false;driverBlockedSeconds=0;}};
+// A waypoint may be passed only inside a bounded corridor. The old infinite
+// half-plane test skipped corners when the sedan was laterally displaced.
+const advanceDriveWaypoint=()=>{
+  while(!driveRouteComplete&&driveWaypointIndex<activeDriveRoute.length){
+    const point=activeDriveRoute[driveWaypointIndex]!;
+    const segmentX=point.x-driveWaypointAnchor.x,segmentZ=point.z-driveWaypointAnchor.z;
+    const segmentLength=Math.hypot(segmentX,segmentZ);
+    const offsetX=sedanState.x-driveWaypointAnchor.x,offsetZ=sedanState.z-driveWaypointAnchor.z;
+    const along=offsetX*segmentX+offsetZ*segmentZ;
+    const crossTrack=segmentLength>1e-6?Math.abs(offsetX*segmentZ-offsetZ*segmentX)/segmentLength:0;
+    const distance=Math.hypot(point.x-sedanState.x,point.z-sedanState.z);
+    const finalWaypoint=driveWaypointIndex===activeDriveRoute.length-1;
+    const reached=distance<=.72;
+    const passed=!finalWaypoint&&along>=segmentLength*segmentLength&&crossTrack<=1.1;
+    if(!reached&&!passed)break;
+    if(finalWaypoint){driveRouteComplete=true;break;}
+    driveWaypointAnchor={x:point.x,z:point.z};
+    driveWaypointIndex++;
+  }
+};
 const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean,forceStop=false)=>{
   advanceDriveWaypoint();
   const waypoint=activeDriveRoute[driveWaypointIndex]??{x:_targetX,z:_targetZ,speed:maxSpeed};
@@ -75,16 +95,20 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   // localX to a positive value collapses rear targets into +/-90 degrees, causing
   // the pure-pursuit controller to orbit instead of recovering the route.
   const alpha=Math.atan2(localZ,localX);
-  // Pure-pursuit bicycle steering: curvature is based on a look-ahead point,
-  // not a direct heading snap. Positive steering turns the car toward world -Z.
-  const curvature=2*Math.sin(alpha)/Math.max(lookAhead,distance*.35);
+  // If recovery puts the target directly behind the front axle, sin(alpha)
+  // approaches zero and classic pure pursuit commands no turn. Bias a bounded
+  // U-turn toward the target's side instead of driving straight away from it.
+  const rearRecovery=localX<-.15&&Math.abs(localZ)<.35;
+  const curvature=rearRecovery
+    ? (Math.sign(localZ||1)*2/Math.max(lookAhead,1.8))
+    : 2*Math.sin(alpha)/Math.max(lookAhead,distance*.35);
   const steering=THREE.MathUtils.clamp(-Math.atan(sedanTuning.wheelbase*curvature)/sedanTuning.maxSteeringAngle,-1,1);
   const cornerFactor=THREE.MathUtils.clamp(1-Math.abs(steering)*.48,.42,1);
   const brakingDistance=Math.max(0,distance-.5);
   const stoppingSpeed=Math.sqrt(2*3.2*brakingDistance);
-  const routeSpeed=Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
-  const throttle=forceStop?0:(distance>.28&&sedanState.speed<routeSpeed-.12?1:0);
-  const brake=forceStop?1:(sedanState.speed>routeSpeed+.08||distance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
+  const routeSpeed=driveRouteComplete||forceStop?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
+  const throttle=forceStop||driveRouteComplete?0:(distance>.28&&sedanState.speed<routeSpeed-.12?1:0);
+  const brake=forceStop||driveRouteComplete?1:(sedanState.speed>routeSpeed+.08||distance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
   const previous={...sedanState};
   const result=stepVehicle(sedanState,{throttle,brake,steering},dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
   let blocked=false;
