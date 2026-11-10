@@ -89,9 +89,12 @@ export function stepVehicle(
 
   if (closedGateZ !== undefined) {
     const frontZ = z + forwardZ * halfLength;
-    const crossedClosedGate = current.z + (-Math.sin(current.yaw)) * halfLength < closedGateZ &&
-      frontZ >= closedGateZ && forwardZ > 0;
-    if (crossedClosedGate) {
+    // Treat the bumper plane as a hard unilateral constraint. Once the
+    // predicted front extent reaches the gate plane, remove inward velocity;
+    // repeated throttle input must never accumulate penetration or residual speed.
+    const movingTowardGate = forwardZ > 0 && speed > 0;
+    const reachedClosedGate = frontZ >= closedGateZ;
+    if (movingTowardGate && reachedClosedGate) {
       z = closedGateZ - forwardZ * halfLength - 0.035;
       speed = 0;
       blockedByGate = true;
