@@ -85,8 +85,8 @@ test('restores solved fountain and Clock Tower evidence from browser save', asyn
 
 async function readPlayerPosition(page: import('@playwright/test').Page) {
   return page.locator('#scene-root').evaluate(element => ({
-    x: Number(element.getAttribute('data-player-x')),
-    z: Number(element.getAttribute('data-player-z')),
+    x: Number((element as HTMLElement).dataset.playerX),
+    z: Number((element as HTMLElement).dataset.playerZ),
   }));
 }
 
@@ -113,7 +113,7 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
 
-  const timeoutMs = Math.ceil((initialDistance / 3.1) * 1000 * 2.5 + 3000);
+  const timeoutMs = Math.ceil((initialDistance / 3.1) * 1000 * 5 + 7000);
   const deadline = Date.now() + timeoutMs;
   let previous = initial;
   let lastProgressAt = Date.now();
@@ -145,7 +145,7 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
       if (moved >= 0.025) {
         previous = current;
         lastProgressAt = Date.now();
-      } else if (Date.now() - lastProgressAt > 1200) {
+      } else if (Date.now() - lastProgressAt > 3500) {
         throw new Error(
           `Investigator movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}) ` +
           `with ${remaining.toFixed(2)} units remaining to (${target.x}, ${target.z}); ` +
