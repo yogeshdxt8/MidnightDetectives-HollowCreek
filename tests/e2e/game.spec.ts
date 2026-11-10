@@ -7,7 +7,7 @@ async function readPlayerPosition(page: Page) {
   }));
 }
 
-async function movePlayerTo(page: Page, target: { x: number; z: number }) {
+async function movePlayerTo(page: Page, target: { x: number; z: number }, runtimeErrors: string[] = []) {
   const joystick = page.locator('#joystick');
   const bounds = await joystick.boundingBox();
   if (!bounds) throw new Error('Movement joystick is not visible.');
@@ -41,7 +41,7 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }) {
         previous = current;
         lastProgress = Date.now();
       } else if (Date.now() - lastProgress > 4500) {
-        throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}`);
+        throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; pageErrors=${runtimeErrors.join(' | ')}`);
       }
       await page.waitForTimeout(70);
     }
@@ -89,10 +89,10 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
   // Trigger the authored bell distraction on the north-east side, then cross the open north route to the key.
-  await movePlayerTo(page, { x: 3.55, z: 3.2 });
+  await movePlayerTo(page, { x: 3.55, z: 3.2 }, runtimeErrors);
   await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
   await page.locator('#escape-action').click();
-  await movePlayerTo(page, { x: -3.25, z: 3.35 });
+  await movePlayerTo(page, { x: -3.25, z: 3.35 }, runtimeErrors);
   await expect(page.locator('#escape-action')).toHaveText('COLLECT KEY');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-has-key')).toBe('true');
@@ -100,14 +100,14 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
 
   // The player must physically return to the exit; key collection alone must not open it.
   await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-exit-unlocked', 'false');
-  await movePlayerTo(page, { x: -3.25, z: -6.5 });
-  await movePlayerTo(page, { x: 0, z: -6.5 });
+  await movePlayerTo(page, { x: -3.25, z: -6.5 }, runtimeErrors);
+  await movePlayerTo(page, { x: 0, z: -6.5 }, runtimeErrors);
   await expect(page.locator('#escape-action')).toHaveText('UNLOCK EXIT');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-exit-unlocked')).toBe('true');
 
   // The level completes only after crossing the open doorway.
-  await movePlayerTo(page, { x: 0, z: -9.5 });
+  await movePlayerTo(page, { x: 0, z: -9.5 }, runtimeErrors);
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('true');
   await expect(page.locator('#hint')).toHaveText('ESCAPED · CHALLENGE COMPLETE');
   await expect(page.locator('#status')).toHaveText('ESCAPE COMPLETE');
@@ -118,11 +118,11 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
 
   // Verify the cabinet cover state persists after entering and clears only when the player moves.
-  await movePlayerTo(page, { x: -5.0, z: 4.5 });
+  await movePlayerTo(page, { x: -5.0, z: 4.5 }, runtimeErrors);
   await expect(page.locator('#escape-action')).toHaveText('HIDE');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('true');
-  await movePlayerTo(page, { x: -2.7, z: 4.2 });
+  await movePlayerTo(page, { x: -2.7, z: 4.2 }, runtimeErrors);
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('false');
   expect(runtimeErrors).toEqual([]);
 });
