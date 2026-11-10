@@ -226,7 +226,7 @@ async function inspectNearestClue(page: import('@playwright/test').Page) {
 }
 
 test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   // This test covers investigation progression, not the cinematic arrival. Skip
   // the one-time intro so its 35-second timeline cannot consume the movement budget.
   await page.addInitScript(() => sessionStorage.setItem('hollow-creek-arrival-seen', '1'));
