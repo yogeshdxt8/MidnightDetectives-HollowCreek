@@ -137,8 +137,7 @@ function simulateRoute(
         state.speed = 0;
         return { state, completed: true, frames: frame + 1, parkingSettled, maxCrossTrack };
       }
-    } else if (nav.routeComplete) {
-      state.speed = 0;
+    } else if (nav.routeComplete && Math.abs(state.speed) < 0.1) {
       return { state, completed: true, frames: frame + 1, parkingSettled, maxCrossTrack };
     }
   }
