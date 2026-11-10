@@ -365,7 +365,7 @@ if(playArrivalSequence){
     if(!driverReturnStarted){driverReturnStart.copy(arrivalDriver.root.position);driverReturnStarted=true;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
     // Walk around the rear corner, stay outside the sedan's collision footprint,
     // then approach through the driver's door aperture instead of cutting through the body.
-    const returnTargets=[arrivalDoorWorld(1.0,1.48),arrivalDoorWorld(-.1,1.48),arrivalDoorWorld(-.1,1.08)];
+    const returnTargets=[arrivalDoorWorld(1.0,1.1),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
     const target=returnTargets[driverReturnPhase]??returnTargets[2]!;
     const reached=moveArrivalActor(arrivalDriver.root,target,dt,1.45);
     if(reached&&driverReturnPhase<2){driverReturnPhase++;(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).set(0,0,0);}
