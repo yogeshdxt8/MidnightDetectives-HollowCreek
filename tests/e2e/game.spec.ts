@@ -140,9 +140,19 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
       // Re-aim from the observed position, not a guessed previous waypoint.
       // Pointer Y maps directly to joystick Y; the controller applies its forward-axis inversion.
       // Send intermediate pointer events so the held joystick remains responsive in headless CI.
+      const cameraYaw = await page.locator('#scene-root').evaluate(element =>
+        Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+      );
+      // Convert the desired world-space direction into the camera-relative
+      // joystick basis used by the runtime. World X/Z must not be sent as
+      // joystick X/Y once the player has rotated the camera.
+      const worldX = remainingX / remaining;
+      const worldZ = remainingZ / remaining;
+      const joystickX = worldX * Math.cos(cameraYaw) - worldZ * Math.sin(cameraYaw);
+      const joystickY = worldX * Math.sin(cameraYaw) + worldZ * Math.cos(cameraYaw);
       await page.mouse.move(
-        centerX + (remainingX / remaining) * radius,
-        centerY + (remainingZ / remaining) * radius,
+        centerX + joystickX * radius,
+        centerY + joystickY * radius,
         { steps: 4 }
       );
 
