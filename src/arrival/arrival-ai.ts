@@ -11,6 +11,7 @@ export type ArrivalWorkflowState =
   | 'greeting'
   | 'returning-to-car'
   | 'boarding'
+  | 'seated'
   | 'closing-driver-door-after-boarding'
   | 'departing'
   | 'departed';
@@ -28,6 +29,7 @@ export type ArrivalWorkflowEvent =
   | 'greeting-finished'
   | 'driver-at-door'
   | 'driver-boarded'
+  | 'driver-door-close-requested'
   | 'driver-door-closed-after-boarding'
   | 'departure-route-completed';
 
@@ -43,7 +45,8 @@ const transitions: Readonly<Record<ArrivalWorkflowState, Partial<Record<ArrivalW
   'greeting-approach': { 'greeting-position-reached': 'greeting' },
   greeting: { 'greeting-finished': 'returning-to-car' },
   'returning-to-car': { 'driver-at-door': 'boarding' },
-  boarding: { 'driver-boarded': 'closing-driver-door-after-boarding' },
+  boarding: { 'driver-boarded': 'seated' },
+  seated: { 'driver-door-close-requested': 'closing-driver-door-after-boarding' },
   'closing-driver-door-after-boarding': { 'driver-door-closed-after-boarding': 'departing' },
   departing: { 'departure-route-completed': 'departed' },
   departed: {}
