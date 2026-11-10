@@ -439,3 +439,30 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
   }
   #toast { bottom: calc(env(safe-area-inset-bottom) + 148px); }
 }
+
+
+/* Active-play HUD: branding belongs on the title/loading screen, not over the world. */
+@media (max-width: 699px) {
+  .overlay {
+    inset: 0 0 auto 0;
+    padding: calc(env(safe-area-inset-top) + 10px) 14px 0;
+    background: none;
+  }
+  .overlay h1,
+  .overlay p {
+    display: none;
+  }
+  .overlay > small {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 5px 9px;
+    border: 1px solid #d8bd8045;
+    border-radius: 16px;
+    background: #080d19a8;
+    color: #e6c98f;
+    font-size: 9px;
+    letter-spacing: .13em;
+    text-shadow: 0 1px 4px #000;
+  }
+}
