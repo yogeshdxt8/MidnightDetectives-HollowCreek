@@ -130,7 +130,7 @@ export function computeParkingControl(
   const speedLimit = Math.sqrt(2 * tuning.serviceBrake * 0.55 * remaining);
   const targetSpeed = terminalPoseValid
     ? 0
-    : Math.min(config.maximumSpeed, speedLimit);
+    : Math.max(0.18, Math.min(config.maximumSpeed, speedLimit));
   const throttle = state.speed < targetSpeed - 0.08 ? 1 : 0;
   const brake = state.speed > targetSpeed + 0.06 || terminalPoseValid
     ? clamp((state.speed - targetSpeed) * 0.8, 0.2, 1)
