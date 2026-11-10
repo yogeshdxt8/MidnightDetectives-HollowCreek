@@ -4,7 +4,7 @@
 
 ## Product constraints
 
-- Single-player 3D mystery-adventure.
+- Single-player, third-person 3D supernatural stealth-escape adventure.
 - Mobile-first interaction; touch and mouse/keyboard support.
 - YouTube Playables is the target platform; publication and certification are external approval gates.
 - No desktop-only development steps in the project operating workflow.
@@ -13,7 +13,7 @@
 
 ## Architectural direction
 
-The initial implementation direction is TypeScript, Three.js, WebGL 2, and Vite. This is a hypothesis to validate, not a reason to force the project into a premature engine commitment.
+The initial implementation direction is TypeScript, Three.js, WebGL 2, and Vite. The first vertical slice validates a compact stealth-escape loop before broader campaign systems are expanded.
 
 The application is a modular client-side game. Gameplay rules must not depend directly on Three.js objects or YouTube SDK globals.
 
@@ -21,7 +21,7 @@ The application is a modular client-side game. Gameplay rules must not depend di
 
 1. **Application bootstrap** — startup sequence, configuration, lifecycle coordination.
 2. **Platform adapter** — YouTube Playables SDK boundary, save/load, pause/resume, audio state, platform events.
-3. **Gameplay domain** — cases, clues, evidence, puzzles, deductions, progression, and rules.
+3. **Gameplay domain** — encounter state, entity perception and state transitions, keys, exits, distractions, checkpoints, progression, and optional story discovery.
 4. **World and presentation** — scenes, cameras, lighting, character presentation, animation, interaction detection.
 5. **UI** — menus, HUD, journal, evidence board, dialogue, accessibility and responsive layouts.
 6. **Asset infrastructure** — manifest, loading, caching, validation, and deterministic resource disposal.
@@ -37,18 +37,20 @@ The application is a modular client-side game. Gameplay rules must not depend di
 
 ## Initial vertical slice
 
-The first playable slice should prove the hardest foundational risks with deliberately small scope:
+The first playable slice should prove the new primary gameplay loop with deliberately small scope:
 
-- One compact location.
-- One controllable investigator.
-- One companion/story character.
-- Third-person camera and mobile controls.
-- Three inspectable clues.
-- One puzzle.
-- Evidence journal and a deduction/case-resolution flow.
+- One compact, visually memorable location (Abandoned Residence prototype).
+- One controllable detective with a third-person camera and simple touch movement.
+- One supernatural entity with readable patrol, investigate, suspicious, search, and chase states.
+- One mandatory key and one visibly locked exit.
+- One hiding/cover interaction with consistent line-of-sight behaviour.
+- One authored environmental distraction.
+- Two viable key-acquisition strategies: wait for a safe patrol opening or create an opportunity with the distraction.
+- Contextual objective guidance and progressive, state-aware hints.
+- Fast encounter failure/retry that preserves completed campaign progress.
 - Pause/resume and save/load integration behind the platform adapter, using current official SDK documentation.
 
-The slice is not a content-production milestone. It is an architecture and performance validation milestone.
+The slice must be tested for fun, clarity, replayability, touch usability, camera readability, and representative mobile performance before campaign expansion. Investigation and evidence interfaces are optional supporting systems, not the primary encounter loop.
 
 ## Proposed source layout
 
