@@ -1,8 +1,8 @@
 # Midnight Detectives: Hollow Creek
 
-**A cinematic, third-person supernatural escape adventure set in the world of Midnight Detectives.**
+**A cinematic, third-person supernatural stealth-escape adventure built for YouTube Playables.**
 
-Explore a mysterious, connected Hollow Creek, search for three missing teammates, uncover evidence, solve logical mechanisms, survive supernatural encounters, and work toward getting the team out safely.
+Enter dangerous locations, outsmart supernatural entities, collect the mandatory key, and escape. Read enemy behaviour, hide, wait for safe openings, or create distractions. Uncover the mystery of Hollow Creek through short, replayable challenges.
 
 ---
 
@@ -10,7 +10,7 @@ Explore a mysterious, connected Hollow Creek, search for three missing teammates
 
 *Midnight Detectives: Hollow Creek* is a single-player 3D adventure being developed for web-based gameplay, with YouTube Playables as its target publishing platform.
 
-The campaign is designed as one continuous adventure across ten compact, connected levels—not an open world and not a set of disconnected case-selection stages. Exploration, curiosity, investigation, logical problem-solving, teamwork, and paced supernatural suspense form the core experience.
+The campaign is structured as a sequence of compact, physically connected locations. Each location delivers an immediate stealth-escape challenge designed for short Playables sessions. The player must find a mandatory key, read the entity's behaviour, choose when to move or create a distraction, and unlock the exit. Mystery, character continuity, and optional discoveries connect the challenges into one adventure.
 
 The game is intended for a **general audience aged 13+**. This is the product's intended audience and positioning; it is distinct from the fictional ages of its protagonists. The game must not be positioned or marketed as specifically for young children.
 
@@ -43,14 +43,14 @@ This opening direction is approved. Detailed level content beyond the approved s
 
 ## Core gameplay
 
-- **Third-person exploration:** The player always sees the selected detective during normal gameplay. The camera follows from behind or over the shoulder; there is no first-person gameplay mode.
-- **Connected locations:** Explore compact rooms, corridors, exterior spaces, and mechanisms within a coherent world.
-- **Dependency-based puzzles:** Find useful objects in one room and use them in another. Prepare, repair, power, or activate mechanisms whose effects may change other rooms.
-- **Investigation and evidence:** Discover story evidence that answers questions, reveals connections, or raises new questions.
-- **Contextual interactions:** Objects communicate what they are, their current state, what is missing, and what the player can do.
-- **Teamwork:** Find the missing detectives and make their presence meaningful to gameplay and story.
-- **Supernatural suspense:** Encounter the established entities through atmosphere, anticipation, readable danger, and fair survival mechanics.
-- **Progress-preserving checkpoints:** Failed encounters restart only the encounter. Previously collected evidence/items, solved puzzles, unlocked routes, rescued teammates, and campaign progress are preserved.
+- **Third-person stealth-escape:** The selected detective remains visible during normal gameplay.
+- **Mandatory key-and-exit objective:** Every core escape challenge requires the player to locate a key and use it to unlock the exit.
+- **Readable enemy behaviour:** Entities patrol, investigate distractions, become suspicious, search, and chase through clearly telegraphed states.
+- **Two viable strategies:** Wait for a safe patrol opening, or create an opportunity with an environmental distraction.
+- **Simple touch controls:** Familiar movement control plus one contextual interaction action.
+- **Proper contextual hints:** Guidance escalates from objective reminders to specific actions when the player is stuck.
+- **Optional discovery:** Evidence and story details enrich the mystery without blocking the short escape loop.
+- **Progress-preserving retries:** Failure restarts the current encounter without erasing completed stages.
 
 ## Physical room and level transitions
 
@@ -95,6 +95,7 @@ Preserve their approved visual identities and references. Their origins, motives
 The repository is the single source of truth for approved design decisions.
 
 - [Game Design Bible](docs/design/game-design-bible.md) — living game vision, approved mechanics, story constraints, transitions, progression, open decisions, and revision history.
+- [Playables Stealth-Escape Gameplay Specification](docs/design/playables-stealth-escape-gameplay.md) — mandatory key-and-exit loop, enemy states, wait-or-distract strategies, touch controls, progressive hints, retries, replayability, and vertical-slice acceptance criteria.
 - [13+ Creative and Product Design Standard](docs/design/13-plus-creative-product-design-standard.md) — audience positioning, tone, visual direction, character/entity continuity, accessibility, and content standards.
 - [YouTube Playables Game Development & Integration Standard](docs/platform/youtube-playables-game-development-standard.md) — mandatory reusable platform architecture, SDK lifecycle, cloud-save rules, performance budgets, Test Suite procedure, CI/release gates, and new-game kickoff checklist.
 
@@ -147,7 +148,7 @@ A successful browser build or automated project test does not itself guarantee P
 
 ## Development status
 
-The repository contains an interactive browser prototype and automated development workflows. The prototype has included a procedural 3D environment blockout, mobile movement/look controls, proximity-based clue collection, an evidence journal, evidence detail panels, a deduction exercise, a case report, and replay/reset functionality.
+The repository contains an interactive browser prototype and automated development workflows. The prototype has included a procedural 3D environment blockout, mobile movement/look controls, proximity-based clue collection, an evidence journal, evidence detail panels, a deduction exercise, a case report, and replay/reset functionality. These investigation-first systems are not the new primary gameplay loop; reuse or retain them only where they support optional story discovery or existing progression.
 
 These prototype elements are not all final game content. Placeholder characters, sample clues/cases, and blockout environments must not be mistaken for approved canonical assets or final level design.
 
