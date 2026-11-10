@@ -561,7 +561,6 @@ if(playArrivalSequence){
   if(arrivalWorkflowAI.state==='departing'){
     setDriveRoute(driveRoutes.departure);applySedanPhysics(dt,3.2,12.5,4.8,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,2.2,1.4,dt);headlampRight.intensity=headlampLeft.intensity;
-    const finalWaypoint=driveRoutes.departure[driveRoutes.departure.length-1]!;
     if(driveRouteComplete&&Math.abs(sedanState.speed)<.12){if(arrivalWorkflowAI.emit('departure-route-completed')){driverDepartedReached=true;arrivalCar.visible=false;}}
   }
   if(arrivalWorkflowAI.isComplete()&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
