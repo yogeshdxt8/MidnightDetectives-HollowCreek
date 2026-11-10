@@ -113,24 +113,38 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const targetDistance=Math.hypot(dx,dz);
   const endpointDistance=nav.distanceToWaypoint;
   const lookAhead=Math.max(.8,targetDistance);
-  const alpha=Math.atan2(localZ,localX);
-  const rearRecovery=localX<-.15&&Math.abs(localZ)<.35;
-  const curvature=rearRecovery
-    ? Math.sign(localZ||1)*2/lookAhead
-    : 2*Math.sin(alpha)/Math.max(lookAhead,.35);
-  const steering=THREE.MathUtils.clamp(-Math.atan(sedanTuning.wheelbase*curvature)/sedanTuning.maxSteeringAngle,-1,1);
+  // Select reverse when the active route target lies behind the sedan.
+  // Reverse steering is sign-inverted because the bicycle model's yaw rate
+  // follows signed longitudinal velocity.
+  const reversing=localX<-.15;
+  const alpha=reversing?Math.atan2(-localZ,-localX):Math.atan2(localZ,localX);
+  const curvature=2*Math.sin(alpha)/Math.max(lookAhead,.35);
+  const steering=THREE.MathUtils.clamp(
+    (reversing?1:-1)*Math.atan(sedanTuning.wheelbase*curvature)/sedanTuning.maxSteeringAngle,
+    -1,1
+  );
   const cornerFactor=THREE.MathUtils.clamp(1-Math.abs(steering)*.48,.42,1);
   const brakingDistance=Math.max(0,endpointDistance-.5);
   const stoppingSpeed=Math.sqrt(2*3.2*brakingDistance);
   const recoveryFailed=nav.mode==='replan-required';
   const routeSpeed=driveRouteComplete||forceStop||recoveryFailed?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
-  const throttle=forceStop||driveRouteComplete||recoveryFailed?0:(endpointDistance>.28&&sedanState.speed<routeSpeed-.12?1:0);
-  const brake=forceStop||driveRouteComplete||recoveryFailed?1:(sedanState.speed>routeSpeed+.08||endpointDistance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
+  const targetVelocity=reversing?-routeSpeed:routeSpeed;
+  const velocityError=targetVelocity-sedanState.speed;
+  const throttle=!reversing&&!forceStop&&!driveRouteComplete&&!recoveryFailed&&velocityError>.12?1:0;
+  const reverse=!reversing&&!forceStop&&!driveRouteComplete&&!recoveryFailed?0:
+    (!forceStop&&!driveRouteComplete&&!recoveryFailed&&velocityError<-.12?1:0);
+  const brake=forceStop||driveRouteComplete||recoveryFailed
+    ?1
+    :(Math.abs(sedanState.speed-targetVelocity)>.08&&
+      Math.sign(sedanState.speed)===Math.sign(targetVelocity)&&
+      Math.abs(sedanState.speed)>Math.abs(targetVelocity)+.08
+        ?THREE.MathUtils.clamp((Math.abs(sedanState.speed)-Math.abs(targetVelocity))*.65,.18,1)
+        :(targetVelocity===0&&Math.abs(sedanState.speed)>.08?1:0));
   const parkingActive=Boolean(parkingTarget)&&Math.hypot(parkingTarget!.x-sedanState.x,parkingTarget!.z-sedanState.z)<=2.5;
   parkingSnapshot=parkingActive
     ? computeParkingControl(sedanState,parkingTarget!,sedanTuning,sedanParkingEnvelope)
     : null;
-  const controlInput=parkingSnapshot?.input??{throttle,brake,steering};
+  const controlInput=parkingSnapshot?.input??{throttle,brake,steering,reverse};
   const previous={...sedanState};
   const result=stepVehicle(sedanState,controlInput,dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
   let blocked=false;
