@@ -120,7 +120,11 @@ const moveArrivalActor=(actor:THREE.Group,target:THREE.Vector3,dt:number,maxSpee
     const fountainClear=Math.hypot(x,z+2.8)>1.65+.48;
     const local=arrivalCar.worldToLocal(new THREE.Vector3(x,0,z));
     const inDriverDoorApproach=actor===arrivalDriver.root&&local.x> -1.25&&local.x<.2&&local.z>.55&&local.z<1.38;
-    const carClear=actor.parent===arrivalCar||inDriverDoorApproach||(Math.abs(local.x)>2.12||Math.abs(local.z)>1.02);
+    // The driver follows an explicit perimeter route around the sedan. Its door threshold and
+  // rear-corner waypoints intentionally touch the expanded vehicle footprint; applying the
+  // generic pedestrian-vs-car test here traps the driver at the door/rear corner. Keep the
+  // building and fountain tests authoritative, and let the route own sedan clearance.
+  const carClear=actor===arrivalDriver.root||actor.parent===arrivalCar||inDriverDoorApproach||(Math.abs(local.x)>2.12||Math.abs(local.z)>1.02);
     const buildingsClear=townBuildingBounds.every(b=>x<b.minX-.42||x>b.maxX+.42||z<b.minZ-.42||z>b.maxZ+.42);
     return fountainClear&&carClear&&buildingsClear;
   };
