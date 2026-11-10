@@ -556,12 +556,12 @@ Do not claim certification or physical-device validation until those checks have
 The primary gameplay is defined in the [Playables Stealth-Escape Gameplay Specification](./playables-stealth-escape-gameplay.md).
 
 - Every core escape encounter has a mandatory key and a locked exit.
-- The player must locate the key, read the entity's behaviour, collect the key, return to the exit, and unlock it.
+- The player must locate the key, read the entity's behaviour, collect the key, physically return to the same exit, deliberately interact with the locked door, and pass through the opened exit. Key collection alone never unlocks the door or completes the encounter.
 - Two valid strategies are supported: wait for a readable safe patrol opening, or create an opportunity with a predictable environmental distraction.
 - The player is never required to wait through an arbitrary timer. Waiting is a tactical choice based on enemy behaviour.
 - Entity states (patrolling, investigating, suspicious, searching, chasing) must be telegraphed and consistent.
 - Third-person visibility, simple touch movement, and one contextual interaction action are the default control principles.
-- Hints are contextual and progressively clearer. They must reflect the actual encounter state and must never suggest unavailable actions.
+- The approved hint sequence is: **Find the key. The exit is locked.** → **Look near the overturned cabinet.** (or the stage's actual landmark) → **Hide! It is coming this way.** → **Make a noise to draw it away.** (only when a distraction is available) → **The exit is unlocked with the key. Get there!** → **Unlock exit.** at the door. Every hint is driven by actual gameplay state and must never suggest unavailable actions.
 - Failure restarts the current encounter quickly while preserving completed campaign progress.
 - Replayability comes from mastery, route/timing choices, and optional story discoveries—not random mandatory-key placement or grind.
 
