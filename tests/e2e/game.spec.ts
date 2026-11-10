@@ -199,32 +199,6 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
   }
   await page.waitForTimeout(150);
 }
-async function inspectNearestClue(page: import('@playwright/test').Page) {
-  const canvas = page.locator('#scene-root canvas');
-  const bounds = await canvas.boundingBox();
-  if (!bounds) throw new Error('Investigation scene is not visible.');
-
-  const count = page.locator('#count');
-  const before = Number(await count.textContent());
-  // The game intentionally accepts taps within 9% of the scene's smaller
-  // dimension around a clue's projected screen position. Sweep a grid with
-  // overlapping coverage instead of guessing that the marker is at screen
-  // center; every tap still goes through the real canvas pointer handler.
-  const spacing = 64;
-  for (let y = bounds.y + spacing / 2; y < bounds.y + bounds.height; y += spacing) {
-    for (let x = bounds.x + spacing / 2; x < bounds.x + bounds.width; x += spacing) {
-      await page.mouse.click(x, y);
-      await page.waitForTimeout(45);
-      const current = Number(await count.textContent());
-      if (current > before) {
-        await expect(count).toHaveText(String(before + 1));
-        return;
-      }
-    }
-  }
-  throw new Error('No visible in-range clue responded to canvas taps; inspect the Playwright trace.');
-}
-
 test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
   test.setTimeout(120_000);
   // This test covers investigation progression, not the cinematic arrival. Skip
