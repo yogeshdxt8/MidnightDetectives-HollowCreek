@@ -36,7 +36,7 @@ const pumpHouseDefinition:PumpHouseDefinition={id:'old-pump-house',requiredLeadI
 const maintenanceYardDefinition:MaintenanceYardDefinition={id:'old-maintenance-yard',requiredLeadId:keeperLead.id,regulatorId:'brass-regulator',evidenceIds:['signed-work-order','matching-tool-mark'],correctDeductionId:'keeper-assistant'};
 const clues:readonly Clue[]=[{id:'note',title:'Torn note',description:'A torn note is caught beneath the noticeboard.'},{id:'print',title:'Muddy footprint',description:'A muddy footprint leads away from the clock tower.'},{id:'key',title:'Brass key',description:'A small brass key lies beside the fountain.'}];
 const root=document.querySelector<HTMLDivElement>('#scene-root');if(!root)throw new Error('Missing scene root');
-const sceneRoot=root;const scene=new THREE.Scene();scene.background=new THREE.Color('#17243a');scene.fog=new THREE.FogExp2('#17243a',.027);
+const sceneRoot=root;const scene=new THREE.Scene();scene.background=new THREE.Color('#17243a');scene.fog=new THREE.FogExp2('#17243a',.027);const stormFog=scene.fog;
 const camera=new THREE.PerspectiveCamera(48,1,.1,100);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;sceneRoot.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight('#b9cbea','#202b40',1.45));const moon=new THREE.DirectionalLight('#d5e2f5',1.35);moon.position.set(-5,10,6);scene.add(moon);const characterRim=new THREE.DirectionalLight('#8daed8',.72);characterRim.position.set(4,4,5);scene.add(characterRim);const squareFill=new THREE.PointLight('#d39a61',.48,18,2);squareFill.position.set(0,4,-7);scene.add(squareFill);
@@ -60,7 +60,7 @@ for(const z of [-.48,.48]){carPart(new THREE.BoxGeometry(.12,.22,.28),lampMat,1.
 const headlampLeft=new THREE.SpotLight('#ffe1a1',0,24,.48,.55,1.2);headlampLeft.position.set(1.8,.9,-.48);headlampLeft.target.position.set(8,.1,-.48);arrivalCar.add(headlampLeft,headlampLeft.target);
 const headlampRight=new THREE.SpotLight('#ffe1a1',0,24,.48,.55,1.2);headlampRight.position.set(1.8,.9,.48);headlampRight.target.position.set(8,.1,.48);arrivalCar.add(headlampRight,headlampRight.target);
 const driverDoorPivot=new THREE.Group();driverDoorPivot.position.set(-.58,.98,.76);arrivalCar.add(driverDoorPivot);
-const driverDoor=carPart(new THREE.BoxGeometry(.82,.82,.09),carPaint,.36,-.1,0,driverDoorPivot);
+carPart(new THREE.BoxGeometry(.82,.82,.09),carPaint,.36,-.1,0,driverDoorPivot);
 carPart(new THREE.BoxGeometry(.52,.08,.11),carTrim,.36,.27,0,driverDoorPivot);
 const rainCount=150;const rainPositions=new Float32Array(rainCount*3);
 for(let i=0;i<rainCount;i++){rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+1]=Math.random()*12;rainPositions[i*3+2]=(Math.random()-.5)*24;}
@@ -253,8 +253,8 @@ else{arrivalCar.position.x=-3.15;headlampLeft.intensity=THREE.MathUtils.damp(hea
 if(t>3.9&&t<4.65)driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-.95,5,dt);
 if(t>=4.25&&t<6.8){const walk=THREE.MathUtils.smoothstep(t,4.25,6.8);player.position.x=THREE.MathUtils.lerp(-4.15,0,walk);player.rotation.y=0;const stride=Math.sin((t-4.25)*8)*.38;leftLeg.rotation.x=stride;rightLeg.rotation.x=-stride;leftArm.rotation.x=-stride*.65;rightArm.rotation.x=stride*.65;}
 if(t>=6.8&&arrivalFinishedAt===0){arrivalFinishedAt=t;driverDoorPivot.rotation.y=-.95;}
-if(t>=5.8&&!stormStarted){stormStarted=true;rain.material.opacity=.58;scene.fog.density=.043;}
-if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<rainCount;i++){rainPositions[i*3+1]-=dt*13;if(rainPositions[i*3+1]<0){rainPositions[i*3+1]=10+Math.random()*3;rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+2]=(Math.random()-.5)*24;}}rainAttribute.needsUpdate=true;
+if(t>=5.8&&!stormStarted){stormStarted=true;rain.material.opacity=.58;stormFog.density=.043;}
+if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<rainCount;i++){rainPositions[i*3+1]=(rainPositions[i*3+1]??0)-dt*13;if((rainPositions[i*3+1]??0)<0){rainPositions[i*3+1]=10+Math.random()*3;rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+2]=(Math.random()-.5)*24;}}rainAttribute.needsUpdate=true;
 if(t>=nextLightningAt){makeLightning();lightningGroup.visible=true;lightningFlash.intensity=5.5;lightningOffAt=t+.16;nextLightningAt=t+7.5+Math.random()*6;void gameAudio.playThunder();}
 if(t>=lightningOffAt){lightningGroup.visible=false;lightningFlash.intensity=THREE.MathUtils.damp(lightningFlash.intensity,0,18,dt);}
 }
