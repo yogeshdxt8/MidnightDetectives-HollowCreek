@@ -502,7 +502,7 @@ if(playArrivalSequence){
     player.userData['arrivalVelocity']=new THREE.Vector3();player.visible=true;player.userData['exitedPassenger']=true;
   }
   if(arrivalWorkflowAI.state==='passenger-exiting'&&player.userData['exitedPassenger']&&!playerExitReached){
-    const exitTarget=arrivalDoorWorld(-.18,-2.15);
+    const exitTarget=arrivalDoorWorld(.5,-2.15);
     const reached=moveArrivalActor(player,exitTarget,dt,1.35);
     const stride=(player.userData['arrivalVelocity'] as THREE.Vector3).length();
     leftLeg.rotation.x=Math.sin(t*7)*Math.min(.3,stride*.2);rightLeg.rotation.x=-leftLeg.rotation.x;
