@@ -140,8 +140,8 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
         break;
       }
 
-      // Re-aim from the observed position, not a guessed previous waypoint.
-      // Pointer Y maps directly to joystick Y; the controller applies its forward-axis inversion.
+      // Re-aim from authoritative world-space coordinates after the arrival sequence has
+      // detached the investigator from the vehicle. Never drive a seated passenger via the joystick.
       // Send intermediate pointer events so the held joystick remains responsive in headless CI.
       const cameraYaw = await page.locator('#scene-root').evaluate(element =>
         Number((element as HTMLElement).dataset.cameraYaw ?? '0')
@@ -230,6 +230,7 @@ test('a fresh player collects all three clues, completes the deduction, and keep
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.waitForTimeout(350);
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-ready'), { timeout: 30_000 }).toBe('true');
   await expect(page.locator('#count')).toHaveText('0');
   await expect(page.locator('#deduction-open')).toBeHidden();
 
