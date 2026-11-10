@@ -470,6 +470,7 @@ if(playArrivalSequence){
     driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
     if(driverBoardingElapsed>=.9){arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.visible=false;arrivalWorkflowAI.emit('driver-boarded');}
   }
+  if(arrivalWorkflowAI.state==='seated')arrivalWorkflowAI.emit('driver-door-close-requested');
   if(arrivalWorkflowAI.state==='closing-driver-door-after-boarding'){
     driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
     if(Math.abs(driverDoorPivot.rotation.y)<.035)arrivalWorkflowAI.emit('driver-door-closed-after-boarding');
