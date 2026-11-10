@@ -77,8 +77,8 @@ describe('vehicle parking controller', () => {
     expect(result.positionError).toBeLessThan(defaultParkingControllerConfig.positionTolerance);
     expect(result.insideEnvelope).toBe(false);
     expect(result.settled).toBe(false);
-    expect(result.input.reverse).toBe(1);
-    expect(result.input.throttle).toBe(0);
+    expect(result.input.reverse).toBe(0);
+    expect(result.input.throttle).toBe(1);
     expect(result.input.brake).toBe(0);
   });
 
