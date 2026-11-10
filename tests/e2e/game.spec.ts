@@ -86,10 +86,10 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
   // Trigger the authored bell distraction on the north-west side, then cross the open north route to the key.
-  await movePlayerTo(page, { x: -3.55, z: 3.2 });
+  await movePlayerTo(page, { x: 3.55, z: 3.2 });
   await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
   await page.locator('#escape-action').click();
-  await movePlayerTo(page, { x: 3.25, z: 3.35 });
+  await movePlayerTo(page, { x: -3.25, z: 3.35 });
   await expect(page.locator('#escape-action')).toHaveText('COLLECT KEY');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-has-key')).toBe('true');
@@ -97,7 +97,7 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
 
   // The player must physically return to the exit; key collection alone must not open it.
   await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-exit-unlocked', 'false');
-  await movePlayerTo(page, { x: 3.25, z: -6.5 });
+  await movePlayerTo(page, { x: -3.25, z: -6.5 });
   await movePlayerTo(page, { x: 0, z: -6.5 });
   await expect(page.locator('#escape-action')).toHaveText('UNLOCK EXIT');
   await page.locator('#escape-action').click();
