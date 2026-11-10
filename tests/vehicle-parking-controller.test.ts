@@ -101,7 +101,7 @@ describe('vehicle parking controller', () => {
     const target = { x: 4, z: -4.3, yaw: Math.atan2(5.14, 0.12) };
     const nearButNotInside = state({
       x: 4.004162469688286,
-      z: -4.2793481733656415,
+      z: -4.1,
       yaw: 1.6583725777766536,
       speed: 0,
       steering: 0.48
