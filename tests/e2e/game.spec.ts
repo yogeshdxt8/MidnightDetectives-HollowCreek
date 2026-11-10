@@ -185,7 +185,8 @@ async function movePlayerTo(page: import('@playwright/test').Page, target: { x: 
       `Investigator did not reach waypoint (${target.x}, ${target.z}) within ${timeoutMs}ms. ` +
       `Started at (${initial.x.toFixed(2)}, ${initial.z.toFixed(2)}), ` +
       `ended at (${finalPosition.x.toFixed(2)}, ${finalPosition.z.toFixed(2)}), ` +
-      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}.`
+      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}; ` +
+      `runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}.`
     );
   }
 
