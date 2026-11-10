@@ -373,8 +373,14 @@ function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sce
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
-  if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(arrivalWorkflowAI.state==='approaching-dropoff'){arrivalWorkflowAI.emit('dropoff-reached');}
+  if(arrivalWorkflowAI.state==='approaching-dropoff'){
+    setDriveRoute(driveRoutes.approach);
+    applySedanPhysics(dt,3.25,5.5,4.6,true);
+    headlampLeft.intensity=headlampRight.intensity=2.8;
+    const approachWaypoint=driveRoutes.approach[driveRoutes.approach.length-1]!;
+    const approachSettled=Math.hypot(approachWaypoint.x-sedanState.x,approachWaypoint.z-sedanState.z)<.85&&sedanState.speed<.22;
+    if(approachSettled)arrivalWorkflowAI.emit('dropoff-reached');
+  }
   if(arrivalWorkflowAI.state==='parking'&&!arrivalCarParked){
     // Keep following the complete drop-off route. Never start the exit animation while
     // the sedan is still travelling or freeze it merely because an intro timer elapsed.
