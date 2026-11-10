@@ -1,5 +1,5 @@
 export type EntityThreatState = 'patrolling' | 'investigating' | 'approaching' | 'searching' | 'chasing';
-export type EscapeHintId = 'find-key' | 'key-location' | 'hide' | 'distract' | 'return-to-exit' | 'unlock-exit' | 'escape';
+export type EscapeHintId = 'find-key' | 'key-location' | 'hide' | 'distract' | 'return-to-exit' | 'unlock-exit' | 'pass-through' | 'escape';
 
 export interface EscapeEncounterState {
   readonly hasKey: boolean;
@@ -59,6 +59,7 @@ export function getEscapeHint(
   context: EscapeHintContext = {},
 ): EscapeHint {
   if (state.escaped) return { id: 'escape', message: 'You escaped!' };
+  if (state.exitUnlocked) return { id: 'pass-through', message: 'The door is open. Escape!' };
   if (state.hasKey && state.playerNearExit && !state.exitUnlocked) {
     return { id: 'unlock-exit', message: 'Unlock exit.' };
   }
