@@ -102,18 +102,39 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     const plaque = addBox(1.28, .88, .22, materials.sign, x, 3.35, gateZ - 1.16);
     plaque.userData['gateIndex'] = index + 1;
     plaque.userData['gateNumeral'] = numeral;
-    // Broad, emissive strokes are intentionally oversized for portrait-phone readability.
-    const numeralZ = gateZ - .88;
-    const numeralBar = (offsetX: number, height: number, angle = 0) => {
-      const mark = addBox(.17, height, .09, materials.signText, x + offsetX, 3.35, numeralZ);
-      mark.rotation.z = angle;
-      mark.userData['gateNumeral'] = numeral;
-      mark.userData['gateIndex'] = index + 1;
-    };
-    if (numeral === 'I') numeralBar(0, .68);
-    if (numeral === 'II') { numeralBar(-.19, .68); numeralBar(.19, .68); }
-    if (numeral === 'III') { numeralBar(-.34, .68); numeralBar(0, .68); numeralBar(.34, .68); }
-    if (numeral === 'IV') { numeralBar(-.34, .68); numeralBar(-.02, .68, -.48); numeralBar(.34, .68, .48); }
+    // A front-facing, high-resolution glyph guarantees legible I–IV at portrait-phone distance.
+    // The texture sits just in front of the plaque and uses an unlit material so scene lighting
+    // cannot turn the gold strokes into near-black marks on mobile GPUs.
+    const numeralCanvas = document.createElement('canvas');
+    numeralCanvas.width = 512;
+    numeralCanvas.height = 352;
+    const numeralContext = numeralCanvas.getContext('2d');
+    if (numeralContext) {
+      numeralContext.clearRect(0, 0, 512, 352);
+      numeralContext.textAlign = 'center';
+      numeralContext.textBaseline = 'middle';
+      numeralContext.font = 'bold 270px Georgia, serif';
+      numeralContext.lineJoin = 'round';
+      numeralContext.lineWidth = 12;
+      numeralContext.strokeStyle = '#302719';
+      numeralContext.shadowColor = '#f4d58e';
+      numeralContext.shadowBlur = 22;
+      numeralContext.fillStyle = '#ffe5a8';
+      numeralContext.strokeText(numeral, 256, 174);
+      numeralContext.fillText(numeral, 256, 174);
+    }
+    const numeralTexture = new THREE.CanvasTexture(numeralCanvas);
+    numeralTexture.colorSpace = THREE.SRGBColorSpace;
+    textures.push(numeralTexture);
+    const numeralGeometry = new THREE.PlaneGeometry(1.12, .77);
+    geometries.push(numeralGeometry);
+    const numeralFace = new THREE.Mesh(numeralGeometry, new THREE.MeshBasicMaterial({
+      map: numeralTexture, transparent: true, depthWrite: false, toneMapped: false
+    }));
+    numeralFace.position.set(x, 3.35, gateZ - 1.16 + .22 / 2 + .012);
+    numeralFace.userData['gateNumeral'] = numeral;
+    numeralFace.userData['gateIndex'] = index + 1;
+    root.add(numeralFace);
     // A warm crown lamp marks each entrance without washing out the ironwork.
     const crown = addBox(.16, .16, .16, materials.lamp, x, 4.02, gateZ - 1.14);
     crown.userData['gatePortal'] = index + 1;
