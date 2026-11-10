@@ -41,7 +41,7 @@ export const defaultParkingControllerConfig: ParkingControllerConfig = {
   headingTolerance: 0.22,
   speedTolerance: 0.1,
   envelopeHalfLength: 2.18,
-  envelopeHalfWidth: 1.08
+  envelopeHalfWidth: 1.32
 };
 
 const clamp = (value: number, min: number, max: number) =>
