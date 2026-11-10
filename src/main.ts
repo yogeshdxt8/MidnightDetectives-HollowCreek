@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { stepVehicle, sedanTuning, type VehicleState } from './physics/vehicle-dynamics';
+import { ArrivalWorkflowAI } from './arrival/arrival-ai';
 import { createDetectiveCharacter } from './characters/detective-character';
 import { createFourGatesEnvironment } from './environments/four-gates-environment';
 import { PlayablesPlatform } from './platform/playables-sdk';
@@ -157,7 +158,7 @@ const arrivalGate=new THREE.Group();scene.add(arrivalGate);arrivalGate.position.
 const gateLeaves:THREE.Group[]=[];for(const side of [-1,1]){const leaf=new THREE.Group();leaf.position.set(side*2.6,0,0);arrivalGate.add(leaf);const frame=new THREE.Mesh(new THREE.BoxGeometry(2.6,.16,.16),gateGold);frame.position.set(-side*1.3,2.2,0);leaf.add(frame);for(let i=0;i<12;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.075,2.2,.075),gateMetal);bar.position.set(-side*(.12+i*.215),1.1,0);leaf.add(bar);}gateLeaves.push(leaf);}
 const arrivalDogs:THREE.Group[]=[];for(let i=0;i<4;i++){const dog=new THREE.Group();const fur=new THREE.MeshStandardMaterial({color:['#302b29','#6a4b36','#242a31','#8a7860'][i],roughness:.95});const body=new THREE.Mesh(new THREE.BoxGeometry(.82,.42,.34),fur);body.position.y=.48;dog.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),fur);head.position.set(.34,.72,0);dog.add(head);const muzzle=new THREE.Mesh(new THREE.BoxGeometry(.22,.13,.2),fur);muzzle.position.set(.52,.65,0);dog.add(muzzle);for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.ConeGeometry(.09,.24,6),fur);ear.position.set(.25,.94,side*.13);ear.rotation.z=-.25;dog.add(ear);}for(const x of [-.25,.25])for(const z of [-.11,.11]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,6),fur);leg.position.set(x,.22,z);dog.add(leg);}const tail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,.38,6),fur);tail.position.set(-.5,.68,0);tail.rotation.z=-.8;dog.add(tail);const spawnPoints=[[-8,0], [8,0], [0,-10], [0,9]] as const;dog.position.set(spawnPoints[i]![0],0,spawnPoints[i]![1]);dog.visible=false;scene.add(dog);arrivalDogs.push(dog);}
 const arrivalDialogue=document.createElement('div');arrivalDialogue.setAttribute('aria-live','polite');arrivalDialogue.style.cssText='position:absolute;left:50%;top:36%;transform:translateX(-50%);z-index:8;max-width:82%;padding:12px 18px;border:1px solid #c6ad78;border-radius:14px;background:rgba(8,13,23,.92);color:#f1dfb6;font:600 14px/1.45 system-ui,sans-serif;text-align:center;letter-spacing:.04em;box-shadow:0 8px 30px #0008;pointer-events:none;display:none;';sceneRoot.appendChild(arrivalDialogue);
-let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let dogsBarking=false;let playerExitReached=false;let arrivalCarParked=false;let driverDoorOpened=false;let passengerDoorOpened=false;type ArrivalDriverState='waiting-for-player'|'greeting-approach'|'greeting'|'returning-to-car'|'boarding'|'seated'|'departing'|'departed';let arrivalDriverState:ArrivalDriverState='waiting-for-player';let greetingElapsed=0;const driverGreetingTarget=new THREE.Vector3();let driverGreetingPhase=0;let driverReturnPhase=0;let driverBoardingElapsed=0;const driverExitStart=new THREE.Vector3();sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
+let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let dogsBarking=false;let playerExitReached=false;let arrivalCarParked=false;let driverDoorOpened=false;let passengerDoorOpened=false;const arrivalWorkflowAI=new ArrivalWorkflowAI();let greetingElapsed=0;const driverGreetingTarget=new THREE.Vector3();let driverGreetingPhase=0;let driverReturnPhase=0;let driverBoardingElapsed=0;const driverExitStart=new THREE.Vector3();sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
 const carPaint=new THREE.MeshStandardMaterial({color:'#35465d',metalness:.38,roughness:.48});
 const carTrim=new THREE.MeshStandardMaterial({color:'#9a7950',metalness:.68,roughness:.32});
 const carGlass=new THREE.MeshStandardMaterial({color:'#26394d',metalness:.12,roughness:.28,transparent:true,opacity:.72});
@@ -367,12 +368,13 @@ const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
 const clock=new THREE.Clock();let frame=0;let walkTime=0;let gamePaused=false;let gameInteractable=false;
 const blockUnavailableInput=(event:Event)=>{if(gamePaused||!gameInteractable){event.preventDefault();event.stopImmediatePropagation();}};
 for(const eventName of ['pointerdown','pointerup','pointermove','click','keydown'])document.addEventListener(eventName,blockUnavailableInput,true);
-function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarSpeed']=sedanState.speed.toFixed(3);sceneRoot.dataset['arrivalDriverState']=arrivalDriverState;sceneRoot.dataset['playerExitReached']=String(playerExitReached);sceneRoot.dataset['arrivalCarParked']=String(arrivalCarParked);sceneRoot.dataset['driverDoorOpened']=String(driverDoorOpened);sceneRoot.dataset['passengerDoorOpened']=String(passengerDoorOpened);sceneRoot.dataset['driverDoorAngle']=driverDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['passengerDoorAngle']=passengerDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['playerExitedPassenger']=String(Boolean(player.userData['exitedPassenger']));sceneRoot.dataset['playerExitDistance']=player.userData['exitedPassenger']?Math.hypot(arrivalDoorWorld(-.18,-2.15).x-player.getWorldPosition(new THREE.Vector3()).x,arrivalDoorWorld(-.18,-2.15).z-player.getWorldPosition(new THREE.Vector3()).z).toFixed(3):'not-started';sceneRoot.dataset['driverReturnPhase']=String(driverReturnPhase);sceneRoot.dataset['driverX']=arrivalDriver.root.position.x.toFixed(2);sceneRoot.dataset['driverZ']=arrivalDriver.root.position.z.toFixed(2);sceneRoot.dataset['driverWorldX']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).x.toFixed(2);sceneRoot.dataset['driverWorldZ']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).z.toFixed(2);sceneRoot.dataset['stormActive']=String(stormStarted);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
+function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarSpeed']=sedanState.speed.toFixed(3);sceneRoot.dataset['arrivalDriverState']=arrivalWorkflowAI.state;sceneRoot.dataset['playerExitReached']=String(playerExitReached);sceneRoot.dataset['arrivalCarParked']=String(arrivalCarParked);sceneRoot.dataset['driverDoorOpened']=String(driverDoorOpened);sceneRoot.dataset['passengerDoorOpened']=String(passengerDoorOpened);sceneRoot.dataset['driverDoorAngle']=driverDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['passengerDoorAngle']=passengerDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['playerExitedPassenger']=String(Boolean(player.userData['exitedPassenger']));sceneRoot.dataset['playerExitDistance']=player.userData['exitedPassenger']?Math.hypot(arrivalDoorWorld(-.18,-2.15).x-player.getWorldPosition(new THREE.Vector3()).x,arrivalDoorWorld(-.18,-2.15).z-player.getWorldPosition(new THREE.Vector3()).z).toFixed(3):'not-started';sceneRoot.dataset['driverReturnPhase']=String(driverReturnPhase);sceneRoot.dataset['driverX']=arrivalDriver.root.position.x.toFixed(2);sceneRoot.dataset['driverZ']=arrivalDriver.root.position.z.toFixed(2);sceneRoot.dataset['driverWorldX']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).x.toFixed(2);sceneRoot.dataset['driverWorldZ']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).z.toFixed(2);sceneRoot.dataset['stormActive']=String(stormStarted);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(!arrivalCarParked){
+  else if(arrivalWorkflowAI.state==='approaching-dropoff'){arrivalWorkflowAI.emit('dropoff-reached');}
+  if(arrivalWorkflowAI.state==='parking'&&!arrivalCarParked){
     // Keep following the complete drop-off route. Never start the exit animation while
     // the sedan is still travelling or freeze it merely because an intro timer elapsed.
     setDriveRoute(driveRoutes.dropoff);
@@ -383,55 +385,55 @@ if(playArrivalSequence){
     const terminalApproachSpeed=Math.min(1.35,Math.sqrt(2*1.4*Math.max(0,approachDistance-1.0)));
     applySedanPhysics(dt,4.0,-4.3,terminalApproachSpeed,true);
     const parkedDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
-    if(parkedDistance<1.35&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};}
+    if(parkedDistance<1.35&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};arrivalWorkflowAI.emit('car-parked');}
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,arrivalCarParked?.7:2.4,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
-  if(arrivalCarParked&&!arrivalDriver.root.userData['exited']){
+  if(arrivalWorkflowAI.state==='opening-driver-door'&&!arrivalDriver.root.userData['exited']){
     driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-1.18,7,dt);
     if(Math.abs(driverDoorPivot.rotation.y+1.18)<.045){
       arrivalCar.updateMatrixWorld(true);scene.attach(arrivalDriver.root);arrivalDriver.root.scale.setScalar(.78);
       // Exit only after the vehicle is stationary and the driver's door is fully open.
       const doorThreshold=arrivalDoorWorld(-.1,1.02);
       arrivalDriver.root.position.copy(doorThreshold);driverExitStart.copy(doorThreshold);arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDriver.root.visible=true;
-      arrivalDriver.root.userData['exited']=true;driverDoorOpened=true;
+      arrivalDriver.root.userData['exited']=true;driverDoorOpened=true;arrivalWorkflowAI.emit('driver-door-opened');arrivalWorkflowAI.emit('driver-exited');
     }
   }
-  if(driverDoorOpened&&!player.userData['exitedPassenger']){
+  if(arrivalWorkflowAI.state==='closing-driver-door'){
     driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
-    if(Math.abs(driverDoorPivot.rotation.y)<.045){
-      passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,1.22,7,dt);
-      if(Math.abs(passengerDoorPivot.rotation.y-1.22)<.045)passengerDoorOpened=true;
-    }
+    if(Math.abs(driverDoorPivot.rotation.y)<.045)arrivalWorkflowAI.emit('driver-door-closed');
   }
-  if(passengerDoorOpened&&!player.userData['exitedPassenger']){
+  if(arrivalWorkflowAI.state==='opening-passenger-door'){
+    passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,1.22,7,dt);
+    if(Math.abs(passengerDoorPivot.rotation.y-1.22)<.045){passengerDoorOpened=true;arrivalWorkflowAI.emit('passenger-door-opened');}
+  }
+  if(arrivalWorkflowAI.state==='passenger-exiting'&&!player.userData['exitedPassenger']){
     arrivalCar.updateMatrixWorld(true);scene.attach(player);player.scale.setScalar(1);
     // Step down at the passenger-side sill; the rig remains ground-aligned and collision-aware.
     player.position.copy(arrivalDoorWorld(-.18,-1.02));player.position.y=0;
     player.userData['arrivalVelocity']=new THREE.Vector3();player.visible=true;player.userData['exitedPassenger']=true;
   }
-  if(player.userData['exitedPassenger']&&!playerExitReached){
+  if(arrivalWorkflowAI.state==='passenger-exiting'&&player.userData['exitedPassenger']&&!playerExitReached){
     const exitTarget=arrivalDoorWorld(-.18,-2.15);
     const reached=moveArrivalActor(player,exitTarget,dt,1.35);
     const stride=(player.userData['arrivalVelocity'] as THREE.Vector3).length();
     leftLeg.rotation.x=Math.sin(t*7)*Math.min(.3,stride*.2);rightLeg.rotation.x=-leftLeg.rotation.x;
     leftArm.rotation.x=-Math.sin(t*7)*Math.min(.16,stride*.11);rightArm.rotation.x=-leftArm.rotation.x;
-    if(reached){playerExitReached=true;leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
+    if(reached){playerExitReached=true;arrivalWorkflowAI.emit('passenger-exited');leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
   }
-  if(playerExitReached){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
-  if(arrivalDriverState==='greeting'&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
+  if(arrivalWorkflowAI.state==='player-clearing-car'){
+    passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);
+    if(Math.abs(passengerDoorPivot.rotation.y)<.045){arrivalWorkflowAI.emit('player-clear-of-car');driverGreetingTarget.set(THREE.MathUtils.clamp(player.position.x+1.05,-4.9,4.9),0,THREE.MathUtils.clamp(player.position.z+.55,-7.7,6.0));arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
+    leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;
+  }
+  if(arrivalWorkflowAI.state==='greeting'&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
   if(t>=24&&t<28){
     arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const reached=moveArrivalActor(dog,new THREE.Vector3(targetX,0,targetZ),dt,2.35);const dogSpeed=(dog.userData['arrivalVelocity'] as THREE.Vector3).length();dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=reached?0:Math.sin(t*13+i+legIndex)*Math.min(.38,dogSpeed*.2);}});
-    if(!dogsBarking){dogsBarking=true;if(arrivalDriverState==='waiting-for-player')arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<8;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*260);}
+    if(!dogsBarking){dogsBarking=true;if(arrivalWorkflowAI.state==='player-clearing-car')arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<8;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*260);}
   }
   // Event-driven driver AI: wait for the player's completed exit, greet face-to-face,
   // return to the driver's door, board, then depart using the collision-aware vehicle controller.
-  if(playerExitReached&&arrivalDriverState==='waiting-for-player'){
-    arrivalDriverState='greeting-approach';
-    driverGreetingTarget.set(THREE.MathUtils.clamp(player.position.x+1.05,-4.9,4.9),0,THREE.MathUtils.clamp(player.position.z+.55,-7.7,6.0));
-    arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();
-  }
-  if(arrivalDriverState==='greeting-approach'){
+  if(arrivalWorkflowAI.state==='greeting-approach'){
     const greetingRoute=[arrivalDoorWorld(-.1,1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-2.35,-1.48),driverGreetingTarget];
     const reached=moveArrivalActor(arrivalDriver.root,greetingRoute[driverGreetingPhase]!,dt,1.35);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
@@ -439,17 +441,17 @@ if(playArrivalSequence){
     if(reached&&driverGreetingPhase<greetingRoute.length-1){driverGreetingPhase++;(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).set(0,0,0);}
     if(reached&&driverGreetingPhase===greetingRoute.length-1){
       arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;
-      arrivalDriverState='greeting';greetingElapsed=0;
+      arrivalWorkflowAI.emit('greeting-position-reached');greetingElapsed=0;
       arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';
     }
   }
-  if(arrivalDriverState==='greeting'){
+  if(arrivalWorkflowAI.state==='greeting'){
     greetingElapsed+=dt;
     const toPlayer=new THREE.Vector3(player.position.x-arrivalDriver.root.position.x,0,player.position.z-arrivalDriver.root.position.z);
     if(toPlayer.lengthSq()>.001)arrivalDriver.root.rotation.y=Math.atan2(toPlayer.x,toPlayer.z);
-    if(greetingElapsed>=2.8){arrivalDriverState='returning-to-car';driverReturnPhase=0;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDialogue.style.display='none';}
+    if(greetingElapsed>=2.8){arrivalWorkflowAI.emit('greeting-finished');driverReturnPhase=0;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDialogue.style.display='none';}
   }
-  if(arrivalDriverState==='returning-to-car'){
+  if(arrivalWorkflowAI.state==='returning-to-car'){
     const returnTargets=[arrivalDoorWorld(-2.35,-1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
     const target=returnTargets[driverReturnPhase]??returnTargets[returnTargets.length-1]!;
     const reached=moveArrivalActor(arrivalDriver.root,target,dt,1.45);
@@ -458,24 +460,27 @@ if(playArrivalSequence){
     if(reached&&driverReturnPhase<returnTargets.length-1){driverReturnPhase++;(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).set(0,0,0);}
     if(reached&&driverReturnPhase===returnTargets.length-1){
       arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;
-      arrivalDriverState='boarding';driverBoardingElapsed=0;arrivalCar.updateMatrixWorld(true);arrivalCar.attach(arrivalDriver.root);
+      arrivalWorkflowAI.emit('driver-at-door');driverBoardingElapsed=0;arrivalCar.updateMatrixWorld(true);arrivalCar.attach(arrivalDriver.root);
       arrivalDriver.root.position.set(-.1,0,1.08);arrivalDriver.root.rotation.y=Math.PI/2;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();
     }
   }
-  if(arrivalDriverState==='boarding'){
+  if(arrivalWorkflowAI.state==='boarding'){
     driverBoardingElapsed+=dt;arrivalDriver.root.position.lerp(new THREE.Vector3(-.1,0,.38),1-Math.exp(-dt*5.5));
     arrivalDriver.root.rotation.y=THREE.MathUtils.damp(arrivalDriver.root.rotation.y,Math.PI/2,7,dt);
     driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
-    if(driverBoardingElapsed>=.9){arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.visible=false;arrivalDriverState='seated';}
+    if(driverBoardingElapsed>=.9){arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.visible=false;arrivalWorkflowAI.emit('driver-boarded');}
   }
-  if(arrivalDriverState==='seated'&&Math.abs(driverDoorPivot.rotation.y)<.035)arrivalDriverState='departing';
-  if(arrivalDriverState==='departing'){
+  if(arrivalWorkflowAI.state==='closing-driver-door-after-boarding'){
+    driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
+    if(Math.abs(driverDoorPivot.rotation.y)<.035)arrivalWorkflowAI.emit('driver-door-closed-after-boarding');
+  }
+  if(arrivalWorkflowAI.state==='departing'){
     setDriveRoute(driveRoutes.departure);applySedanPhysics(dt,3.2,12.5,4.8,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,2.2,1.4,dt);headlampRight.intensity=headlampLeft.intensity;
     const finalWaypoint=driveRoutes.departure[driveRoutes.departure.length-1]!;
-    if(Math.hypot(finalWaypoint.x-sedanState.x,finalWaypoint.z-sedanState.z)<.8){arrivalDriverState='departed';arrivalCar.visible=false;}
+    if(Math.hypot(finalWaypoint.x-sedanState.x,finalWaypoint.z-sedanState.z)<.8){arrivalWorkflowAI.emit('departure-route-completed');arrivalCar.visible=false;}
   }
-  if(arrivalDriverState==='departed'&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
+  if(arrivalWorkflowAI.isComplete()&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
 }if(!stormStarted){stormStarted=true;rain.material.opacity=.82;stormFog.density=.043;}
 if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<rainCount;i++){rainPositions[i*3+1]=(rainPositions[i*3+1]??0)-dt*13;if((rainPositions[i*3+1]??0)<0){rainPositions[i*3+1]=10+Math.random()*3;rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+2]=(Math.random()-.5)*24;}}rainAttribute.needsUpdate=true;
 if(t>=nextLightningAt){makeLightning();lightningGroup.visible=true;lightningFlash.intensity=5.5;lightningOffAt=t+.16;nextLightningAt=t+3.2+Math.random()*3.2;void gameAudio.playThunder();}
