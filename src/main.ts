@@ -265,11 +265,11 @@ if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(t<16){applySedanPhysics(dt,3.25,-5.65,4.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
+  else if(t<16){applySedanPhysics(dt,4.1,-2.8,4.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
   else { 
     // Hold at the fountain-side drop-off point. Keep applying braking/hold dynamics;
     // do not send the sedan back across the square or hide it after the passenger exits.
-    applySedanPhysics(dt,3.25,-5.65,0,true);
+    applySedanPhysics(dt,4.1,-2.8,0,true);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
@@ -282,7 +282,7 @@ if(playArrivalSequence){
   }
   if(t>=17&&t<19){
     const p=THREE.MathUtils.smoothstep(t,17,19);
-    arrivalDriver.root.position.lerpVectors(driverExitStart,new THREE.Vector3(4.65,0,-5.65),p);
+    arrivalDriver.root.position.lerpVectors(driverExitStart,new THREE.Vector3(4.65,0,-2.8),p);
     arrivalDriver.root.rotation.y=Math.PI/2;
     arrivalDriver.leftLeg.rotation.x=Math.sin(t*5)*.24;arrivalDriver.rightLeg.rotation.x=-Math.sin(t*5)*.24;
     arrivalDriver.leftArm.rotation.x=-.25;arrivalDriver.rightArm.rotation.x=-.25;
