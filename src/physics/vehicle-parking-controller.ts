@@ -79,7 +79,8 @@ export function isSedanInsideParkingEnvelope(
 }
 
 /**
- * Low-speed, forward-only terminal pose controller. It computes controls only;
+ * Low-speed terminal pose controller. It can use a controlled reverse correction
+ * when the target lies behind the vehicle. It computes controls only;
  * vehicle dynamics and collision checks remain authoritative for movement.
  */
 export function computeParkingControl(
@@ -98,10 +99,18 @@ export function computeParkingControl(
   const localX = dx * c - dz * s;
   const localZ = dx * s + dz * c;
   const distance = Math.max(positionError, 0.2);
-  const bearing = Math.atan2(localZ, localX);
-  const curvature = 2 * Math.sin(bearing) / distance - config.headingWeight * headingError;
+  // If the target is behind the vehicle, use reverse rather than steering
+  // forward away from the bay. Reverse travel in the bicycle model inverts
+  // the steering-to-yaw relationship, so invert the steering command too.
+  const reversing = localX < -0.15;
+  const bearing = reversing
+    ? Math.atan2(-localZ, -localX)
+    : Math.atan2(localZ, localX);
+  const curvature = 2 * Math.sin(bearing) / distance -
+    config.headingWeight * headingError * (reversing ? -1 : 1);
   const steering = clamp(
-    -Math.atan(tuning.wheelbase * curvature) / tuning.maxSteeringAngle,
+    (reversing ? 1 : -1) *
+      Math.atan(tuning.wheelbase * curvature) / tuning.maxSteeringAngle,
     -1,
     1
   );
@@ -131,13 +140,15 @@ export function computeParkingControl(
   const targetSpeed = terminalPoseValid
     ? 0
     : Math.max(0.18, Math.min(config.maximumSpeed, speedLimit));
-  const throttle = state.speed < targetSpeed - 0.08 ? 1 : 0;
-  const brake = state.speed > targetSpeed + 0.06 || terminalPoseValid
-    ? clamp((state.speed - targetSpeed) * 0.8, 0.2, 1)
+  const targetVelocity = reversing ? -targetSpeed : targetSpeed;
+  const throttle = !reversing && state.speed < targetVelocity - 0.08 ? 1 : 0;
+  const reverse = reversing && state.speed > targetVelocity + 0.08 ? 1 : 0;
+  const brake = Math.abs(state.speed) > targetSpeed + 0.06 || terminalPoseValid
+    ? clamp((Math.abs(state.speed) - targetSpeed) * 0.8, 0.2, 1)
     : 0;
 
   return {
-    input: { throttle, brake, steering },
+    input: { throttle, brake, steering, reverse },
     positionError,
     headingError,
     insideEnvelope,
