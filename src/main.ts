@@ -238,7 +238,7 @@ const arrivalGate=new THREE.Group();scene.add(arrivalGate);arrivalGate.position.
 const gateLeaves:THREE.Group[]=[];for(const side of [-1,1]){const leaf=new THREE.Group();leaf.position.set(side*2.6,0,0);arrivalGate.add(leaf);const frame=new THREE.Mesh(new THREE.BoxGeometry(2.6,.16,.16),gateGold);frame.position.set(-side*1.3,2.2,0);leaf.add(frame);for(let i=0;i<12;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.075,2.2,.075),gateMetal);bar.position.set(-side*(.12+i*.215),1.1,0);leaf.add(bar);}gateLeaves.push(leaf);}
 const arrivalDogs:THREE.Group[]=[];for(let i=0;i<4;i++){const dog=new THREE.Group();const fur=new THREE.MeshStandardMaterial({color:['#302b29','#6a4b36','#242a31','#8a7860'][i],roughness:.95});const body=new THREE.Mesh(new THREE.BoxGeometry(.82,.42,.34),fur);body.position.y=.48;dog.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),fur);head.position.set(.34,.72,0);dog.add(head);const muzzle=new THREE.Mesh(new THREE.BoxGeometry(.22,.13,.2),fur);muzzle.position.set(.52,.65,0);dog.add(muzzle);for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.ConeGeometry(.09,.24,6),fur);ear.position.set(.25,.94,side*.13);ear.rotation.z=-.25;dog.add(ear);}for(const x of [-.25,.25])for(const z of [-.11,.11]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,6),fur);leg.position.set(x,.22,z);dog.add(leg);}const tail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,.38,6),fur);tail.position.set(-.5,.68,0);tail.rotation.z=-.8;dog.add(tail);const spawnPoints=[[-8,0], [8,0], [0,-10], [0,9]] as const;dog.position.set(spawnPoints[i]![0],0,spawnPoints[i]![1]);dog.visible=false;scene.add(dog);arrivalDogs.push(dog);}
 const arrivalDialogue=document.createElement('div');arrivalDialogue.setAttribute('aria-live','polite');arrivalDialogue.style.cssText='position:absolute;left:50%;top:36%;transform:translateX(-50%);z-index:8;max-width:82%;padding:12px 18px;border:1px solid #c6ad78;border-radius:14px;background:rgba(8,13,23,.92);color:#f1dfb6;font:600 14px/1.45 system-ui,sans-serif;text-align:center;letter-spacing:.04em;box-shadow:0 8px 30px #0008;pointer-events:none;display:none;';sceneRoot.appendChild(arrivalDialogue);
-let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let dogsBarking=false;let playerExitReached=false;let arrivalCarParked=false;let driverDoorOpened=false;let passengerDoorOpened=false;let driverSeatedReached=false;let driverDepartedReached=false;let seatedHoldElapsed=0;const arrivalWorkflowAI=new ArrivalWorkflowAI();let greetingElapsed=0;const driverGreetingTarget=new THREE.Vector3();let driverGreetingPhase=0;let driverReturnPhase=0;const driverExitStart=new THREE.Vector3();sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
+let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let dogsBarking=false;let playerExitReached=false;let arrivalCarParked=false;let driverDoorOpened=false;let passengerDoorOpened=false;let driverSeatedReached=false;let driverDepartedReached=false;let seatedHoldElapsed=0;const arrivalWorkflowAI=new ArrivalWorkflowAI();let driverReturnPhase=0;const driverExitStart=new THREE.Vector3();sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
 const carPaint=new THREE.MeshStandardMaterial({color:'#35465d',metalness:.38,roughness:.48});
 const carTrim=new THREE.MeshStandardMaterial({color:'#9a7950',metalness:.68,roughness:.32});
 const carGlass=new THREE.MeshStandardMaterial({color:'#26394d',metalness:.12,roughness:.28,transparent:true,opacity:.72});
@@ -511,7 +511,7 @@ if(playArrivalSequence){
   }
   if(arrivalWorkflowAI.state==='player-clearing-car'){
     passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);
-    if(Math.abs(passengerDoorPivot.rotation.y)<.045){arrivalWorkflowAI.emit('player-clear-of-car');driverGreetingTarget.set(THREE.MathUtils.clamp(player.position.x+1.05,-4.9,4.9),0,THREE.MathUtils.clamp(player.position.z+.55,-7.7,6.0));arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
+    if(Math.abs(passengerDoorPivot.rotation.y)<.045){arrivalWorkflowAI.emit('player-clear-of-car');arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
     leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;
   }
   if(arrivalWorkflowAI.state==='greeting'&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
@@ -519,25 +519,11 @@ if(playArrivalSequence){
     arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const reached=moveArrivalActor(dog,new THREE.Vector3(targetX,0,targetZ),dt,2.35);const dogSpeed=(dog.userData['arrivalVelocity'] as THREE.Vector3).length();dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=reached?0:Math.sin(t*13+i+legIndex)*Math.min(.38,dogSpeed*.2);}});
     if(!dogsBarking){dogsBarking=true;if(arrivalWorkflowAI.state==='player-clearing-car')arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<8;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*260);}
   }
-  // Event-driven driver AI: wait for the player's completed exit, greet face-to-face,
-  // return to the driver's door, board, then depart using the collision-aware vehicle controller.
-  if(arrivalWorkflowAI.state==='greeting-approach'){
-    const greetingRoute=[arrivalDoorWorld(-.1,1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-2.35,-1.48),driverGreetingTarget];
-    const reached=moveArrivalActor(arrivalDriver.root,greetingRoute[driverGreetingPhase]!,dt,1.35);
-    const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
-    arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.25,stride*.17);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
-    if(reached&&driverGreetingPhase<greetingRoute.length-1){driverGreetingPhase++;(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).set(0,0,0);}
-    if(reached&&driverGreetingPhase===greetingRoute.length-1){
-      arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;
-      arrivalWorkflowAI.emit('greeting-position-reached');greetingElapsed=0;
-      arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';
-    }
-  }
-  if(arrivalWorkflowAI.state==='greeting'){
-    greetingElapsed+=dt;
-    const toPlayer=new THREE.Vector3(player.position.x-arrivalDriver.root.position.x,0,player.position.z-arrivalDriver.root.position.z);
-    if(toPlayer.lengthSq()>.001)arrivalDriver.root.rotation.y=Math.atan2(toPlayer.x,toPlayer.z);
-    if(greetingElapsed>=2.8){arrivalWorkflowAI.emit('greeting-finished');driverReturnPhase=0;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDialogue.style.display='none';}
+  // The GO command is issued on the same update that confirms the passenger is clear.
+  // The driver then returns directly to the door, boards, closes it, and departs.
+  if(arrivalWorkflowAI.state==='go-commanded'){
+    driverReturnPhase=0;
+    arrivalWorkflowAI.emit('driver-go-commanded');
   }
   if(arrivalWorkflowAI.state==='returning-to-car'){
     const returnTargets=[arrivalDoorWorld(-2.35,-1.48),arrivalDoorWorld(-2.35,1.48),arrivalDoorWorld(-.1,2.0),arrivalDoorWorld(-.1,1.1),arrivalDoorWorld(-.1,1.08)];
