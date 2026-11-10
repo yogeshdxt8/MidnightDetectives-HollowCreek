@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { stepVehicle, sedanTuning, type VehicleState } from './physics/vehicle-dynamics';
+import { computeParkingControl, defaultParkingControllerConfig, type ParkingPose } from './physics/vehicle-parking-controller';
 import { VehicleRouteNavigator } from './navigation/vehicle-route-navigator';
 import { ArrivalWorkflowAI } from './arrival/arrival-ai';
 import { createDetectiveCharacter } from './characters/detective-character';
@@ -65,6 +66,9 @@ let driveRouteComplete=false;
 let driverBlockedSeconds=0;
 let routeRecoveryAttempts=0;
 let lastCollisionReason='none';
+let parkingSnapshot:ReturnType<typeof computeParkingControl>|null=null;
+const sedanParkingPose:ParkingPose={x:4,z:-4.3,yaw:Math.atan2(2.6,.25)};
+const sedanParkingEnvelope={centerX:sedanParkingPose.x,centerZ:sedanParkingPose.z,yaw:sedanParkingPose.yaw,halfLength:defaultParkingControllerConfig.envelopeHalfLength,halfWidth:defaultParkingControllerConfig.envelopeHalfWidth};
 const routeName=(route:DriveWaypoint[])=>route===driveRoutes.approach?'approach':route===driveRoutes.dropoff?'dropoff':'departure';
 const setDriveRoute=(route:DriveWaypoint[])=>{
   if(activeDriveRoute!==route){
@@ -76,7 +80,7 @@ const setDriveRoute=(route:DriveWaypoint[])=>{
     navigationSnapshot=null;
   }
 };
-const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean,forceStop=false)=>{
+const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean,forceStop=false,parkingTarget?:ParkingPose)=>{
   if(!navigationSnapshot||navigationSnapshot.routeId!==routeName(activeDriveRoute)){
     routeNavigator.setRoute(routeName(activeDriveRoute),{x:sedanState.x,z:sedanState.z},activeDriveRoute);
   }
@@ -119,8 +123,13 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const routeSpeed=driveRouteComplete||forceStop||recoveryFailed?0:Math.min(maxSpeed,waypoint.speed,stoppingSpeed)*cornerFactor;
   const throttle=forceStop||driveRouteComplete||recoveryFailed?0:(endpointDistance>.28&&sedanState.speed<routeSpeed-.12?1:0);
   const brake=forceStop||driveRouteComplete||recoveryFailed?1:(sedanState.speed>routeSpeed+.08||endpointDistance<=.28?THREE.MathUtils.clamp((sedanState.speed-routeSpeed)*.65,.18,1):0);
+  const parkingActive=Boolean(parkingTarget)&&Math.hypot(parkingTarget!.x-sedanState.x,parkingTarget!.z-sedanState.z)<=2.5;
+  parkingSnapshot=parkingActive
+    ? computeParkingControl(sedanState,parkingTarget!,sedanTuning,sedanParkingEnvelope)
+    : null;
+  const controlInput=parkingSnapshot?.input??{throttle,brake,steering};
   const previous={...sedanState};
-  const result=stepVehicle(sedanState,{throttle,brake,steering},dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
+  const result=stepVehicle(sedanState,controlInput,dt,sedanTuning,gateOpen?undefined:gatePlaneZ);
   let blocked=false;
   lastCollisionReason='none';
   for(let sample=1;sample<=12;sample++){
@@ -416,7 +425,7 @@ const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
 const clock=new THREE.Clock();let frame=0;let walkTime=0;let gamePaused=false;let gameInteractable=false;
 const blockUnavailableInput=(event:Event)=>{if(gamePaused||!gameInteractable){event.preventDefault();event.stopImmediatePropagation();}};
 for(const eventName of ['pointerdown','pointerup','pointermove','click','keydown'])document.addEventListener(eventName,blockUnavailableInput,true);
-function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarSpeed']=sedanState.speed.toFixed(3);sceneRoot.dataset['arrivalRoute']=navigationSnapshot?.routeId??routeName(activeDriveRoute);sceneRoot.dataset['arrivalWaypointIndex']=String(navigationSnapshot?.waypointIndex??0);sceneRoot.dataset['arrivalCrossTrackError']=(navigationSnapshot?.crossTrackError??0).toFixed(3);sceneRoot.dataset['arrivalNavigationMode']=navigationSnapshot?.mode??'uninitialized';sceneRoot.dataset['arrivalYaw']=sedanState.yaw.toFixed(4);sceneRoot.dataset['arrivalSteering']=sedanState.steering.toFixed(4);sceneRoot.dataset['arrivalCollisionReason']=lastCollisionReason;sceneRoot.dataset['arrivalRecoverySeconds']=String(navigationSnapshot?.recoveryElapsed??0);sceneRoot.dataset['arrivalDriverState']=arrivalWorkflowAI.state;sceneRoot.dataset['arrivalAIRejectedEvents']=String(arrivalWorkflowAI.rejectedEvents);sceneRoot.dataset['playerExitReached']=String(playerExitReached);sceneRoot.dataset['arrivalCarParked']=String(arrivalCarParked);sceneRoot.dataset['driverDoorOpened']=String(driverDoorOpened);sceneRoot.dataset['passengerDoorOpened']=String(passengerDoorOpened);sceneRoot.dataset['driverDoorAngle']=driverDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['passengerDoorAngle']=passengerDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['playerExitedPassenger']=String(Boolean(player.userData['exitedPassenger']));sceneRoot.dataset['playerExitDistance']=player.userData['exitedPassenger']?Math.hypot(arrivalDoorWorld(-.18,-2.15).x-player.getWorldPosition(new THREE.Vector3()).x,arrivalDoorWorld(-.18,-2.15).z-player.getWorldPosition(new THREE.Vector3()).z).toFixed(3):'not-started';sceneRoot.dataset['driverReturnPhase']=String(driverReturnPhase);sceneRoot.dataset['driverX']=arrivalDriver.root.position.x.toFixed(2);sceneRoot.dataset['driverZ']=arrivalDriver.root.position.z.toFixed(2);sceneRoot.dataset['driverWorldX']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).x.toFixed(2);sceneRoot.dataset['driverWorldZ']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).z.toFixed(2);sceneRoot.dataset['stormActive']=String(stormStarted);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
+function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarSpeed']=sedanState.speed.toFixed(3);sceneRoot.dataset['arrivalRoute']=navigationSnapshot?.routeId??routeName(activeDriveRoute);sceneRoot.dataset['arrivalWaypointIndex']=String(navigationSnapshot?.waypointIndex??0);sceneRoot.dataset['arrivalCrossTrackError']=(navigationSnapshot?.crossTrackError??0).toFixed(3);sceneRoot.dataset['arrivalNavigationMode']=navigationSnapshot?.mode??'uninitialized';sceneRoot.dataset['arrivalYaw']=sedanState.yaw.toFixed(4);sceneRoot.dataset['arrivalSteering']=sedanState.steering.toFixed(4);sceneRoot.dataset['arrivalCollisionReason']=lastCollisionReason;sceneRoot.dataset['arrivalRecoverySeconds']=String(navigationSnapshot?.recoveryElapsed??0);sceneRoot.dataset['arrivalLookAheadDistance']=(navigationSnapshot?.lookAheadDistance??0).toFixed(3);sceneRoot.dataset['arrivalParkingActive']=String(Boolean(parkingSnapshot));sceneRoot.dataset['arrivalParkingPositionError']=(parkingSnapshot?.positionError??0).toFixed(3);sceneRoot.dataset['arrivalParkingHeadingError']=(parkingSnapshot?.headingError??0).toFixed(4);sceneRoot.dataset['arrivalParkingInsideEnvelope']=String(parkingSnapshot?.insideEnvelope??false);sceneRoot.dataset['arrivalParkingSettled']=String(parkingSnapshot?.settled??false);sceneRoot.dataset['arrivalDriverState']=arrivalWorkflowAI.state;sceneRoot.dataset['arrivalAIRejectedEvents']=String(arrivalWorkflowAI.rejectedEvents);sceneRoot.dataset['playerExitReached']=String(playerExitReached);sceneRoot.dataset['arrivalCarParked']=String(arrivalCarParked);sceneRoot.dataset['driverDoorOpened']=String(driverDoorOpened);sceneRoot.dataset['passengerDoorOpened']=String(passengerDoorOpened);sceneRoot.dataset['driverDoorAngle']=driverDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['passengerDoorAngle']=passengerDoorPivot.rotation.y.toFixed(4);sceneRoot.dataset['playerExitedPassenger']=String(Boolean(player.userData['exitedPassenger']));sceneRoot.dataset['playerExitDistance']=player.userData['exitedPassenger']?Math.hypot(arrivalDoorWorld(-.18,-2.15).x-player.getWorldPosition(new THREE.Vector3()).x,arrivalDoorWorld(-.18,-2.15).z-player.getWorldPosition(new THREE.Vector3()).z).toFixed(3):'not-started';sceneRoot.dataset['driverReturnPhase']=String(driverReturnPhase);sceneRoot.dataset['driverX']=arrivalDriver.root.position.x.toFixed(2);sceneRoot.dataset['driverZ']=arrivalDriver.root.position.z.toFixed(2);sceneRoot.dataset['driverWorldX']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).x.toFixed(2);sceneRoot.dataset['driverWorldZ']=arrivalDriver.root.getWorldPosition(new THREE.Vector3()).z.toFixed(2);sceneRoot.dataset['stormActive']=String(stormStarted);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
@@ -432,14 +441,16 @@ if(playArrivalSequence){
     // Keep following the complete drop-off route. Never start the exit animation while
     // the sedan is still travelling or freeze it merely because an intro timer elapsed.
     setDriveRoute(driveRoutes.dropoff);
-    const approachDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
-    // Use a low-speed terminal approach instead of latching a full stop outside
-    // the parking envelope. The speed target falls to zero at 1.0 unit from the
-    // destination, leaving the sedan stationary inside the 1.35-unit capture radius.
+    const approachDistance=Math.hypot(sedanState.x-sedanParkingPose.x,sedanState.z-sedanParkingPose.z);
+    // Route navigation owns the approach. Inside the terminal capture radius,
+    // the pose controller aligns the sedan and verifies its complete footprint.
     const terminalApproachSpeed=Math.min(1.35,Math.sqrt(2*1.4*Math.max(0,approachDistance-1.0)));
-    applySedanPhysics(dt,4.0,-4.3,terminalApproachSpeed,true);
-    const parkedDistance=Math.hypot(sedanState.x-4.0,sedanState.z+4.3);
-    if(parkedDistance<1.35&&sedanState.speed<.18){arrivalCarParked=true;sedanState={...sedanState,speed:0};arrivalWorkflowAI.emit('car-parked');}
+    applySedanPhysics(dt,sedanParkingPose.x,sedanParkingPose.z,terminalApproachSpeed,true,false,sedanParkingPose);
+    if(parkingSnapshot?.settled&&sedanFootprintClear(sedanState.x,sedanState.z,sedanState.yaw)){
+      arrivalCarParked=true;
+      sedanState={...sedanState,speed:0};
+      arrivalWorkflowAI.emit('car-parked');
+    }
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,arrivalCarParked?.7:2.4,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
