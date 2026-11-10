@@ -60,17 +60,24 @@ function routeInput(state: VehicleState, nav: ReturnType<VehicleRouteNavigator['
   const localX = dx * c - dz * s;
   const localZ = dx * s + dz * c;
   const lookAhead = Math.max(0.8, Math.hypot(dx, dz));
-  const alpha = Math.atan2(localZ, localX);
+  const reversing = localX < -0.15;
+  const alpha = reversing ? Math.atan2(-localZ, -localX) : Math.atan2(localZ, localX);
   const curvature = 2 * Math.sin(alpha) / Math.max(lookAhead, 0.35);
-  const steering = Math.max(-1, Math.min(1, -Math.atan(sedanTuning.wheelbase * curvature) / sedanTuning.maxSteeringAngle));
+  const steering = Math.max(-1, Math.min(1,
+    (reversing ? 1 : -1) * Math.atan(sedanTuning.wheelbase * curvature) / sedanTuning.maxSteeringAngle
+  ));
   const cornerFactor = Math.max(0.42, Math.min(1, 1 - Math.abs(steering) * 0.48));
   const stoppingSpeed = Math.sqrt(2 * 3.2 * Math.max(0, nav.distanceToWaypoint - 0.5));
   const targetSpeed = nav.routeComplete ? 0 : Math.min(maxSpeed, waypoint.speed, stoppingSpeed) * cornerFactor;
-  const throttle = nav.distanceToWaypoint > 0.28 && state.speed < targetSpeed - 0.12 ? 1 : 0;
-  const brake = state.speed > targetSpeed + 0.08 || nav.distanceToWaypoint <= 0.28
-    ? Math.max(0.18, Math.min(1, (state.speed - targetSpeed) * 0.65))
-    : 0;
-  return { throttle, brake, steering };
+  const targetVelocity = reversing ? -targetSpeed : targetSpeed;
+  const velocityError = targetVelocity - state.speed;
+  const throttle = !reversing && velocityError > 0.12 ? 1 : 0;
+  const reverse = reversing && velocityError < -0.12 ? 1 : 0;
+  const brake = Math.abs(state.speed) > Math.abs(targetVelocity) + 0.08 &&
+    Math.sign(state.speed) === Math.sign(targetVelocity)
+      ? Math.max(0.18, Math.min(1, (Math.abs(state.speed) - Math.abs(targetVelocity)) * 0.65))
+      : targetVelocity === 0 && Math.abs(state.speed) > 0.08 ? 1 : 0;
+  return { throttle, reverse, brake, steering };
 }
 
 function simulateRoute(
