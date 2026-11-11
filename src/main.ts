@@ -107,7 +107,7 @@ const arrivalGate=new THREE.Group();scene.add(arrivalGate);arrivalGate.position.
 const gateLeaves:THREE.Group[]=[];for(const side of [-1,1]){const leaf=new THREE.Group();leaf.position.set(side*2.6,0,0);arrivalGate.add(leaf);const frame=new THREE.Mesh(new THREE.BoxGeometry(2.6,.16,.16),gateGold);frame.position.set(-side*1.3,2.2,0);leaf.add(frame);for(let i=0;i<12;i++){const bar=new THREE.Mesh(new THREE.BoxGeometry(.075,2.2,.075),gateMetal);bar.position.set(-side*(.12+i*.215),1.1,0);leaf.add(bar);}gateLeaves.push(leaf);}
 const arrivalDogs:THREE.Group[]=[];for(let i=0;i<4;i++){const dog=new THREE.Group();const fur=new THREE.MeshStandardMaterial({color:['#302b29','#6a4b36','#242a31','#8a7860'][i],roughness:.95});const body=new THREE.Mesh(new THREE.BoxGeometry(.82,.42,.34),fur);body.position.y=.48;dog.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),fur);head.position.set(.34,.72,0);dog.add(head);const muzzle=new THREE.Mesh(new THREE.BoxGeometry(.22,.13,.2),fur);muzzle.position.set(.52,.65,0);dog.add(muzzle);for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.ConeGeometry(.09,.24,6),fur);ear.position.set(.25,.94,side*.13);ear.rotation.z=-.25;dog.add(ear);}for(const x of [-.25,.25])for(const z of [-.11,.11]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,.42,6),fur);leg.position.set(x,.22,z);dog.add(leg);}const tail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,.38,6),fur);tail.position.set(-.5,.68,0);tail.rotation.z=-.8;dog.add(tail);const spawnPoints=[[-8,0], [8,0], [0,-10], [0,9]] as const;dog.position.set(spawnPoints[i]![0],0,spawnPoints[i]![1]);dog.visible=false;scene.add(dog);arrivalDogs.push(dog);}
 const arrivalDialogue=document.createElement('div');arrivalDialogue.setAttribute('aria-live','polite');arrivalDialogue.style.cssText='position:absolute;left:50%;top:36%;transform:translateX(-50%);z-index:8;max-width:82%;padding:12px 18px;border:1px solid #c6ad78;border-radius:14px;background:rgba(8,13,23,.92);color:#f1dfb6;font:600 14px/1.45 system-ui,sans-serif;text-align:center;letter-spacing:.04em;box-shadow:0 8px 30px #0008;pointer-events:none;display:none;';sceneRoot.appendChild(arrivalDialogue);
-let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let dogsBarking=false;const driverExitStart=new THREE.Vector3();const driverReturnStart=new THREE.Vector3();let driverReturnStarted=false;let driverReturnPhase=0;let driverReturnReached=false;let driverReentered=false;sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
+let arrivalSequenceStarted=false;let arrivalSequenceComplete=false;let sedanParked=false;let parkedSedanPosition=new THREE.Vector3();let parkedSedanYaw=0;let dogsBarking=false;const driverExitStart=new THREE.Vector3();const driverReturnStart=new THREE.Vector3();let driverReturnStarted=false;let driverReturnPhase=0;let driverReturnReached=false;let driverReentered=false;sessionStorage.setItem('hollow-creek-arrival-seen','1');if(!playArrivalSequence){arrivalCar.visible=false;arrivalDriver.root.visible=false;arrivalDogs.forEach(dog=>dog.visible=false);}
 const carPaint=new THREE.MeshStandardMaterial({color:'#35465d',metalness:.38,roughness:.48});
 const carTrim=new THREE.MeshStandardMaterial({color:'#9a7950',metalness:.68,roughness:.32});
 const carGlass=new THREE.MeshStandardMaterial({color:'#26394d',metalness:.12,roughness:.28,transparent:true,opacity:.72});
@@ -319,15 +319,24 @@ const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
 const clock=new THREE.Clock();let frame=0;let walkTime=0;let gamePaused=false;let gameInteractable=false;
 const blockUnavailableInput=(event:Event)=>{if(gamePaused||!gameInteractable){event.preventDefault();event.stopImmediatePropagation();}};
 for(const eventName of ['pointerdown','pointerup','pointermove','click','keydown'])document.addEventListener(eventName,blockUnavailableInput,true);
-function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['stormActive']=String(stormStarted);const frameDelta=clock.getDelta(),dt=Math.min(frameDelta,.05),movementDt=Math.min(frameDelta,.25),t=clock.elapsedTime;sceneRoot.dataset['frameDelta']=frameDelta.toFixed(3);sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
+function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarYaw']=arrivalCar.rotation.y.toFixed(4);sceneRoot.dataset['stormActive']=String(stormStarted);const frameDelta=clock.getDelta(),dt=Math.min(frameDelta,.05),movementDt=Math.min(frameDelta,.25),t=clock.elapsedTime;sceneRoot.dataset['frameDelta']=frameDelta.toFixed(3);sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
   if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
   else if(t<16){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.2,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else if(t<32.2){setDriveRoute(driveRoutes.dropoff);
-    // Park outside the fountain's expanded collision footprint; the sedan's full body stays clear.
-    applySedanPhysics(dt,4.0,-4.3,0,true);
+  else if(t<32.2){
+    // Freeze the exact completed drop-off transform. Zero throttle still leaves the
+    // steering/vehicle solver active, which can make the parked sedan creep or rotate.
+    if(!sedanParked){
+      parkedSedanPosition.copy(arrivalCar.position);
+      parkedSedanYaw=arrivalCar.rotation.y;
+      sedanState={...sedanState,speed:0,steering:0};
+      sedanParked=true;
+    }
+    arrivalCar.position.copy(parkedSedanPosition);
+    arrivalCar.rotation.y=parkedSedanYaw;
+    sceneRoot.dataset['sedanParked']='true';
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
