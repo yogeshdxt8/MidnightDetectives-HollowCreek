@@ -66,6 +66,7 @@ let driverBlockedSeconds=0;
 let sedanParked=false;
 const parkedSedanPosition=new THREE.Vector3();
 let parkedSedanYaw=0;
+let sedanParkedAt:number|null=null;
 const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driverBlockedSeconds=0;}};
 const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;if(Math.hypot(point.x-sedanState.x,point.z-sedanState.z)>.72)break;driveWaypointIndex++;}};
 const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean)=>{
@@ -326,65 +327,60 @@ const observer=new ResizeObserver(resize);observer.observe(sceneRoot);resize();
 const clock=new THREE.Clock();let frame=0;let walkTime=0;let gamePaused=false;let gameInteractable=false;
 const blockUnavailableInput=(event:Event)=>{if(gamePaused||!gameInteractable){event.preventDefault();event.stopImmediatePropagation();}};
 for(const eventName of ['pointerdown','pointerup','pointermove','click','keydown'])document.addEventListener(eventName,blockUnavailableInput,true);
-function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarYaw']=arrivalCar.rotation.y.toFixed(4);sceneRoot.dataset['stormActive']=String(stormStarted);const frameDelta=clock.getDelta(),dt=Math.min(frameDelta,.05),movementDt=Math.min(frameDelta,.25),t=clock.elapsedTime;sceneRoot.dataset['frameDelta']=frameDelta.toFixed(3);sceneRoot.dataset['playerReady']=String(!playArrivalSequence||t>=23.5);
+function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sceneRoot.dataset['animationFrames']=String(Number(sceneRoot.dataset['animationFrames']??0)+1);const playerWorldAtFrameStart=player.getWorldPosition(new THREE.Vector3());sceneRoot.dataset['playerX']=playerWorldAtFrameStart.x.toFixed(3);sceneRoot.dataset['playerZ']=playerWorldAtFrameStart.z.toFixed(3);sceneRoot.dataset['movementX']=move.x.toFixed(3);sceneRoot.dataset['movementY']=move.y.toFixed(3);sceneRoot.dataset['gamePaused']=String(gamePaused);sceneRoot.dataset['gameInteractable']=String(gameInteractable);sceneRoot.dataset['arrivalCarX']=arrivalCar.position.x.toFixed(2);sceneRoot.dataset['arrivalCarZ']=arrivalCar.position.z.toFixed(2);sceneRoot.dataset['arrivalCarYaw']=arrivalCar.rotation.y.toFixed(4);sceneRoot.dataset['stormActive']=String(stormStarted);const frameDelta=clock.getDelta(),dt=Math.min(frameDelta,.05),movementDt=Math.min(frameDelta,.25),t=clock.elapsedTime;let arrivalTimelineTime=t;sceneRoot.dataset['frameDelta']=frameDelta.toFixed(3);
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
-  if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
-  else if(t<16&&!sedanParked){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.8,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else if(t<16&&sedanParked){arrivalCar.position.copy(parkedSedanPosition);arrivalCar.rotation.y=parkedSedanYaw;headlampLeft.intensity=headlampRight.intensity=2.4;}
-  else if(t<32.2){
-    // Freeze the exact completed drop-off transform. Zero throttle still leaves the
-    // steering/vehicle solver active, which can make the parked sedan creep or rotate.
-    if(!sedanParked){
-      parkedSedanPosition.copy(arrivalCar.position);
-      parkedSedanYaw=arrivalCar.rotation.y;
-      sedanState={...sedanState,speed:0,steering:0};
-      sedanParked=true;
-    }
+  if(t<5&&!sedanParked){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
+  else if(!sedanParked){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.8,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
+  if(sedanParked){
+    if(sedanParkedAt===null)sedanParkedAt=t;
     arrivalCar.position.copy(parkedSedanPosition);
     arrivalCar.rotation.y=parkedSedanYaw;
     sceneRoot.dataset['sedanParked']='true';
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
-  if(t>=16&&t<16.8){driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-1.18,7,dt);}
-  if(t>=16.8&&t<17&&!arrivalDriver.root.userData['exited']){
+  arrivalTimelineTime=sedanParkedAt===null?t:16+(t-sedanParkedAt);
+  sceneRoot.dataset['arrivalTimeline']=arrivalTimelineTime.toFixed(2);
+  sceneRoot.dataset['playerReady']=String(!playArrivalSequence||arrivalTimelineTime>=23.5);
+  if(arrivalTimelineTime>=16&&arrivalTimelineTime<16.8){driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,-1.18,7,dt);}
+  if(arrivalTimelineTime>=16.8&&arrivalTimelineTime<17&&!arrivalDriver.root.userData['exited']){
     arrivalCar.updateMatrixWorld(true);scene.attach(arrivalDriver.root);arrivalDriver.root.scale.setScalar(1);
     // Reveal the driver only after the body has cleared the cabin, at the real door threshold.
     const doorThreshold=arrivalDoorWorld(-.1,1.02);
     arrivalDriver.root.position.copy(doorThreshold);driverExitStart.copy(doorThreshold);arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();arrivalDriver.root.visible=true;
     arrivalDriver.root.userData['exited']=true;
   }
-  if(t>=17&&t<19.8){
+  if(arrivalTimelineTime>=17&&arrivalTimelineTime<19.8){
     const reached=moveArrivalActor(arrivalDriver.root,new THREE.Vector3(4.15,0,-3.35),dt,1.65);
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
-    arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.28,stride*.16);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
+    arrivalDriver.leftLeg.rotation.x=Math.sin(arrivalTimelineTime*7)*Math.min(.28,stride*.16);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
     arrivalDriver.leftArm.rotation.x=-.18;arrivalDriver.rightArm.rotation.x=-.18;
     if(reached){arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;}
   }
-  if(t>=19&&t<20){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,1.22,7,dt);}
-  if(t>=20&&t<20.2&&!player.userData['exitedPassenger']){
+  if(arrivalTimelineTime>=19&&arrivalTimelineTime<20){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,1.22,7,dt);}
+  if(arrivalTimelineTime>=20&&arrivalTimelineTime<20.2&&!player.userData['exitedPassenger']){
     arrivalCar.updateMatrixWorld(true);scene.attach(player);player.scale.setScalar(1);
     // Step down at the passenger-side sill; the rig remains ground-aligned and collision-aware.
     player.position.copy(arrivalDoorWorld(-.18,-1.02));player.position.y=0;
     player.userData['arrivalVelocity']=new THREE.Vector3();player.visible=true;player.userData['exitedPassenger']=true;
   }
-  if(t>=20.2&&t<23.8){
+  if(arrivalTimelineTime>=20.2&&arrivalTimelineTime<23.8){
     const exitTarget=arrivalDoorWorld(-.18,-2.15);
     const reached=moveArrivalActor(player,exitTarget,dt,1.35);
     const stride=(player.userData['arrivalVelocity'] as THREE.Vector3).length();
-    leftLeg.rotation.x=Math.sin(t*7)*Math.min(.3,stride*.2);rightLeg.rotation.x=-leftLeg.rotation.x;
-    leftArm.rotation.x=-Math.sin(t*7)*Math.min(.16,stride*.11);rightArm.rotation.x=-leftArm.rotation.x;
+    leftLeg.rotation.x=Math.sin(arrivalTimelineTime*7)*Math.min(.3,stride*.2);rightLeg.rotation.x=-leftLeg.rotation.x;
+    leftArm.rotation.x=-Math.sin(arrivalTimelineTime*7)*Math.min(.16,stride*.11);rightArm.rotation.x=-leftArm.rotation.x;
     if(reached){leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
   }
-  if(t>=23&&t<23.5){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
-  if(t>=23&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
-  if(t>=24&&t<28){
-    arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const reached=moveArrivalActor(dog,new THREE.Vector3(targetX,0,targetZ),dt,2.35);const dogSpeed=(dog.userData['arrivalVelocity'] as THREE.Vector3).length();dog.children[1]!.position.y=.72+Math.abs(Math.sin(t*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=reached?0:Math.sin(t*13+i+legIndex)*Math.min(.38,dogSpeed*.2);}});
+  if(arrivalTimelineTime>=23&&arrivalTimelineTime<23.5){passengerDoorPivot.rotation.y=THREE.MathUtils.damp(passengerDoorPivot.rotation.y,0,7,dt);leftLeg.rotation.x=0;rightLeg.rotation.x=0;leftArm.rotation.x=0;rightArm.rotation.x=0;}
+  if(arrivalTimelineTime>=23&&!arrivalSequenceStarted){arrivalSequenceStarted=true;arrivalDialogue.textContent='WELCOME TO HOLLOW CREEK';arrivalDialogue.style.display='block';}
+  if(arrivalTimelineTime>=24&&arrivalTimelineTime<28){
+    arrivalDogs.forEach((dog,i)=>{dog.visible=true;const angle=[Math.PI,0,-Math.PI/2,Math.PI/2][i]!;const targetX=player.position.x+Math.cos(angle)*1.65;const targetZ=player.position.z+Math.sin(angle)*1.65;const reached=moveArrivalActor(dog,new THREE.Vector3(targetX,0,targetZ),dt,2.35);const dogSpeed=(dog.userData['arrivalVelocity'] as THREE.Vector3).length();dog.children[1]!.position.y=.72+Math.abs(Math.sin(arrivalTimelineTime*12+i*1.7))*.12;for(const legIndex of [5,6,7,8]){const leg=dog.children[legIndex];if(leg)leg.rotation.z=reached?0:Math.sin(arrivalTimelineTime*13+i+legIndex)*Math.min(.38,dogSpeed*.2);}});
     if(!dogsBarking){dogsBarking=true;arrivalDialogue.textContent='WOOF!  WOOF!  WOOF!';for(let bark=0;bark<8;bark++)window.setTimeout(()=>{void gameAudio.playDogBark();},bark*260);}
   }
-  if(t>=28&&!driverReentered){
+  if(arrivalTimelineTime>=28&&!driverReentered){
     if(!driverReturnStarted){driverReturnStart.copy(arrivalDriver.root.position);driverReturnStarted=true;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();}
     // Walk around the rear corner, stay outside the sedan's collision footprint,
     // then approach through the driver's door aperture instead of cutting through the body.
@@ -394,32 +390,32 @@ if(playArrivalSequence){
     if(reached&&driverReturnPhase<2){driverReturnPhase++;(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).set(0,0,0);}
     if(reached&&driverReturnPhase===2)driverReturnReached=true;
     const stride=(arrivalDriver.root.userData['arrivalVelocity'] as THREE.Vector3).length();
-    arrivalDriver.leftLeg.rotation.x=Math.sin(t*7)*Math.min(.25,stride*.17);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
+    arrivalDriver.leftLeg.rotation.x=Math.sin(arrivalTimelineTime*7)*Math.min(.25,stride*.17);arrivalDriver.rightLeg.rotation.x=-arrivalDriver.leftLeg.rotation.x;
     if(driverReturnReached){arrivalDriver.leftLeg.rotation.x=0;arrivalDriver.rightLeg.rotation.x=0;}
   }
-  if(t>=30.7&&driverReturnReached&&!driverReentered){
+  if(arrivalTimelineTime>=30.7&&driverReturnReached&&!driverReentered){
     // Boarding is gated by a confirmed arrival at the open driver's door.
     arrivalCar.updateMatrixWorld(true);arrivalCar.attach(arrivalDriver.root);arrivalDriver.root.position.set(-.1,0,1.08);arrivalDriver.root.rotation.y=Math.PI/2;arrivalDriver.root.userData['arrivalVelocity']=new THREE.Vector3();driverReentered=true;
   }
-  if(driverReentered&&t<34){
+  if(driverReentered&&arrivalTimelineTime<34){
     const seatProgress=THREE.MathUtils.smoothstep(t,30.7,31.45);
     arrivalDriver.root.position.lerp(new THREE.Vector3(-.1,0,.38),1-Math.exp(-dt*5.5));
     arrivalDriver.root.rotation.y=THREE.MathUtils.damp(arrivalDriver.root.rotation.y,Math.PI/2,7,dt);
     if(seatProgress>.98){arrivalDriver.root.position.set(-.1,0,.38);arrivalDriver.root.visible=false;}
-    if(t>31.5)driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
+    if(arrivalTimelineTime>31.5)driverDoorPivot.rotation.y=THREE.MathUtils.damp(driverDoorPivot.rotation.y,0,7,dt);
   }
-  if(t>=32.2&&driverReentered){
+  if(arrivalTimelineTime>=32.2&&driverReentered){
     // The sedan remains parked at the drop-off point for the full playable encounter.
     // The driver is seated and the door is closed; no departure route is started.
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);headlampRight.intensity=headlampLeft.intensity;
   }
-  if(t>=41&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
+  if(arrivalTimelineTime>=41&&!arrivalSequenceComplete){arrivalSequenceComplete=true;arrivalDialogue.style.display='none';arrivalDogs.forEach(dog=>dog.visible=true);}
 }if(!stormStarted){stormStarted=true;rain.material.opacity=.82;stormFog.density=.043;}
 if(stormStarted){const rainAttribute=rainGeometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<rainCount;i++){rainPositions[i*3+1]=(rainPositions[i*3+1]??0)-dt*13;if((rainPositions[i*3+1]??0)<0){rainPositions[i*3+1]=10+Math.random()*3;rainPositions[i*3]=(Math.random()-.5)*22;rainPositions[i*3+2]=(Math.random()-.5)*24;}}rainAttribute.needsUpdate=true;
 if(t>=nextLightningAt){makeLightning();lightningGroup.visible=true;lightningFlash.intensity=5.5;lightningOffAt=t+.16;nextLightningAt=t+3.2+Math.random()*3.2;void gameAudio.playThunder();}
 if(t>=lightningOffAt){lightningGroup.visible=false;lightningFlash.intensity=THREE.MathUtils.damp(lightningFlash.intensity,0,18,dt);}
 }
-const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw)),right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));sceneRoot.dataset['cameraYaw']=cameraYaw.toFixed(4);const playerCanMove=!playArrivalSequence||t>=23.5;const playerWorldPosition=player.getWorldPosition(new THREE.Vector3());const direction=playerCanMove?forward.clone().multiplyScalar(-move.y).add(right.multiplyScalar(move.x)):new THREE.Vector3();if(playerCanMove&&direction.lengthSq()>.001){direction.normalize();const speed=3.1,nx=THREE.MathUtils.clamp(playerWorldPosition.x+direction.x*speed*movementDt,-5.5,5.5),nz=THREE.MathUtils.clamp(playerWorldPosition.z+direction.z*speed*movementDt,-10.2,6.5);// Resolve movement per axis so a circular obstacle can be skirted instead
+const forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw)),right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));sceneRoot.dataset['cameraYaw']=cameraYaw.toFixed(4);const playerCanMove=!playArrivalSequence||arrivalTimelineTime>=23.5;const playerWorldPosition=player.getWorldPosition(new THREE.Vector3());const direction=playerCanMove?forward.clone().multiplyScalar(-move.y).add(right.multiplyScalar(move.x)):new THREE.Vector3();if(playerCanMove&&direction.lengthSq()>.001){direction.normalize();const speed=3.1,nx=THREE.MathUtils.clamp(playerWorldPosition.x+direction.x*speed*movementDt,-5.5,5.5),nz=THREE.MathUtils.clamp(playerWorldPosition.z+direction.z*speed*movementDt,-10.2,6.5);// Resolve movement per axis so a circular obstacle can be skirted instead
 // of freezing the player whenever the diagonal step intersects its boundary.
 const clearAt=(x:number,z:number)=>Math.hypot(x,z+2.8)>1.95;
 const canMoveX=clearAt(nx,playerWorldPosition.z);
