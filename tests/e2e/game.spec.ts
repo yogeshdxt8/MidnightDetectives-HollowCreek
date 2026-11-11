@@ -101,7 +101,8 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#escape-action')).toHaveText('COLLECT KEY');
   await page.locator('#escape-action').click();
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-has-key')).toBe('true');
-  await expect(page.locator('#escape-objective')).toHaveText('The exit is unlocked with the key. Get there!');
+  await expect(page.locator('.overlay h1')).toHaveText('Return to the exit.');
+  await expect(page.locator('#escape-objective')).toHaveText('You have the key. Return to the exit and unlock it.');
 
   // The player must physically return to the exit; key collection alone must not open it.
   await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-exit-unlocked', 'false');
@@ -121,6 +122,7 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('false');
   await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-has-key', 'false');
   await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
+  await expect(page.locator('.overlay h1')).toHaveText('Find the key. Escape alive.');
 
   expect(runtimeErrors).toEqual([]);
 });
