@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { stepVehicle, sedanTuning, type VehicleState } from './physics/vehicle-dynamics';
 import { createDetectiveCharacter } from './characters/detective-character';
 import { createFourGatesEnvironment } from './environments/four-gates-environment';
+import { createHollowCreekDressing } from './environments/hollow-creek-dressing';
 import { createStealthEscapeEncounter } from './gameplay/stealth-escape';
 import { PlayablesPlatform } from './platform/playables-sdk';
 import { GamePersistence } from './platform/game-persistence';
@@ -139,6 +140,7 @@ let nextLightningAt=1.1;let lightningOffAt=0;let stormStarted=true;
 const makeLightning=()=>{lightningGroup.clear();const points:THREE.Vector3[]=[];let x=(Math.random()-.5)*13,y=10,z=-10+(Math.random()-.5)*5;points.push(new THREE.Vector3(x,y,z));for(let i=0;i<6;i++){x+=(Math.random()-.5)*2.3;y-=1.55;z+=(Math.random()-.5)*1.2;points.push(new THREE.Vector3(x,y,z));}const geometry=new THREE.BufferGeometry().setFromPoints(points);const bolt=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#e8f4ff'}));lightningGroup.add(bolt);};
 
 const fourGatesEnvironment=createFourGatesEnvironment();scene.add(fourGatesEnvironment.root);
+const hollowCreekDressing=createHollowCreekDressing();scene.add(hollowCreekDressing.root);
 const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.65,.5,12),new THREE.MeshStandardMaterial({color:'#667184'}));fountain.position.set(0,.25,-2.8);fountain.userData['collisionRadius']=1.65;scene.add(fountain);
 const water=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.08,12),new THREE.MeshStandardMaterial({color:'#536f89',metalness:.3,roughness:.25}));water.position.set(0,.55,-2.8);scene.add(water);
 const compartment=new THREE.Group();compartment.position.set(0,.61,-2.8);scene.add(compartment);
