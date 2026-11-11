@@ -63,6 +63,31 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 });
 
+test('parks the sedan at the terminal drop-off point and never lets physics move it again', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.addInitScript(() => sessionStorage.removeItem('hollow-creek-arrival-seen'));
+  await page.goto('/');
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-sedan-parked', 'true', { timeout: 45_000 });
+  const parked = await page.locator('#scene-root').evaluate(element => {
+    const data = (element as HTMLElement).dataset;
+    return { x: data.sedanParkedX, z: data.sedanParkedZ, yaw: data.sedanParkedYaw };
+  });
+  expect(parked.x).toBeDefined();
+  expect(parked.z).toBeDefined();
+  expect(parked.yaw).toBeDefined();
+  await page.waitForTimeout(2_000);
+  const stillParked = await page.locator('#scene-root').evaluate(element => {
+    const data = (element as HTMLElement).dataset;
+    return { x: data.sedanParkedX, z: data.sedanParkedZ, yaw: data.sedanParkedYaw, carX: data.arrivalCarX, carZ: data.arrivalCarZ, carYaw: data.arrivalCarYaw };
+  });
+  expect(stillParked.x).toBe(parked.x);
+  expect(stillParked.z).toBe(parked.z);
+  expect(stillParked.yaw).toBe(parked.yaw);
+  expect(stillParked.carX).toBe(Number(parked.x).toFixed(2));
+  expect(stillParked.carZ).toBe(Number(parked.z).toFixed(2));
+  expect(stillParked.carYaw).toBe(Number(parked.yaw).toFixed(4));
+});
+
 test('starts with immediate control and a clear key-and-exit objective', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.stack ?? error.message));
