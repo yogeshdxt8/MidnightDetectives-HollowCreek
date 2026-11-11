@@ -44,6 +44,7 @@ export function createStealthEscapeEncounter(
 
   const ui = {
     objective: document.querySelector<HTMLElement>('#escape-objective'),
+    title: document.querySelector<HTMLElement>('.overlay h1'),
     action: document.querySelector<HTMLButtonElement>('#escape-action'),
     hint: document.querySelector<HTMLElement>('#hint'),
     status: document.querySelector<HTMLElement>('#status'),
