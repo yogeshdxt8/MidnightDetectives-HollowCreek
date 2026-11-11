@@ -70,7 +70,7 @@ export function createSupernaturalAtmosphere(scene: THREE.Scene): SupernaturalAt
         rainPositions[offset + 4] = rainPositions[offset + 4]! - fall;
         rainPositions[offset] = rainPositions[offset]! - fall * 0.14;
         rainPositions[offset + 3] = rainPositions[offset + 3]! - fall * 0.14;
-        if (rainPositions[offset + 1] < 0.25) {
+        if (rainPositions[offset + 1]! < 0.25) {
           const x = (Math.random() - 0.5) * 17;
           const z = -14 + Math.random() * 25;
           const y = 7 + Math.random() * 3;
@@ -88,7 +88,7 @@ export function createSupernaturalAtmosphere(scene: THREE.Scene): SupernaturalAt
         motePositions[offset] = motePositions[offset]! + moteDrift[offset]! * dt;
         motePositions[offset + 1] = motePositions[offset + 1]! + moteDrift[offset + 1]! * dt;
         motePositions[offset + 2] = motePositions[offset + 2]! + moteDrift[offset + 2]! * dt;
-        if (motePositions[offset + 1] > 1.55) motePositions[offset + 1] = 0.16;
+        if (motePositions[offset + 1]! > 1.55) motePositions[offset + 1] = 0.16;
         if (Math.abs(motePositions[offset]!) > 7) moteDrift[offset] = moteDrift[offset]! * -1;
       }
       (moteGeometry.attributes['position'] as THREE.BufferAttribute).needsUpdate = true;
