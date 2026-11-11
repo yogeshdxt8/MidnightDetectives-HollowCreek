@@ -94,6 +94,37 @@ export function createDetectiveCharacter(options: DetectiveCharacterOptions = {}
     new THREE.Vector3(0.65, 1, 0.7));
   capsule(head, 0.018, 0.055, hair, new THREE.Vector3(0, -0.105, 0.15), 6);
 
+  // Additional silhouette work: structured overcoat hem, collar, belt and field-worn details.
+  const hem = add(torso, new THREE.CylinderGeometry(0.31, 0.39, 0.28, 12, 1, false),
+    coat, new THREE.Vector3(0, -0.43, 0));
+  hem.scale.z = 0.76;
+  for (const side of [-1, 1]) {
+    const tail = add(torso, new THREE.BoxGeometry(0.19, 0.52, 0.055), coatEdge,
+      new THREE.Vector3(side * 0.19, -0.48, 0.205));
+    tail.rotation.z = side * -0.08;
+    add(torso, new THREE.BoxGeometry(0.12, 0.22, 0.11), coat,
+      new THREE.Vector3(side * 0.235, 0.39, 0.015));
+    add(torso, new THREE.BoxGeometry(0.13, 0.045, 0.12), brass,
+      new THREE.Vector3(side * 0.235, 0.49, 0.02));
+  }
+  const collar = add(torso, new THREE.CylinderGeometry(0.16, 0.24, 0.12, 10, 1, true),
+    coatEdge, new THREE.Vector3(0, 0.37, 0.015));
+  collar.rotation.x = 0.08;
+  const belt = add(torso, new THREE.CylinderGeometry(0.292, 0.292, 0.075, 12, 1, true),
+    leather, new THREE.Vector3(0, -0.29, 0));
+  belt.scale.z = 0.74;
+  add(torso, new THREE.BoxGeometry(0.12, 0.1, 0.035), brass, new THREE.Vector3(0.08, -0.29, 0.23));
+  for (const side of [-1, 1]) {
+    const seam = add(torso, new THREE.BoxGeometry(0.025, 0.53, 0.018), coatEdge,
+      new THREE.Vector3(side * 0.265, -0.08, 0.205));
+    seam.rotation.z = side * 0.025;
+  }
+  // A compact leather field notebook and radio pouch distinguish the investigator at camera distance.
+  const notebook = add(root, new THREE.BoxGeometry(0.16, 0.22, 0.055), leather,
+    new THREE.Vector3(-0.29, 0.78, 0.12));
+  notebook.rotation.z = -0.12;
+  add(root, new THREE.BoxGeometry(0.08, 0.035, 0.025), brass, new THREE.Vector3(-0.29, 0.78, 0.155));
+
   // Tailored trousers and articulated lower-body pivots.
   const legMaterial = trousers;
   const leftLeg = new THREE.Group();
