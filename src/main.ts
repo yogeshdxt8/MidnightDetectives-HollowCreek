@@ -81,9 +81,9 @@ const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:numb
   const alpha=Math.atan2(localZ,Math.max(.05,localX));
   // Pure-pursuit bicycle steering: curvature is based on a look-ahead point,
   // not a direct heading snap. The bicycle model advances with forward=(cos(yaw), -sin(yaw)),
-  // so positive steering must increase yaw to turn from +X toward world -Z.
+  // curvature follows local target Z; negate it because this model's steering/yaw sign is opposite.
   const curvature=2*Math.sin(alpha)/Math.max(lookAhead,distance*.35);
-  const steering=THREE.MathUtils.clamp(Math.atan(sedanTuning.wheelbase*curvature)/sedanTuning.maxSteeringAngle,-1,1);
+  const steering=THREE.MathUtils.clamp(-Math.atan(sedanTuning.wheelbase*curvature)/sedanTuning.maxSteeringAngle,-1,1);
   const cornerFactor=THREE.MathUtils.clamp(1-Math.abs(steering)*.48,.42,1);
   const brakingDistance=Math.max(0,distance-.5);
   const stoppingSpeed=Math.sqrt(2*3.2*brakingDistance);
