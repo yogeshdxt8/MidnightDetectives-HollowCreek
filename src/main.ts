@@ -338,6 +338,9 @@ if(playArrivalSequence){
     arrivalCar.position.copy(parkedSedanPosition);
     arrivalCar.rotation.y=parkedSedanYaw;
     sceneRoot.dataset['sedanParked']='true';
+    sceneRoot.dataset['sedanParkedX']=parkedSedanPosition.x.toFixed(4);
+    sceneRoot.dataset['sedanParkedZ']=parkedSedanPosition.z.toFixed(4);
+    sceneRoot.dataset['sedanParkedYaw']=parkedSedanYaw.toFixed(4);
     headlampLeft.intensity=THREE.MathUtils.damp(headlampLeft.intensity,.7,2,dt);
     headlampRight.intensity=headlampLeft.intensity;
   }
