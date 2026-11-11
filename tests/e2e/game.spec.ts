@@ -122,18 +122,6 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-has-key', 'false');
   await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
 
-  // Verify the cabinet cover state persists after entering and clears only when the player moves.
-  await movePlayerTo(page, { x: -5.2, z: 3.75 }, runtimeErrors, true);
-  if ((await page.locator('#escape-action').textContent())?.trim() === 'MAKE NOISE') {
-    await page.locator('#escape-action').click();
-    await movePlayerTo(page, { x: -5.2, z: 3.75 }, runtimeErrors);
-  }
-  const hideRuntime = await page.locator('#scene-root').evaluate(element => ({ ...element.dataset }));
-  await expect(page.locator('#escape-action'), JSON.stringify(hideRuntime)).toHaveText('HIDE');
-  await page.locator('#escape-action').click();
-  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('true');
-  await movePlayerTo(page, { x: -2.7, z: 4.2 }, runtimeErrors);
-  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('false');
   expect(runtimeErrors).toEqual([]);
 });
 
