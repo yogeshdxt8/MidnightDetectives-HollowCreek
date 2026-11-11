@@ -1,11 +1,11 @@
 # Midnight Detectives: Hollow Creek — Game Design Bible
 
 **Document status:** Living design source of truth  
-**Version:** 0.2.2  
+**Version:** 0.3.0  
 **Last updated:** 2026-11-10  
 **Repository:** `yogeshdxt8/MidnightDetectives-HollowCreek`  
 **Audience:** Game design, narrative, engineering, art, audio, QA, and production  
-**Product direction:** Cinematic supernatural mystery adventure for a general audience aged 13+  
+**Product direction:** Cinematic, third-person supernatural stealth-escape adventure for YouTube Playables; general audience aged 13+  
 **Approval rule:** Only items explicitly marked **Approved / Locked** are binding. Items marked **Proposal** or **Open** must not silently become canon or production requirements.
 
 ---
@@ -46,32 +46,32 @@ The repository is the single source of truth for approved game design decisions.
 
 ## 2. Product vision
 
-**A compact, third-person, level-based supernatural escape adventure in which the player explores Hollow Creek, searches for missing teammates, uncovers connected evidence, solves physical mechanisms, survives supernatural encounters, and ultimately tries to get the team out safely.**
+**A cinematic, third-person supernatural stealth-escape adventure built around short, replayable challenges: enter a dangerous location, locate the mandatory key, read the entity's behaviour, wait for a safe opening or create a distraction, collect the key, unlock the exit, and escape.**
 
-The player should feel like an investigator exploring a connected, mysterious place—not someone selecting disconnected stages from a menu.
+The player should feel immediate danger and agency within the opening moments. The larger mystery, missing teammates, and connected world provide narrative continuity between compact challenges; lengthy investigation and dependency puzzles are no longer the primary gameplay activity.
 
 ### 2.1 Core player promise
 
-- Explore memorable, interconnected locations.
-- Notice environmental details and discover meaningful evidence.
-- Find useful objects and use them in logical places, including rooms visited earlier or later.
-- Solve mechanisms through observation and reasoning.
-- Wonder what happened to the missing detectives.
-- Reunite the team and experience meaningful cooperation.
-- Encounter supernatural threats through suspense, anticipation, and fair survival gameplay.
-- Reach new locations through physical, cinematic transitions.
+- Take control quickly and understand the immediate escape objective.
+- Locate a mandatory key and unlock a clearly communicated exit.
+- Read enemy patrol, facing, attention, suspicion, search, and chase behaviour.
+- Choose between patient timing and player-created distractions.
+- Use simple touch controls, contextual interactions, and readable cover.
+- Receive fair, state-aware hints that prevent confusion without interrupting skilled play.
+- Replay short encounters to improve timing, route choice, and mastery.
+- Discover optional story evidence and reunite with teammates across a coherent cinematic adventure.
 
 ### 2.2 Experience pillars
 
-1. **Exploration and discovery** — the primary activity.
-2. **Curiosity and narrative progression** — each discovery answers a question or creates a meaningful new one.
-3. **Logical problem-solving** — dependencies are clue-supported and fair.
-4. **Teamwork and reunion** — missing teammates are central to the emotional and gameplay journey.
-5. **Supernatural suspense** — tension is paced, readable, and recoverable.
-6. **A connected world** — rooms and levels feel physically and narratively connected.
-7. **Player respect** — no punitive repetition, arbitrary difficulty, or manipulative engagement systems.
+1. **Immediate action** — the player gains control and understands the challenge quickly.
+2. **Readable stealth** — enemy behaviour, detection, and cover are understandable and fair.
+3. **Player agency** — wait for an opening or deliberately create one with a distraction.
+4. **Short challenge / quick retry** — each encounter is compact, satisfying, and easy to replay.
+5. **Clear guidance** — objectives and progressive hints prevent aimless wandering.
+6. **Mystery and continuity** — optional discoveries, teammates, and physical transitions connect the stages.
+7. **Player respect** — no punitive repetition, arbitrary difficulty, forced waiting, or manipulative engagement systems.
 
-A provisional activity balance discussed during design is approximately 70% exploration/discovery, 20% puzzles/problem-solving, and 10% survival tension. Treat these as tuning targets, not rigid quotas; validate through playtesting.
+The old 70/20/10 exploration/puzzle/survival balance is superseded by this stealth-escape direction. Tune the actual rhythm through playtests rather than imposing a fixed percentage.
 
 ---
 
@@ -551,6 +551,24 @@ Do not claim certification or physical-device validation until those checks have
 
 ---
 
+## Core stealth-escape gameplay — Approved direction
+
+The primary gameplay is defined in the [Playables Stealth-Escape Gameplay Specification](./playables-stealth-escape-gameplay.md).
+
+- Every core escape encounter has a mandatory key and a locked exit.
+- The player must locate the key, read the entity's behaviour, collect the key, physically return to the same exit, deliberately interact with the locked door, and pass through the opened exit. Key collection alone never unlocks the door or completes the encounter.
+- Two valid strategies are supported: wait for a readable safe patrol opening, or create an opportunity with a predictable environmental distraction.
+- The player is never required to wait through an arbitrary timer. Waiting is a tactical choice based on enemy behaviour.
+- Entity states (patrolling, investigating, suspicious, searching, chasing) must be telegraphed and consistent.
+- Third-person visibility, simple touch movement, and one contextual interaction action are the default control principles.
+- The approved hint sequence is: **Find the key. The exit is locked.** → **Look near the overturned cabinet.** (or the stage's actual landmark) → **Hide! It is coming this way.** → **Make a noise to draw it away.** (only when a distraction is available) → **The exit is unlocked with the key. Get there!** → **Unlock exit.** at the door. Every hint is driven by actual gameplay state and must never suggest unavailable actions.
+- Failure restarts the current encounter quickly while preserving completed campaign progress.
+- Replayability comes from mastery, route/timing choices, and optional story discoveries—not random mandatory-key placement or grind.
+
+The first vertical slice is one compact location, one entity, one mandatory key, one locked exit, one hiding/cover interaction, and one authored distraction opportunity. Both waiting and distraction strategies must be viable and tested.
+
+The autonomous sedan arrival remains the opening cinematic spectacle. The stealth-escape loop begins after that opening and does not replace or remove the vehicle sequence.
+
 ## 18. Open decisions register
 
 These topics are intentionally not finalized. They require design work and/or explicit creator approval.
@@ -562,7 +580,7 @@ These topics are intentionally not finalized. They require design work and/or ex
 | Specialist abilities for the four detectives | Open | Check canonical personalities and obtain approval |
 | Companion-call currency and costs | Open | Never gate required story progress |
 | Exact inventory UI and journal presentation | Open | Preserve item/evidence/clue distinctions |
-| Exact enemy AI and encounter mechanics | Open | Do not invent entity powers or weaknesses |
+| Detailed enemy AI tuning and entity-specific supernatural abilities | Open | Use readable, fair stealth states; do not invent entity powers or weaknesses |
 | Identity and history of the forgotten person | Open | Must remain unresolved until approved |
 | Other eleven of the Twelve Mechanisms | Open | Only Clock Tower's membership is established |
 | Exact ending and sequel hook | Open | Do not prematurely establish hidden canon |
@@ -596,6 +614,7 @@ Before a design decision or feature is marked approved, confirm:
 | 0.2.0 | 2026-11-10 | Temporary age-14 update, superseded by creator decision in v0.2.1. |
 | 0.2.1 | 2026-11-10 | Creator reverted the protagonists' ages to 12. Age 12 is current canon; the game's general-audience 13+ positioning remains unchanged. |
 | 0.2.2 | 2026-11-10 | Creator approved a player-facing confidentiality rule: never disclose the protagonists' exact ages anywhere in the game. Age 12 remains internal canon only. |
+| 0.3.0 | 2026-11-10 | Creator pivoted the product to YouTube Playables-focused supernatural stealth-escape gameplay: mandatory key-and-exit objectives, wait-or-distract strategies, readable enemy states, simple touch controls, progressive state-aware hints, quick retries, and replayable short challenges. Preserved Four Gates, third-person camera, established character/entity canon, connected-world continuity, and the autonomous sedan opening spectacle. |
 
 ---
 

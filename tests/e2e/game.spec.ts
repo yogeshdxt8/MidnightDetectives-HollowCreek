@@ -1,19 +1,77 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-test('renders the investigation interface and WebGL scene', async ({ page }) => {
+async function readPlayerPosition(page: Page) {
+  return page.locator('#scene-root').evaluate(element => ({
+    x: Number((element as HTMLElement).dataset.playerX),
+    z: Number((element as HTMLElement).dataset.playerZ),
+  }));
+}
+
+async function movePlayerTo(page: Page, target: { x: number; z: number }, runtimeErrors: string[] = []) {
+  const joystick = page.locator('#joystick');
+  const bounds = await joystick.boundingBox();
+  if (!bounds) throw new Error('Movement joystick is not visible.');
+  const centerX = bounds.x + bounds.width / 2;
+  const centerY = bounds.y + bounds.height / 2;
+  const radius = bounds.width * .34;
+  const initial = await readPlayerPosition(page);
+  const timeoutMs = Math.ceil(Math.hypot(target.x - initial.x, target.z - initial.z) / 3.1 * 1000 * 5 + 8000);
+  const deadline = Date.now() + timeoutMs;
+  let previous = initial;
+  let lastProgress = Date.now();
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  try {
+    while (Date.now() < deadline) {
+      const current = await readPlayerPosition(page);
+      const dx = target.x - current.x;
+      const dz = target.z - current.z;
+      const remaining = Math.hypot(dx, dz);
+      if (remaining <= .3) return;
+      const yaw = await page.locator('#scene-root').evaluate(element =>
+        Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+      );
+      const worldX = dx / remaining;
+      const worldZ = dz / remaining;
+      const joystickX = worldX * Math.cos(yaw) - worldZ * Math.sin(yaw);
+      const joystickY = worldX * Math.sin(yaw) + worldZ * Math.cos(yaw);
+      await page.mouse.move(centerX + joystickX * radius, centerY + joystickY * radius, { steps: 4 });
+      const moved = Math.hypot(current.x - previous.x, current.z - previous.z);
+      if (moved >= .025) {
+        previous = current;
+        lastProgress = Date.now();
+      } else if (Date.now() - lastProgress > 4500) {
+        throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; pageErrors=${runtimeErrors.join(' | ')}`);
+      }
+      await page.waitForTimeout(70);
+    }
+  } finally {
+    await page.mouse.up();
+  }
+  const finalPosition = await readPlayerPosition(page);
+  throw new Error(`Could not reach (${target.x}, ${target.z}); ended at (${finalPosition.x.toFixed(2)}, ${finalPosition.z.toFixed(2)}).`);
+}
+
+test.beforeEach(async ({ page }) => {
+  // Test the gameplay slice directly; the cinematic sedan opening is validated separately.
+  await page.addInitScript(() => sessionStorage.setItem('hollow-creek-arrival-seen', '1'));
+  await page.setViewportSize({ width: 390, height: 844 });
+});
+
+test('starts with immediate control and a clear key-and-exit objective', async ({ page }) => {
   const pageErrors: string[] = [];
-  page.on('pageerror', error => pageErrors.push(error.message));
-
+  page.on('pageerror', error => pageErrors.push(error.stack ?? error.message));
   await page.goto('/');
   await expect(page.locator('#playables-loading')).toBeHidden();
   await expect(page.locator('header')).toContainText('MIDNIGHT DETECTIVES');
-  await expect(page.getByRole('heading', { name: /the town keeps/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /find the key/i })).toBeVisible();
+  await expect(page.locator('#escape-objective')).toHaveText('Find the key. The exit is locked.');
+  await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
   await expect(page.locator('#scene-root canvas')).toBeVisible();
   await expect(page.locator('#joystick')).toBeVisible();
-  await expect(page.locator('#look-pad')).toBeVisible();
-  await expect(page.locator('.journal')).toBeVisible();
-  await expect(page.locator('#count')).toHaveText('0');
-
+  await expect(page.locator('#escape-action')).toBeHidden();
+  await expect(page.locator('.journal')).toBeHidden();
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
   const webgl = await page.locator('canvas').evaluate(canvas => {
     const element = canvas as HTMLCanvasElement;
     return Boolean(element.getContext('webgl2') || element.getContext('webgl'));
@@ -22,296 +80,64 @@ test('renders the investigation interface and WebGL scene', async ({ page }) => 
   expect(pageErrors).toEqual([]);
 });
 
-test('keeps the touch investigation controls usable on a phone viewport', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  await expect(page.locator('#joystick')).toBeVisible();
-  await expect(page.locator('#look-pad')).toBeVisible();
-  await expect(page.locator('.journal')).toBeHidden();
-  await expect(page.locator('#case-toggle')).toBeVisible();
-  await expect(page.locator('.overlay h1')).toBeHidden();
-  await expect(page.locator('.overlay > small')).toBeVisible();
-  await page.locator('#case-toggle').click();
-  await expect(page.locator('.journal')).toBeVisible();
-  const dimensions = await page.evaluate(() => ({
-    documentWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-    appHeight: document.querySelector('#app')?.getBoundingClientRect().height ?? 0,
-  }));
-  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.documentWidth);
-  expect(dimensions.appHeight).toBeGreaterThan(0);
-});
-
-test('restores solved fountain and Clock Tower evidence from browser save', async ({ page }) => {
-  page.on('pageerror', error => console.log('[browser pageerror]', error.stack ?? error.message));
-  page.on('console', message => { if (message.type() === 'error') console.log('[browser console error]', message.text()); });
-  await page.addInitScript(() => {
-    if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
-    const seededSave = {
-      version: 2,
-      activeCaseId: 'case-001',
-      discoveredClueIds: ['note', 'print', 'key'],
-      solvedPuzzleIds: ['fountain-seal'],
-      completedCaseIds: [],
-      investigation: {
-        discoveredEvidenceIds: ['three-line-imprint'],
-        trackedLeadIds: ['clocktower-service-door'],
-        unlockedLocationIds: ['clocktower-service-entrance'],
-        searchedLocationIds: ['clocktower-service-entrance'],
-        solvedPuzzleIds: [],
-        askedKeeperTopicIds: [],
-        presentedKeeperEvidenceIds: [],
-        recoveredObjectIds: ['fountain-relic'],
-        completedDeductionIds: []
-      }
-    };
-    localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify(seededSave));
-  });
-  await page.goto('/');
-  const storedSave = await page.evaluate(() => localStorage.getItem('midnight-detectives-hollow-creek.save.v2'));
-  expect(storedSave, 'browser save fixture must exist before restoration').not.toBeNull();
-  expect(JSON.parse(storedSave!).discoveredClueIds, 'browser storage must contain the seeded clues').toEqual(['note', 'print', 'key']);
-  await expect(page.locator('#count')).toHaveText('3');
-  await expect(page.locator('#relic-inventory')).toContainText('Fountain relic');
-  await expect(page.locator('#evidence')).toContainText('Torn note');
-  await expect(page.locator('#evidence')).toContainText('Muddy footprint');
-  await expect(page.locator('#evidence')).toContainText('Brass key');
-  await page.locator('#board-open').click();
-  await expect(page.locator('#board-panel')).toBeVisible();
-  await expect(page.locator('#board-evidence')).toContainText('Three-line imprint');
-  await expect(page.locator('#board-review-clocktower')).toBeVisible();
-  await page.locator('#board-review-clocktower').click();
-  await expect(page.locator('#location-panel')).toBeVisible();
-  await expect(page.locator('#location-evidence')).toBeVisible();
-  await expect(page.locator('#location-evidence-title')).toHaveText('Three-line metal imprint');
-  await expect(page.locator('#puzzle-open')).toBeHidden();
-});
-
-
-async function readPlayerPosition(page: import('@playwright/test').Page) {
-  return page.locator('#scene-root').evaluate(element => ({
-    x: Number((element as HTMLElement).dataset.playerX),
-    z: Number((element as HTMLElement).dataset.playerZ),
-  }));
-}
-
-async function movePlayerTo(page: import('@playwright/test').Page, target: { x: number; z: number }) {
+test('completes the mandatory key, return, unlock and physical escape sequence', async ({ page }) => {
+  test.setTimeout(90_000);
   const runtimeErrors: string[] = [];
   page.on('pageerror', error => runtimeErrors.push(error.stack ?? error.message));
   page.on('console', message => { if (message.type() === 'error') runtimeErrors.push(message.text()); });
-  const joystick = page.locator('#joystick');
-  const bounds = await joystick.boundingBox();
-  if (!bounds) throw new Error('Movement joystick is not visible.');
-
-  const centerX = bounds.x + bounds.width / 2;
-  const centerY = bounds.y + bounds.height / 2;
-  const radius = bounds.width * 0.34;
-  const hint = page.locator('#hint');
-  const initial = await readPlayerPosition(page);
-  const initialCameraYaw = await page.locator('#scene-root').evaluate(element =>
-    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
-  );
-  if (!Number.isFinite(initial.x) || !Number.isFinite(initial.z)) {
-    throw new Error('Live investigator coordinates were not published by the scene.');
-  }
-
-  const initialDistance = Math.hypot(target.x - initial.x, target.z - initial.z);
-  if (initialDistance <= 0.35) return;
-
-  await page.mouse.move(centerX, centerY);
-  await page.mouse.down();
-
-  const timeoutMs = Math.ceil((initialDistance / 3.1) * 1000 * 5 + 7000);
-  const deadline = Date.now() + timeoutMs;
-  let previous = initial;
-  let lastProgressAt = Date.now();
-  let current = initial;
-  let arrived = false;
-
-  try {
-    while (Date.now() < deadline) {
-      current = await readPlayerPosition(page);
-      const remainingX = target.x - current.x;
-      const remainingZ = target.z - current.z;
-      const remaining = Math.hypot(remainingX, remainingZ);
-
-      if (remaining <= 0.35) {
-        arrived = true;
-        break;
-      }
-
-      // Re-aim from authoritative world-space coordinates after the arrival sequence has
-      // detached the investigator from the vehicle. Never drive a seated passenger via the joystick.
-      // Send intermediate pointer events so the held joystick remains responsive in headless CI.
-      const cameraYaw = await page.locator('#scene-root').evaluate(element =>
-        Number((element as HTMLElement).dataset.cameraYaw ?? '0')
-      );
-      // Convert the desired world-space direction into the camera-relative
-      // joystick basis used by the runtime. World X/Z must not be sent as
-      // joystick X/Y once the player has rotated the camera.
-      const worldX = remainingX / remaining;
-      const worldZ = remainingZ / remaining;
-      const joystickX = worldX * Math.cos(cameraYaw) - worldZ * Math.sin(cameraYaw);
-      const joystickY = worldX * Math.sin(cameraYaw) + worldZ * Math.cos(cameraYaw);
-      await page.mouse.move(
-        centerX + joystickX * radius,
-        centerY + joystickY * radius,
-        { steps: 4 }
-      );
-
-      const moved = Math.hypot(current.x - previous.x, current.z - previous.z);
-      if (moved >= 0.025) {
-        previous = current;
-        lastProgressAt = Date.now();
-      } else if (Date.now() - lastProgressAt > 3500) {
-        throw new Error(
-          `Investigator movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}) ` +
-          `with ${remaining.toFixed(2)} units remaining to (${target.x}, ${target.z}); ` +
-          `hint="${(await hint.textContent())?.trim()}" and joystick="${await page.locator('#stick').evaluate(element => getComputedStyle(element).transform)}"; ` +
-          `runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; ` +
-          `errors=${JSON.stringify(runtimeErrors)}.`
-        );
-      }
-
-      await page.waitForTimeout(80);
-    }
-  } finally {
-    await page.mouse.up();
-  }
-
-  if (!arrived) {
-    const finalPosition = await readPlayerPosition(page);
-    throw new Error(
-      `Investigator did not reach waypoint (${target.x}, ${target.z}) within ${timeoutMs}ms. ` +
-      `Started at (${initial.x.toFixed(2)}, ${initial.z.toFixed(2)}), ` +
-      `ended at (${finalPosition.x.toFixed(2)}, ${finalPosition.z.toFixed(2)}), ` +
-      `remaining distance ${Math.hypot(target.x - finalPosition.x, target.z - finalPosition.z).toFixed(2)}; ` +
-      `runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}.`
-    );
-  }
-
-  const finalCameraYaw = await page.locator('#scene-root').evaluate(element =>
-    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
-  );
-  const cameraYawDelta = Math.atan2(Math.sin(finalCameraYaw - initialCameraYaw), Math.cos(finalCameraYaw - initialCameraYaw));
-  if (Math.abs(cameraYawDelta) > 0.01) {
-    throw new Error(`Joystick movement unexpectedly rotated the camera by ${cameraYawDelta.toFixed(3)} radians.`);
-  }
-  await page.waitForTimeout(150);
-}
-test('a fresh player collects all three clues, completes the deduction, and keeps progress after refresh', async ({ page }) => {
-  test.setTimeout(120_000);
-  // This test covers investigation progression, not the cinematic arrival. Skip
-  // the one-time intro so its 35-second timeline cannot consume the movement budget.
-  await page.addInitScript(() => sessionStorage.setItem('hollow-creek-arrival-seen', '1'));
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.waitForTimeout(350);
-  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-ready'), { timeout: 30_000 }).toBe('true');
-  await expect(page.locator('#count')).toHaveText('0');
-  await expect(page.locator('#deduction-open')).toBeHidden();
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
-  // The direct route to the eastern clue crosses the fountain collision radius.
-  // First move to the north-west side, then cross the open northern walkway.
-  await movePlayerTo(page, { x: -3.3, z: 0.6 });
-  await movePlayerTo(page, { x: 1.8, z: 0.6 });
-  // Pickup is proximity-based: walking through the clue radius records it;
-  // the test deliberately performs no canvas tap or inspect interaction.
-  await expect(page.locator('#count')).toHaveText('1');
+  // Trigger the authored bell distraction on the north-east side, then cross the open north route to the key.
+  await movePlayerTo(page, { x: 3.55, z: 3.2 }, runtimeErrors);
+  await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
+  await page.locator('#escape-action').click();
+  await movePlayerTo(page, { x: -3.25, z: 3.35 }, runtimeErrors);
+  await expect(page.locator('#escape-action')).toHaveText('COLLECT KEY');
+  await page.locator('#escape-action').click();
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-has-key')).toBe('true');
+  await expect(page.locator('#escape-objective')).toHaveText('The exit is unlocked with the key. Get there!');
 
-  // The fountain has a circular collision/exclusion zone centered near
-  // z=-2.8. Route around its north side instead of trying to walk through it.
-  await movePlayerTo(page, { x: -3.3, z: 0.6 });
-  await movePlayerTo(page, { x: -3.3, z: -1.2 });
-  await expect(page.locator('#count')).toHaveText('2');
+  // The player must physically return to the exit; key collection alone must not open it.
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-exit-unlocked', 'false');
+  await movePlayerTo(page, { x: -3.25, z: -6.5 }, runtimeErrors);
+  await movePlayerTo(page, { x: 0, z: -6.5 }, runtimeErrors);
+  await expect(page.locator('#escape-action')).toHaveText('UNLOCK EXIT');
+  await page.locator('#escape-action').click();
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-exit-unlocked')).toBe('true');
 
-  await movePlayerTo(page, { x: -3.3, z: 1.5 });
-  await movePlayerTo(page, { x: 3.2, z: 1.5 });
-  await movePlayerTo(page, { x: 3.2, z: -3.7 });
-  await expect(page.locator('#count')).toHaveText('3');
-  await page.locator('#case-toggle').click();
-  await expect(page.locator('#deduction-open')).toBeVisible();
+  // The level completes only after crossing the open doorway.
+  await movePlayerTo(page, { x: 0, z: -9.5 }, runtimeErrors);
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('true');
+  await expect(page.locator('#hint')).toHaveText('ESCAPED · CHALLENGE COMPLETE');
+  await expect(page.locator('#status')).toHaveText('ESCAPE COMPLETE');
+  await expect(page.locator('#escape-action')).toHaveText('PLAY AGAIN');
+  await page.locator('#escape-action').click();
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-escape-complete')).toBe('false');
+  await expect(page.locator('#scene-root')).toHaveAttribute('data-escape-has-key', 'false');
+  await expect(page.locator('#hint')).toHaveText('Find the key. The exit is locked.');
 
-  await expect.poll(async () => page.evaluate(() => {
-    const raw = localStorage.getItem('midnight-detectives-hollow-creek.save.v2');
-    return raw ? JSON.parse(raw).discoveredClueIds.length : 0;
-  })).toBe(3);
-
-  // A real browser reload must restore the progress created through scene interactions.
-  await page.reload();
-  await expect(page.locator('#count')).toHaveText('3');
-  await page.locator('#case-toggle').click();
-  await expect(page.locator('.journal')).toBeVisible();
-  await expect(page.locator('#evidence')).toContainText('Torn note');
-  await expect(page.locator('#evidence')).toContainText('Muddy footprint');
-  await expect(page.locator('#evidence')).toContainText('Brass key');
-  await expect(page.locator('#deduction-open')).toBeVisible();
-
-  await page.locator('#deduction-open').click();
-  await expect(page.locator('#deduction-panel')).toBeVisible();
-  await page.locator('[data-option-id="footprint-key"]').click();
-  await expect(page.locator('#case-result')).toBeVisible();
-  await expect(page.locator('#status')).toHaveText('DEDUCTION COMPLETE');
+  // Verify the cabinet cover state persists after entering and clears only when the player moves.
+  await movePlayerTo(page, { x: -5.0, z: 4.5 }, runtimeErrors);
+  await expect(page.locator('#escape-action')).toHaveText('HIDE');
+  await page.locator('#escape-action').click();
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('true');
+  await movePlayerTo(page, { x: -2.7, z: 4.2 }, runtimeErrors);
+  await expect.poll(() => page.locator('#scene-root').getAttribute('data-player-hidden')).toBe('false');
+  expect(runtimeErrors).toEqual([]);
 });
 
-test('mobile notifications and puzzle dialog stay clear of touch controls and inside the viewport', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => {
-    localStorage.setItem('midnight-detectives-hollow-creek.save.v2', JSON.stringify({
-      version: 2,
-      activeCaseId: 'case-001',
-      discoveredClueIds: ['note'],
-      solvedPuzzleIds: [],
-      completedCaseIds: [],
-      investigation: {
-        discoveredEvidenceIds: [], trackedLeadIds: [], unlockedLocationIds: [],
-        searchedLocationIds: [], solvedPuzzleIds: [], askedKeeperTopicIds: [],
-        presentedKeeperEvidenceIds: [], recoveredObjectIds: [], completedDeductionIds: []
-      }
-    }));
-  });
+test('shows a single contextual action and keeps the touch HUD inside a phone viewport', async ({ page }) => {
   await page.goto('/');
-  await page.locator('#case-toggle').click();
-  await expect(page.locator('#puzzle-open')).toBeVisible();
-
-  const canvas = page.locator('#scene-root canvas');
-  const canvasBounds = await canvas.boundingBox();
-  if (!canvasBounds) throw new Error('Investigation scene is not visible.');
-  await page.mouse.click(canvasBounds.x + 12, canvasBounds.y + 12);
-  const toast = page.locator('#toast');
-  await expect(toast).toHaveClass(/show/);
-
-  const toastAndControls = await page.evaluate(() => {
-    const rect = (selector: string) => {
-      const element = document.querySelector<HTMLElement>(selector);
-      if (!element) return null;
-      const r = element.getBoundingClientRect();
-      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
-    };
-    return {
-      toast: rect('#toast'),
-      joystick: rect('#joystick'),
-      look: rect('#look-pad'),
-      heading: rect('.overlay h1')
-    };
-  });
-  const overlaps = (a: typeof toastAndControls.toast, b: typeof toastAndControls.toast) =>
-    Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
-  expect(overlaps(toastAndControls.toast, toastAndControls.joystick)).toBe(false);
-  expect(overlaps(toastAndControls.toast, toastAndControls.look)).toBe(false);
-  expect(overlaps(toastAndControls.toast, toastAndControls.heading)).toBe(false);
-
-  await page.locator('#puzzle-open').click();
-  const dialog = page.locator('#puzzle-panel');
-  await expect(dialog).toBeVisible();
-  const dialogBounds = await dialog.boundingBox();
-  expect(dialogBounds).not.toBeNull();
-  expect(dialogBounds!.x).toBeGreaterThanOrEqual(0);
-  expect(dialogBounds!.y).toBeGreaterThanOrEqual(0);
-  expect(dialogBounds!.x + dialogBounds!.width).toBeLessThanOrEqual(390);
-  expect(dialogBounds!.y + dialogBounds!.height).toBeLessThanOrEqual(844);
-  await page.locator('[data-symbol="moon"]').click();
-  await page.locator('[data-symbol="star"]').click();
-  await page.locator('[data-symbol="bell"]').click();
-  await expect(page.locator('#puzzle-sequence')).toContainText('SEAL OPEN');
+  await expect(page.locator('#joystick')).toBeVisible();
+  await expect(page.locator('#look-pad')).toBeVisible();
+  await expect(page.locator('#escape-objective')).toBeVisible();
+  await expect(page.locator('#escape-action')).toBeHidden();
+  const dimensions = await page.evaluate(() => ({
+    width: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    appHeight: document.querySelector('#app')?.getBoundingClientRect().height ?? 0,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.width);
+  expect(dimensions.appHeight).toBeGreaterThan(0);
 });

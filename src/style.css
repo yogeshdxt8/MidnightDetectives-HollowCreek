@@ -467,3 +467,28 @@ body:has(.detail-panel:not([hidden])) main{filter:brightness(.42);pointer-events
     text-shadow: 0 1px 4px #000;
   }
 }
+
+
+/* Playables stealth-escape HUD: keep only the objective, threat hint and one contextual action. */
+#app.stealth-mode .journal{display:none!important}
+#app.stealth-mode .overlay{background:linear-gradient(90deg,#080d19c9,transparent 88%),linear-gradient(0deg,#080d1966,transparent 55%)}
+#app.stealth-mode .overlay h1{max-width:90%;font-size:clamp(27px,5.2vw,48px)}
+#app.stealth-mode .overlay p{max-width:min(78%,420px);font-weight:650;color:#f1e6d0;text-shadow:0 2px 8px #000}
+#app.stealth-mode .overlay strong{bottom:auto;top:clamp(112px,19vh,170px);left:clamp(18px,4vw,40px);right:auto;transform:none;width:auto;max-width:min(82%,420px);text-align:left;border-color:#d8bd8070;background:#0a1220dc;font:600 12px system-ui,sans-serif;letter-spacing:.01em;color:#fff0ce}
+#app.stealth-mode footer{position:absolute;z-index:4;left:14px;right:14px;bottom:8px;height:20px;pointer-events:none;text-shadow:0 2px 6px #000}
+.escape-action{position:absolute;z-index:8;right:20px;bottom:24px;min-width:124px;min-height:54px;padding:12px 18px;border:1px solid #f2d59b;border-radius:14px;background:linear-gradient(145deg,#b58c51,#71512e);color:#fff7e8;font:800 12px system-ui,sans-serif;letter-spacing:.09em;box-shadow:0 5px 20px #0009;touch-action:manipulation}
+.escape-action[hidden]{display:none!important}
+.escape-action:disabled{opacity:.5}
+@media(max-width:480px){#app.stealth-mode .overlay h1{font-size:clamp(25px,8vw,34px)}#app.stealth-mode .overlay strong{top:128px;font-size:11px}.escape-action{right:14px;bottom:22px;min-width:112px;min-height:52px}.touch-controls #joystick{left:14px;bottom:14px;width:104px;height:104px}}
+
+
+/* Override the legacy compact-phone rule that hid all objective text. */
+#app.stealth-mode main > .overlay h1,
+#app.stealth-mode main > .overlay p {
+  display: block !important;
+  visibility: visible !important;
+}
+#app.stealth-mode main > .overlay strong {
+  display: block !important;
+  visibility: visible !important;
+}
