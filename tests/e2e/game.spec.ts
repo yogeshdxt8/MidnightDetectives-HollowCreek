@@ -19,25 +19,28 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
   const deadline = Date.now() + timeoutMs;
   let bestRemaining = Math.hypot(target.x - initial.x, target.z - initial.z);
   let lastProgress = Date.now();
+  const initialDx = target.x - initial.x;
+  const initialDz = target.z - initial.z;
+  const initialRemaining = Math.hypot(initialDx, initialDz);
+  if (initialRemaining <= .3) return;
+  const yaw = await page.locator('#scene-root').evaluate(element =>
+    Number((element as HTMLElement).dataset.cameraYaw ?? '0')
+  );
+  const worldX = initialDx / initialRemaining;
+  const worldZ = initialDz / initialRemaining;
+  const joystickX = worldX * Math.cos(yaw) - worldZ * Math.sin(yaw);
+  const joystickY = worldX * Math.sin(yaw) + worldZ * Math.cos(yaw);
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
+  await page.mouse.move(centerX + joystickX * radius, centerY + joystickY * radius, { steps: 4 });
   try {
     while (Date.now() < deadline) {
-      // Allow at least one render/update opportunity before sampling the DOM-backed position.
-      await page.waitForTimeout(550);
+      // Keep a stable stick direction for this waypoint. Re-aiming from stale
+      // DOM samples can reverse the input after a delayed render frame.
+      await page.waitForTimeout(250);
       const current = await readPlayerPosition(page);
-      const dx = target.x - current.x;
-      const dz = target.z - current.z;
-      const remaining = Math.hypot(dx, dz);
+      const remaining = Math.hypot(target.x - current.x, target.z - current.z);
       if (remaining <= .3) return;
-      const yaw = await page.locator('#scene-root').evaluate(element =>
-        Number((element as HTMLElement).dataset.cameraYaw ?? '0')
-      );
-      const worldX = dx / remaining;
-      const worldZ = dz / remaining;
-      const joystickX = worldX * Math.cos(yaw) - worldZ * Math.sin(yaw);
-      const joystickY = worldX * Math.sin(yaw) + worldZ * Math.cos(yaw);
-      await page.mouse.move(centerX + joystickX * radius, centerY + joystickY * radius, { steps: 4 });
       if (remaining < bestRemaining - .02) {
         bestRemaining = remaining;
         lastProgress = Date.now();
