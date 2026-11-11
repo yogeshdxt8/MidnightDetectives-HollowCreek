@@ -17,12 +17,14 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
   const initial = await readPlayerPosition(page);
   const timeoutMs = Math.ceil(Math.hypot(target.x - initial.x, target.z - initial.z) / 3.1 * 1000 * 5 + 8000);
   const deadline = Date.now() + timeoutMs;
-  let previous = initial;
+  let bestRemaining = Math.hypot(target.x - initial.x, target.z - initial.z);
   let lastProgress = Date.now();
   await page.mouse.move(centerX, centerY);
   await page.mouse.down();
   try {
     while (Date.now() < deadline) {
+      // Allow at least one render/update opportunity before sampling the DOM-backed position.
+      await page.waitForTimeout(100);
       const current = await readPlayerPosition(page);
       const dx = target.x - current.x;
       const dz = target.z - current.z;
@@ -36,14 +38,12 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
       const joystickX = worldX * Math.cos(yaw) - worldZ * Math.sin(yaw);
       const joystickY = worldX * Math.sin(yaw) + worldZ * Math.cos(yaw);
       await page.mouse.move(centerX + joystickX * radius, centerY + joystickY * radius, { steps: 4 });
-      const moved = Math.hypot(current.x - previous.x, current.z - previous.z);
-      if (moved >= .025) {
-        previous = current;
+      if (remaining < bestRemaining - .02) {
+        bestRemaining = remaining;
         lastProgress = Date.now();
       } else if (Date.now() - lastProgress > 4500) {
-        throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; pageErrors=${runtimeErrors.join(' | ')}`);
+        throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), remaining=${remaining.toFixed(2)}, best=${bestRemaining.toFixed(2)}, target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; pageErrors=${runtimeErrors.join(' | ')}`);
       }
-      await page.waitForTimeout(70);
     }
   } finally {
     await page.mouse.up();
