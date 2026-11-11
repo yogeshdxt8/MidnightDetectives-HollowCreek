@@ -26,8 +26,41 @@ export function createFourGatesEnvironment(): FourGatesEnvironment {
     signText: new THREE.MeshStandardMaterial({ color: '#d8c49a', emissive: '#8d7046', emissiveIntensity: .25, roughness: .7 }),
     puddle: new THREE.MeshStandardMaterial({ color: '#566474', roughness: .2, metalness: .18, transparent: true, opacity: .48 })
   };
+  // Procedural wet-stone/asphalt albedo: no downloaded texture files or network dependency.
+  const groundCanvas = document.createElement('canvas');
+  groundCanvas.width = 512; groundCanvas.height = 512;
+  const groundContext = groundCanvas.getContext('2d');
+  if (groundContext) {
+    groundContext.fillStyle = '#394352'; groundContext.fillRect(0, 0, 512, 512);
+    let seed = 1847;
+    const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    for (let i = 0; i < 1900; i++) {
+      const shade = Math.floor(38 + random() * 42);
+      groundContext.fillStyle = `rgba(${shade},${shade + 5},${shade + 12},${0.08 + random() * 0.12})`;
+      const size = 1 + random() * 5;
+      groundContext.fillRect(random() * 512, random() * 512, size, size);
+    }
+    groundContext.strokeStyle = 'rgba(13,20,29,0.34)';
+    groundContext.lineWidth = 2;
+    for (let i = 0; i < 9; i++) {
+      const x = random() * 512, y = random() * 512;
+      groundContext.beginPath(); groundContext.moveTo(x, y);
+      groundContext.lineTo(x + (random() - 0.5) * 45, y + 15 + random() * 35);
+      groundContext.lineTo(x + (random() - 0.5) * 65, y + 28 + random() * 55);
+      groundContext.stroke();
+    }
+  }
+  const groundTexture = new THREE.CanvasTexture(groundCanvas);
+  groundTexture.colorSpace = THREE.SRGBColorSpace;
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(2.5, 7);
+  groundTexture.anisotropy = 4;
+  materials.asphalt.map = groundTexture;
+  materials.asphalt.color.set('#ffffff');
+  materials.asphalt.needsUpdate = true;
   const geometries: THREE.BufferGeometry[] = [];
-  const textures: THREE.Texture[] = [];
+  const textures: THREE.Texture[] = [groundTexture];
   const addBox = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number) => {
     const geometry = new THREE.BoxGeometry(w, h, d); geometries.push(geometry);
     const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.castShadow = false; mesh.receiveShadow = true; root.add(mesh); return mesh;
