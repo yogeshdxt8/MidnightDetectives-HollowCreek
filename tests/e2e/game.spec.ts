@@ -7,7 +7,7 @@ async function readPlayerPosition(page: Page) {
   }));
 }
 
-async function movePlayerTo(page: Page, target: { x: number; z: number }, runtimeErrors: string[] = []) {
+async function movePlayerTo(page: Page, target: { x: number; z: number }, runtimeErrors: string[] = [], stopForDistraction = false) {
   const joystick = page.locator('#joystick');
   const bounds = await joystick.boundingBox();
   if (!bounds) throw new Error('Movement joystick is not visible.');
@@ -39,6 +39,10 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
       // DOM samples can reverse the input after a delayed render frame.
       await page.waitForTimeout(250);
       const current = await readPlayerPosition(page);
+      if (stopForDistraction) {
+        const action = page.locator('#escape-action');
+        if (await action.isVisible() && (await action.textContent())?.trim() === 'MAKE NOISE') return;
+      }
       const remaining = Math.hypot(target.x - current.x, target.z - current.z);
       if (remaining <= .3) return;
       if (remaining < bestRemaining - .02) {
@@ -92,7 +96,7 @@ test('completes the mandatory key, return, unlock and physical escape sequence',
   await expect(page.locator('#scene-root')).toHaveAttribute('data-game-interactable', 'true');
 
   // Trigger the authored bell distraction on the north-east side, then cross the open north route to the key.
-  await movePlayerTo(page, { x: 3.55, z: 3.2 }, runtimeErrors);
+  await movePlayerTo(page, { x: 3.55, z: 3.2 }, runtimeErrors, true);
   await expect(page.locator('#escape-action')).toHaveText('MAKE NOISE');
   await page.locator('#escape-action').click();
   await movePlayerTo(page, { x: -3.25, z: 3.35 }, runtimeErrors);
