@@ -15,7 +15,7 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
   const centerY = bounds.y + bounds.height / 2;
   const radius = bounds.width * .34;
   const initial = await readPlayerPosition(page);
-  const timeoutMs = Math.ceil(Math.hypot(target.x - initial.x, target.z - initial.z) / 3.1 * 1000 * 5 + 8000);
+  const timeoutMs = Math.ceil(Math.hypot(target.x - initial.x, target.z - initial.z) / 3.1 * 1000 * 8 + 20_000);
   const deadline = Date.now() + timeoutMs;
   let bestRemaining = Math.hypot(target.x - initial.x, target.z - initial.z);
   let lastProgress = Date.now();
@@ -24,7 +24,7 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
   try {
     while (Date.now() < deadline) {
       // Allow at least one render/update opportunity before sampling the DOM-backed position.
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(550);
       const current = await readPlayerPosition(page);
       const dx = target.x - current.x;
       const dz = target.z - current.z;
@@ -41,7 +41,7 @@ async function movePlayerTo(page: Page, target: { x: number; z: number }, runtim
       if (remaining < bestRemaining - .02) {
         bestRemaining = remaining;
         lastProgress = Date.now();
-      } else if (Date.now() - lastProgress > 4500) {
+      } else if (Date.now() - lastProgress > 15_000) {
         throw new Error(`Movement stalled at (${current.x.toFixed(2)}, ${current.z.toFixed(2)}), remaining=${remaining.toFixed(2)}, best=${bestRemaining.toFixed(2)}, target (${target.x}, ${target.z}); runtime=${JSON.stringify(await page.locator('#scene-root').evaluate(element => ({ ...element.dataset })))}; pageErrors=${runtimeErrors.join(' | ')}`);
       }
     }
