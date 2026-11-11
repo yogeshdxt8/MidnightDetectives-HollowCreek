@@ -44,6 +44,7 @@ export function createStealthEscapeEncounter(
 
   const ui = {
     objective: document.querySelector<HTMLElement>('#escape-objective'),
+    title: document.querySelector<HTMLElement>('.overlay h1'),
     action: document.querySelector<HTMLButtonElement>('#escape-action'),
     hint: document.querySelector<HTMLElement>('#hint'),
     status: document.querySelector<HTMLElement>('#status'),
@@ -255,10 +256,23 @@ export function createStealthEscapeEncounter(
       ui.hint.textContent = next.message;
       lastHintId = next.id;
     }
+    if (ui.title) {
+      ui.title.textContent = state.escaped
+        ? 'Escape complete.'
+        : state.exitUnlocked
+          ? 'The exit is open.'
+          : state.hasKey
+            ? 'Return to the exit.'
+            : 'Find the key. Escape alive.';
+    }
     if (ui.objective) {
-      ui.objective.textContent = state.hasKey
-        ? (state.exitUnlocked ? 'Exit unlocked. Get out!' : 'The exit is unlocked with the key. Get there!')
-        : 'Find the key. The exit is locked.';
+      ui.objective.textContent = state.escaped
+        ? 'You made it out of Hollow Creek.'
+        : state.exitUnlocked
+          ? 'The exit is open. Move through the doorway!'
+          : state.hasKey
+            ? 'You have the key. Return to the exit and unlock it.'
+            : 'Find the key. The exit is locked.';
     }
   };
 
