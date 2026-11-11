@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { stepVehicle, sedanTuning, type VehicleState } from './physics/vehicle-dynamics';
+import { sampleCinematicPath } from './physics/cinematic-path';
 import { createDetectiveCharacter } from './characters/detective-character';
 import { createFourGatesEnvironment } from './environments/four-gates-environment';
 import { createHollowCreekDressing } from './environments/hollow-creek-dressing';
@@ -66,6 +67,7 @@ let driverBlockedSeconds=0;
 let sedanParked=false;
 const parkedSedanPosition=new THREE.Vector3();
 let parkedSedanYaw=0;
+let previousApproachPosition=new THREE.Vector3(-3.8,0,5.5);
 const setDriveRoute=(route:DriveWaypoint[])=>{if(activeDriveRoute!==route){activeDriveRoute=route;driveWaypointIndex=0;driverBlockedSeconds=0;}};
 const advanceDriveWaypoint=()=>{while(driveWaypointIndex<activeDriveRoute.length-1){const point=activeDriveRoute[driveWaypointIndex]!;if(Math.hypot(point.x-sedanState.x,point.z-sedanState.z)>.72)break;driveWaypointIndex++;}};
 const applySedanPhysics=(dt:number,_targetX:number,_targetZ:number,maxSpeed:number,gateOpen:boolean)=>{
@@ -330,7 +332,16 @@ function animate(){if(gamePaused)return;frame=requestAnimationFrame(animate);sce
 if(playArrivalSequence){
   // The sedan enters from the player-facing side, crosses the foreground horizontally,
   // then turns toward the fountain. The town gates are never used as a vehicle entrance.
-  if(t<5){setDriveRoute(driveRoutes.approach);applySedanPhysics(dt,3.25,5.5,4.6,true);headlampLeft.intensity=headlampRight.intensity=2.8;}
+  if(t<5){
+    const sample=sampleCinematicPath({x:-3.8,z:5.5},{x:-1.4,z:5.5},{x:1.2,z:5.5},{x:3.25,z:5.5},t/5);
+    arrivalCar.position.set(sample.x,0,sample.z);
+    arrivalCar.rotation.y=Math.atan2(-sample.tangentZ,sample.tangentX);
+    const travelled=previousApproachPosition.distanceTo(arrivalCar.position);
+    carWheels.forEach(w=>w.rotation.z+=travelled/.39);
+    previousApproachPosition.copy(arrivalCar.position);
+    sedanState={x:sample.x,z:sample.z,yaw:arrivalCar.rotation.y,speed:travelled/Math.max(dt,.001),steering:0};
+    headlampLeft.intensity=headlampRight.intensity=2.8;
+  }
   else if(t<16&&!sedanParked){setDriveRoute(driveRoutes.dropoff);applySedanPhysics(dt,4.0,-4.3,3.8,true);headlampLeft.intensity=headlampRight.intensity=2.4;}
   else if(t<16&&sedanParked){arrivalCar.position.copy(parkedSedanPosition);arrivalCar.rotation.y=parkedSedanYaw;headlampLeft.intensity=headlampRight.intensity=2.4;}
   else if(t<32.2){
