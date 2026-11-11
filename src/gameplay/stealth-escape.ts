@@ -153,16 +153,57 @@ export function createStealthEscapeEncounter(
   exitGlow.position.set(0, 2.1, .5);
   exit.add(exitGlow);
 
-  // Hollow Man silhouette: weathered hat, pale mask and long charcoal coat.
+  // Hollow Man: layered, elongated coat silhouette, weathered brimmed hat and sculpted pale mask.
   const entity = new THREE.Group();
+  entity.name = 'Hollow_Man_Stalker';
   scene.add(entity);
-  const coat = addMesh(entity, new THREE.CapsuleGeometry(.34, .9, 4, 8), mats.coat, 0, .83, 0);
-  coat.scale.set(1, 1.08, .78);
-  addMesh(entity, new THREE.BoxGeometry(.82, .18, .42), mats.hat, 0, 1.78, 0);
-  addMesh(entity, new THREE.CylinderGeometry(.25, .3, .13, 10), mats.hat, 0, 1.86, 0);
-  addMesh(entity, new THREE.SphereGeometry(.22, 12, 10), mats.mask, 0, 1.52, .035);
-  addMesh(entity, new THREE.BoxGeometry(.065, .34, .065), mats.coatDark, -.43, .92, 0);
-  addMesh(entity, new THREE.BoxGeometry(.065, .34, .065), mats.coatDark, .43, .92, 0);
+  const robe = addMesh(entity, new THREE.CylinderGeometry(.28, .47, 1.12, 10, 2, false),
+    mats.coat, 0, .72, 0);
+  robe.scale.z = .78;
+  const upperCoat = addMesh(entity, new THREE.CapsuleGeometry(.31, .52, 4, 10),
+    mats.coat, 0, 1.22, 0);
+  upperCoat.scale.set(1, 1.05, .78);
+  // Split coat tails create a readable, unsettling outline in motion.
+  for (const side of [-1, 1]) {
+    const tail = addMesh(entity, new THREE.BoxGeometry(.28, .78, .075), mats.coatDark,
+      side * .19, .42, -.015);
+    tail.rotation.z = side * -.12;
+    const sleeve = addMesh(entity, new THREE.CapsuleGeometry(.095, .54, 4, 8),
+      mats.coatDark, side * .39, .91, .005);
+    sleeve.rotation.z = side * -.2;
+    const hand = addMesh(entity, new THREE.CapsuleGeometry(.047, .2, 3, 6),
+      mats.mask, side * .47, .47, .035);
+    hand.rotation.z = side * -.08;
+    for (let finger = 0; finger < 3; finger++) {
+      const digit = addMesh(entity, new THREE.CapsuleGeometry(.012, .11, 2, 5),
+        mats.mask, side * (.45 + finger * .025), .32, .065 + finger * .025);
+      digit.rotation.z = side * -.18;
+    }
+  }
+  // A narrow neck disappears into the coat collar.
+  addMesh(entity, new THREE.CylinderGeometry(.105, .13, .24, 8), mats.coatDark, 0, 1.62, 0);
+  const mask = addMesh(entity, new THREE.SphereGeometry(.205, 14, 12), mats.mask, 0, 1.73, .045);
+  mask.scale.set(.82, 1.14, .64);
+  // Recessed dark eye sockets and a simple raised nose ridge make the mask legible without gore.
+  const socketMaterial = new THREE.MeshStandardMaterial({ color: '#22232a', roughness: .98 });
+  const maskDetailGeometry: THREE.BufferGeometry[] = [];
+  const addMaskDetail = (geo: THREE.BufferGeometry, x: number, y: number, z: number, scaleX = 1, scaleY = 1) => {
+    maskDetailGeometry.push(geo);
+    const detail = new THREE.Mesh(geo, socketMaterial);
+    detail.position.set(x, y, z);
+    detail.scale.set(scaleX, scaleY, .45);
+    entity.add(detail);
+    return detail;
+  };
+  addMaskDetail(new THREE.SphereGeometry(.052, 8, 6), -.075, 1.76, .164, 1.15, .75);
+  addMaskDetail(new THREE.SphereGeometry(.052, 8, 6), .075, 1.76, .164, 1.15, .75);
+  addMesh(entity, new THREE.BoxGeometry(.035, .16, .035), mats.doorTrim, 0, 1.67, .178);
+  addMesh(entity, new THREE.BoxGeometry(.13, .018, .025), mats.coatDark, 0, 1.56, .16);
+  // Broad hat brim and tapered crown preserve the established Hollow Man visual identity.
+  addMesh(entity, new THREE.CylinderGeometry(.37, .37, .055, 12), mats.hat, 0, 1.94, 0);
+  const hatCrown = addMesh(entity, new THREE.CylinderGeometry(.205, .245, .27, 10), mats.hat, 0, 2.095, -.015);
+  hatCrown.rotation.z = -.035;
+  addMesh(entity, new THREE.BoxGeometry(.16, .035, .025), mats.woodLight, 0, 2.13, .225);
   entity.position.set(3.4, 0, -1.5);
   entity.rotation.y = -Math.PI / 2;
 
@@ -539,6 +580,8 @@ export function createStealthEscapeEncounter(
       scene.remove(cabinet, key, bell, thrownStone, exit, entity);
       for (const item of geometry) item.dispose();
       for (const material of Object.values(mats)) material.dispose();
+      socketMaterial.dispose();
+      maskDetailGeometry.forEach(item => item.dispose());
       if (ui.action) ui.action.hidden = true;
       document.querySelector<HTMLElement>('#app')?.classList.remove('stealth-mode');
     },
