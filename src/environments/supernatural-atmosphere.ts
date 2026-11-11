@@ -66,10 +66,10 @@ export function createSupernaturalAtmosphere(scene: THREE.Scene): SupernaturalAt
       for (let i = 0; i < rainCount; i++) {
         const offset = i * 6;
         const fall = rainVelocity[i]! * dt;
-        rainPositions[offset + 1] -= fall;
-        rainPositions[offset + 4] -= fall;
-        rainPositions[offset] -= fall * 0.14;
-        rainPositions[offset + 3] -= fall * 0.14;
+        rainPositions[offset + 1] = rainPositions[offset + 1]! - fall;
+        rainPositions[offset + 4] = rainPositions[offset + 4]! - fall;
+        rainPositions[offset] = rainPositions[offset]! - fall * 0.14;
+        rainPositions[offset + 3] = rainPositions[offset + 3]! - fall * 0.14;
         if (rainPositions[offset + 1] < 0.25) {
           const x = (Math.random() - 0.5) * 17;
           const z = -14 + Math.random() * 25;
@@ -85,11 +85,11 @@ export function createSupernaturalAtmosphere(scene: THREE.Scene): SupernaturalAt
       (rainGeometry.attributes['position'] as THREE.BufferAttribute).needsUpdate = true;
       for (let i = 0; i < moteCount; i++) {
         const offset = i * 3;
-        motePositions[offset] += moteDrift[offset]! * dt;
-        motePositions[offset + 1] += moteDrift[offset + 1]! * dt;
-        motePositions[offset + 2] += moteDrift[offset + 2]! * dt;
+        motePositions[offset] = motePositions[offset]! + moteDrift[offset]! * dt;
+        motePositions[offset + 1] = motePositions[offset + 1]! + moteDrift[offset + 1]! * dt;
+        motePositions[offset + 2] = motePositions[offset + 2]! + moteDrift[offset + 2]! * dt;
         if (motePositions[offset + 1] > 1.55) motePositions[offset + 1] = 0.16;
-        if (Math.abs(motePositions[offset]) > 7) moteDrift[offset] *= -1;
+        if (Math.abs(motePositions[offset]!) > 7) moteDrift[offset] = moteDrift[offset]! * -1;
       }
       (moteGeometry.attributes['position'] as THREE.BufferAttribute).needsUpdate = true;
       spectralLight.intensity = 0.34 + Math.sin(elapsedSeconds * 1.7) * 0.07 + Math.sin(elapsedSeconds * 4.1) * 0.025;
